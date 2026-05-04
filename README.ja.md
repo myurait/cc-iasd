@@ -35,12 +35,14 @@ project-context root で npx から実行します。
 
 ```bash
 npx cc-iasd@latest init --doc-lang Japanese --dev-lang TypeScript
+npx cc-iasd@latest doctor
 ```
 
 このリポジトリからローカルに確認する場合は次です。
 
 ```bash
 node bin/cc-iasd.js init /tmp/my-project-context --doc-lang Japanese --dev-lang TypeScript
+node bin/cc-iasd.js doctor /tmp/my-project-context
 ```
 
 ## `init` が作る構成
@@ -88,7 +90,7 @@ src/
 
 このリポジトリは `myurait/ledger-flow` からの移行初期段階です。
 
-現在の npm CLI は project-context 初期化に対応しています。milestone run、escalation、report、evidence maintenance の各コマンドは今後実装対象です。
+現在の npm CLI は project-context 初期化と構造検査に対応しています。milestone run、escalation、report、evidence maintenance の各コマンドは今後実装対象です。
 
 ## ライセンス
 

@@ -270,11 +270,13 @@ ChatLobby:
 
 ---
 
-## 11. 後段 command
+## 11. cc-iasd doctor
 
-### 11.1 cc-iasd doctor
+### 11.1 目的
 
 project-context の整合性を検査する。
+
+### 11.2 処理
 
 ```text
 検査例:
@@ -287,15 +289,17 @@ project-context の整合性を検査する。
 - evidence references が壊れていないか
 ```
 
-### 11.2 cc-iasd sync
+MVP の初期実装では、project-context scaffold の必須パスと旧 ledger 由来パスの混入を検査する。
+
+### 11.3 cc-iasd sync
 
 Spec Kit / plugin / evidence index の参照整合を更新する。
 
-### 11.3 cc-iasd update-profile
+### 11.4 cc-iasd update-profile
 
 ledger profile を更新する。ただし、過去実行時の lock は上書きしない。
 
-### 11.4 cc-iasd audit
+### 11.5 cc-iasd audit
 
 長期的な evidence / decision / review の整合性を確認する。
 

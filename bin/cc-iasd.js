@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { copyFile, mkdir, readdir, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,6 +11,7 @@ const usage = `cc-iasd ${VERSION}
 
 Usage:
   cc-iasd init [project-context-path] [options]
+  cc-iasd doctor [project-context-path]
   cc-iasd --help
 
 Options:
@@ -37,7 +38,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (parsed.command !== 'init') {
+  if (!['init', 'doctor'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -162,6 +163,100 @@ const copyTopLevelFiles = async (root, sourceDir, destDir, options, created) => 
     await mkdir(path.dirname(target), { recursive: true });
     await copyFile(source, target);
   }
+};
+
+const requiredPaths = [
+  'runtime/cc-iasd.yaml',
+  'runtime/lock.json',
+  'rules/policies',
+  'rules/roles',
+  'rules/templates',
+  'rules/project-policies.md',
+  'user/product-intent.md',
+  'user/constraints.md',
+  'user/decisions.md',
+  'user/preferences.md',
+  'user/scratch.md',
+  'ops/ideal/ideal-experience.md',
+  'ops/ideal/product-charter.md',
+  'ops/features/index.md',
+  'ops/features/backlog.md',
+  'ops/features/epics',
+  'ops/features/supporting',
+  'ops/roadmaps',
+  'ops/specs',
+  'ops/milestones',
+  'ops/milestones/project-context/reviews',
+  'ops/logs',
+  'ops/decisions.md',
+  'ops/evidence-index.md',
+  'ops/knowledge.md',
+  'src',
+];
+
+const forbiddenPaths = [
+  '.ledger',
+  'development-docs',
+  'ops/reviews',
+];
+
+const forbiddenContent = [
+  '.ledger',
+  'development-docs',
+  'ledger.py',
+  'ledger.yaml',
+  'ops/reviews/',
+];
+
+const collectMarkdownFiles = async (root, current = '') => {
+  const dir = path.join(root, current);
+  const entries = await readdir(dir, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const rel = path.join(current, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === 'node_modules' || entry.name === '.git') continue;
+      files.push(...await collectMarkdownFiles(root, rel));
+      continue;
+    }
+    if (entry.isFile() && (entry.name.endsWith('.md') || entry.name.endsWith('.yaml') || entry.name.endsWith('.json'))) {
+      files.push(rel);
+    }
+  }
+  return files;
+};
+
+const doctor = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const issues = [];
+
+  for (const relPath of requiredPaths) {
+    if (!await exists(path.join(root, relPath))) {
+      issues.push(`Missing required path: ${relPath}`);
+    }
+  }
+
+  for (const relPath of forbiddenPaths) {
+    if (await exists(path.join(root, relPath))) {
+      issues.push(`Forbidden legacy path exists: ${relPath}`);
+    }
+  }
+
+  if (await exists(root)) {
+    const files = await collectMarkdownFiles(root);
+    for (const file of files) {
+      const content = await readFile(path.join(root, file), 'utf8');
+      for (const marker of forbiddenContent) {
+        if (content.includes(marker)) {
+          issues.push(`Forbidden legacy reference "${marker}" in ${file}`);
+        }
+      }
+    }
+  } else {
+    issues.push(`Project-context path does not exist: ${root}`);
+  }
+
+  return { root, issues };
 };
 
 const init = async (args) => {
@@ -305,10 +400,22 @@ try {
     console.log(usage);
     process.exit(0);
   }
-  const result = await init(args);
-  console.log(`${args.dryRun ? 'Planned' : 'Created'} ${result.written.length} file(s).`);
-  if (result.skipped.length) {
-    console.log(`Skipped ${result.skipped.length} existing file(s). Use --force to overwrite.`);
+  if (args.command === 'doctor') {
+    const result = await doctor(args);
+    if (result.issues.length) {
+      console.error(`cc-iasd doctor failed for ${result.root}`);
+      for (const issue of result.issues) {
+        console.error(`- ${issue}`);
+      }
+      process.exit(1);
+    }
+    console.log(`cc-iasd doctor passed for ${result.root}`);
+  } else {
+    const result = await init(args);
+    console.log(`${args.dryRun ? 'Planned' : 'Created'} ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Use --force to overwrite.`);
+    }
   }
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
