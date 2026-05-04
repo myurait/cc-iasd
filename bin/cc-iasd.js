@@ -13,13 +13,14 @@ Usage:
   cc-iasd init [project-context-path] [options]
   cc-iasd doctor [project-context-path]
   cc-iasd run milestone <id> [--root <project-context-path>]
+  cc-iasd report <id> [--root <project-context-path>]
   cc-iasd --help
 
 Options:
   --doc-lang <language>   Documentation language. Default: Japanese
   --dev-lang <language>   Development language. Default: unspecified
   --product-lang <lang>   Product language. Default: same as --doc-lang
-  --root <path>           Project-context root for run commands. Default: current directory
+  --root <path>           Project-context root for milestone commands. Default: current directory
   --dry-run               Print planned writes without creating files
   --force                 Overwrite existing files
 `;
@@ -42,7 +43,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'report'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -54,6 +55,11 @@ const parseArgs = (argv) => {
     parsed.milestoneId = tokens.shift() ?? '';
     if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
       throw new Error('Usage: cc-iasd run milestone <id>');
+    }
+  } else if (parsed.command === 'report') {
+    parsed.milestoneId = tokens.shift() ?? '';
+    if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd report <id>');
     }
   } else if (tokens[0] && !tokens[0].startsWith('-')) {
     parsed.target = tokens.shift();
@@ -284,6 +290,19 @@ const readOptionalText = async (root, relPath) => {
   }
 };
 
+const listMarkdownFiles = async (root, relDir) => {
+  const dir = assertInside(path.join(root, relDir), root);
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
+    return entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md')
+      .map((entry) => path.join(relDir, entry.name))
+      .sort();
+  } catch {
+    return [];
+  }
+};
+
 const extractField = (content, label) => {
   const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const match = content.match(new RegExp(`^- ${escaped}:\\s*(.+)$`, 'm'));
@@ -435,6 +454,34 @@ const milestoneHandoffTemplate = ({ milestoneId, linkedFeature, linkedRoadmap, l
   '',
 ].join('\n');
 
+const completionReportTemplate = ({ milestoneId, now, status, evidence, reviewFiles }) => [
+  `# Completion Report: ${milestoneId}`,
+  '',
+  `- Milestone ID: ${milestoneId}`,
+  `- Generated At: ${now}`,
+  '',
+  '## Status Summary',
+  '',
+  status.trim() || 'No status.md content found.',
+  '',
+  '## Evidence Summary',
+  '',
+  evidence.trim() || 'No evidence.md content found.',
+  '',
+  '## Review Evidence',
+  '',
+  ...(reviewFiles.length ? reviewFiles.map((file) => `- ${file}`) : ['- No review files found.']),
+  '',
+  '## Completion Assessment',
+  '',
+  '- Implemented Scope: TBD',
+  '- Test / Lint / Build Result: TBD',
+  '- Minor Autonomous Decisions: TBD',
+  '- Remaining Risks: TBD',
+  '- Human Confirmation Points: TBD',
+  '',
+].join('\n');
+
 const runMilestone = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
@@ -464,6 +511,36 @@ const runMilestone = async (args) => {
     'Review evidence for this milestone.',
     '',
   ].join('\n'), { ...args, force: false }, created);
+
+  return { root, milestoneId, written: created.written, skipped: created.skipped };
+};
+
+const reportMilestone = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for milestone report.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+
+  const milestoneId = args.milestoneId;
+  const milestoneRoot = `ops/milestones/${milestoneId}`;
+  if (!await exists(path.join(root, milestoneRoot))) {
+    throw new Error(`Milestone does not exist: ${milestoneRoot}`);
+  }
+
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const status = await readOptionalText(root, `${milestoneRoot}/status.md`);
+  const evidence = await readOptionalText(root, `${milestoneRoot}/evidence.md`);
+  const reviewFiles = await listMarkdownFiles(root, `${milestoneRoot}/reviews`);
+
+  await writeText(root, `${milestoneRoot}/completion-report.md`, completionReportTemplate({
+    milestoneId,
+    now,
+    status,
+    evidence,
+    reviewFiles,
+  }), { ...args, force: false }, created);
 
   return { root, milestoneId, written: created.written, skipped: created.skipped };
 };
@@ -615,6 +692,13 @@ try {
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Use --force only with init; run does not overwrite milestone records.`);
+    }
+  } else if (args.command === 'report') {
+    const result = await reportMilestone(args);
+    console.log(`Prepared completion report for milestone ${result.milestoneId} in ${result.root}.`);
+    console.log(`Created ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Report does not overwrite milestone records.`);
     }
   } else {
     const result = await init(args);

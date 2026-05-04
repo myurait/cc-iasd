@@ -185,6 +185,8 @@ milestone 完了報告を生成する。
 ops/milestones/<milestone-id>/completion-report.md
 ```
 
+MVP の初期実装では、`status.md`、`evidence.md`、`reviews/` の review ファイル一覧を集約し、既存の `completion-report.md` は上書きしない。
+
 ---
 
 ## 7. 初期 workflow

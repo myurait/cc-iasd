@@ -37,6 +37,7 @@ project-context root で npx から実行します。
 npx cc-iasd@latest init --doc-lang Japanese --dev-lang TypeScript
 npx cc-iasd@latest doctor
 npx cc-iasd@latest run milestone mvp-001
+npx cc-iasd@latest report mvp-001
 ```
 
 このリポジトリからローカルに確認する場合は次です。
@@ -45,6 +46,7 @@ npx cc-iasd@latest run milestone mvp-001
 node bin/cc-iasd.js init /tmp/my-project-context --doc-lang Japanese --dev-lang TypeScript
 node bin/cc-iasd.js doctor /tmp/my-project-context
 node bin/cc-iasd.js run milestone mvp-001 --root /tmp/my-project-context
+node bin/cc-iasd.js report mvp-001 --root /tmp/my-project-context
 ```
 
 ## `init` が作る構成
@@ -92,7 +94,7 @@ src/
 
 このリポジトリは `myurait/ledger-flow` からの移行初期段階です。
 
-現在の npm CLI は project-context 初期化、構造検査、最小 milestone handoff 生成に対応しています。escalation、report、evidence maintenance の各コマンドは今後実装対象です。
+現在の npm CLI は project-context 初期化、構造検査、最小 milestone handoff 生成、completion report 生成に対応しています。escalation、evidence maintenance の各コマンドは今後実装対象です。
 
 ## ライセンス
 
