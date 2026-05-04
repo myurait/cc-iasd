@@ -349,6 +349,8 @@ const doctor = async (args) => {
         }
       }
     }
+
+    await validateMilestoneLinks(root, issues);
   } else {
     issues.push(`Project-context path does not exist: ${root}`);
   }
@@ -397,6 +399,80 @@ const extractField = (content, label) => {
   if (!match) return '';
   const value = match[1].trim();
   return value === 'TBD' ? '' : value;
+};
+
+const isUnset = (value) => !value || value === 'none' || value.startsWith('UNRESOLVED');
+
+const resolveExistingPath = async (root, candidates) => {
+  for (const candidate of candidates.filter(Boolean)) {
+    if (await exists(path.join(root, candidate))) {
+      return candidate;
+    }
+  }
+  return '';
+};
+
+const linkedPathCandidates = (kind, value, linkedSpec = '') => {
+  if (isUnset(value)) return [];
+  if (value.startsWith('ops/')) return [value];
+
+  switch (kind) {
+    case 'feature':
+      return [
+        `ops/features/${value}.md`,
+        `ops/features/${value}/README.md`,
+        `ops/features/epics/${value}.md`,
+        `ops/features/epics/${value}/README.md`,
+        `ops/features/supporting/${value}.md`,
+        `ops/features/supporting/${value}/README.md`,
+      ];
+    case 'roadmap':
+      return [
+        `ops/roadmaps/${value}.md`,
+        `ops/roadmaps/${value}/README.md`,
+      ];
+    case 'spec':
+      return [
+        `ops/specs/${value}`,
+        `ops/specs/${value}/requirements.md`,
+      ];
+    case 'tasks':
+      return [
+        `ops/specs/${value}/tasks.md`,
+        linkedSpec && !linkedSpec.startsWith('ops/') ? `ops/specs/${linkedSpec}/tasks.md` : '',
+        linkedSpec && linkedSpec.startsWith('ops/') ? `${linkedSpec.replace(/\/$/, '')}/tasks.md` : '',
+      ];
+    default:
+      return [];
+  }
+};
+
+const validateMilestoneLinks = async (root, issues) => {
+  const milestoneDirs = await listDirectories(root, 'ops/milestones');
+  for (const milestoneDir of milestoneDirs) {
+    const statusPath = `${milestoneDir}/status.md`;
+    if (!await exists(path.join(root, statusPath))) continue;
+
+    const status = await readFile(path.join(root, statusPath), 'utf8');
+    const linkedFeature = extractField(status, 'Linked Feature');
+    const linkedRoadmap = extractField(status, 'Linked Roadmap');
+    const linkedSpec = extractField(status, 'Linked Spec');
+    const linkedTasks = extractField(status, 'Linked Tasks');
+    const checks = [
+      ['feature', 'Linked Feature', linkedFeature, ''],
+      ['roadmap', 'Linked Roadmap', linkedRoadmap, ''],
+      ['spec', 'Linked Spec', linkedSpec, ''],
+      ['tasks', 'Linked Tasks', linkedTasks, linkedSpec],
+    ];
+
+    for (const [kind, label, value, context] of checks) {
+      if (isUnset(value)) continue;
+      const resolved = await resolveExistingPath(root, linkedPathCandidates(kind, value, context));
+      if (!resolved) {
+        issues.push(`Broken milestone link in ${statusPath}: ${label} ${value}`);
+      }
+    }
+  }
 };
 
 const linkStatus = (label, value) => value || `UNRESOLVED (${label} not set)`;
