@@ -17,6 +17,7 @@ Usage:
   cc-iasd report <id> [--root <project-context-path>]
   cc-iasd index evidence [--root <project-context-path>]
   cc-iasd log event --summary <text> [--type <type>] [--milestone <id>] [--evidence <path>] [--root <project-context-path>]
+  cc-iasd review add <milestone-id> --summary <text> --result <text> [--type light|full] [--root <project-context-path>]
   cc-iasd feature add <id> --summary <text> --pillar <name> [--kind epic|supporting] [--root <project-context-path>]
   cc-iasd roadmap add <id> --summary <text> --goal <text> [--root <project-context-path>]
   cc-iasd spec add <id> --summary <text> [--root <project-context-path>]
@@ -27,8 +28,9 @@ Options:
   --dev-lang <language>   Development language. Default: unspecified
   --product-lang <lang>   Product language. Default: same as --doc-lang
   --root <path>           Project-context root for milestone commands. Default: current directory
-  --type <type>           Log event type. Default: manual
-  --summary <text>        Log event summary
+  --type <type>           Log event type, or review type for review add
+  --summary <text>        Log event or review summary
+  --result <text>         Review result summary
   --milestone <id>        Related milestone id for log events
   --evidence <path>       Related evidence path for log events
   --feature <ref>         Linked feature for run milestone
@@ -55,6 +57,7 @@ const parseArgs = (argv) => {
     milestoneId: '',
     eventType: 'manual',
     eventSummary: '',
+    reviewResult: '',
     relatedMilestone: '',
     relatedEvidence: '',
     linkedFeature: '',
@@ -74,7 +77,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'feature', 'roadmap', 'spec'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'review', 'feature', 'roadmap', 'spec'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -101,6 +104,16 @@ const parseArgs = (argv) => {
     parsed.runTarget = tokens.shift() ?? '';
     if (parsed.runTarget !== 'event') {
       throw new Error('Usage: cc-iasd log event --summary <text>');
+    }
+  } else if (parsed.command === 'review') {
+    parsed.eventType = 'light';
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'add') {
+      throw new Error('Usage: cc-iasd review add <milestone-id> --summary <text> --result <text>');
+    }
+    parsed.milestoneId = tokens.shift() ?? '';
+    if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd review add <milestone-id> --summary <text> --result <text>');
     }
   } else if (parsed.command === 'feature') {
     parsed.runTarget = tokens.shift() ?? '';
@@ -162,6 +175,9 @@ const parseArgs = (argv) => {
         break;
       case '--summary':
         parsed.eventSummary = readValue(token);
+        break;
+      case '--result':
+        parsed.reviewResult = readValue(token);
         break;
       case '--milestone':
         parsed.relatedMilestone = readValue(token);
@@ -422,6 +438,7 @@ const doctor = async (args) => {
     await validateFeatureFiles(root, issues);
     await validateRoadmapFiles(root, issues);
     await validateSpecFiles(root, issues);
+    await validateReviewFiles(root, issues);
   } else {
     issues.push(`Project-context path does not exist: ${root}`);
   }
@@ -629,6 +646,35 @@ const validateSpecFiles = async (root, issues) => {
       const tasks = await readFile(path.join(root, tasksPath), 'utf8');
       if (!/^- \[[ xX]\] .+/m.test(tasks)) {
         issues.push(`Missing spec task checklist in ${tasksPath}`);
+      }
+    }
+  }
+};
+
+const validateReviewFiles = async (root, issues) => {
+  const milestoneDirs = await listDirectories(root, 'ops/milestones');
+  for (const milestoneDir of milestoneDirs) {
+    const reviewFiles = await listMarkdownFiles(root, `${milestoneDir}/reviews`);
+    for (const file of reviewFiles) {
+      const basename = path.basename(file);
+      if (!/^review_[0-9]{17}_[a-z0-9-]+\.md$/.test(basename)) {
+        issues.push(`Invalid review file name: ${file}`);
+      }
+
+      const content = await readFile(path.join(root, file), 'utf8');
+      const milestoneId = extractField(content, 'Milestone ID');
+      const reviewType = extractField(content, 'Review Type');
+      const result = extractField(content, 'Result');
+      const expectedMilestoneId = path.basename(milestoneDir);
+
+      if (milestoneId !== expectedMilestoneId) {
+        issues.push(`Invalid review milestone id in ${file}: ${milestoneId || 'missing'}`);
+      }
+      if (!['light', 'full'].includes(reviewType)) {
+        issues.push(`Invalid review type in ${file}: ${reviewType || 'missing'}`);
+      }
+      if (isUnset(result)) {
+        issues.push(`Missing review result in ${file}`);
       }
     }
   }
@@ -903,6 +949,47 @@ const completionReportTemplate = ({ milestoneId, now, status, evidence, reviewFi
   '',
 ].join('\n');
 
+const reviewRecordTemplate = ({ milestoneId, now, reviewType, summary, result }) => [
+  `# Review: ${milestoneId}`,
+  '',
+  `- Date: ${now}`,
+  '- Reviewer: TBD',
+  '- Base Commit: TBD',
+  `- Scope: ${summary}`,
+  `- Milestone ID: ${milestoneId}`,
+  `- Review Type: ${reviewType}`,
+  `- Result: ${result}`,
+  '- Trigger: manual',
+  '',
+  '## Findings',
+  '',
+  '### Critical',
+  '',
+  '- None',
+  '',
+  '### High',
+  '',
+  '- None',
+  '',
+  '### Medium',
+  '',
+  '- None',
+  '',
+  '### Low',
+  '',
+  '- None',
+  '',
+  '## Review Notes',
+  '',
+  '- TBD',
+  '',
+  '## Implementation Response Plan',
+  '',
+  '- Planned Fixes: TBD',
+  '- Deferred Items: TBD',
+  '',
+].join('\n');
+
 const escalationTemplate = ({ milestoneId, now, status, evidence, activeBlocker, linkedSpec, linkedTasks }) => [
   `# Escalation Packet: ${milestoneId}`,
   '',
@@ -1132,6 +1219,46 @@ const addSpec = async (args) => {
   });
 
   return { root, specId: args.specId, specRoot, written: created.written, skipped: created.skipped };
+};
+
+const addReview = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for review add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  if (!['light', 'full'].includes(args.eventType)) {
+    throw new Error('Review type must be light or full');
+  }
+  if (!args.eventSummary || !args.reviewResult) {
+    throw new Error('Usage: cc-iasd review add <milestone-id> --summary <text> --result <text>');
+  }
+
+  const milestoneId = args.milestoneId;
+  const milestoneRoot = `ops/milestones/${milestoneId}`;
+  if (!await exists(path.join(root, milestoneRoot))) {
+    throw new Error(`Milestone does not exist: ${milestoneRoot}`);
+  }
+
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const reviewPath = `${milestoneRoot}/reviews/review_${timestampForFile(now)}_${slugify(args.eventSummary)}.md`;
+  await writeText(root, reviewPath, reviewRecordTemplate({
+    milestoneId,
+    now,
+    reviewType: args.eventType,
+    summary: args.eventSummary,
+    result: args.reviewResult,
+  }), { ...args, force: false }, created);
+
+  await writeLogEvent(root, {
+    eventType: 'review-add',
+    summary: `Added ${args.eventType} review for ${milestoneId}`,
+    relatedMilestone: milestoneId,
+    relatedEvidence: reviewPath,
+  });
+
+  return { root, milestoneId, reviewPath, written: created.written, skipped: created.skipped };
 };
 
 const indexEvidence = async (args) => {
@@ -1465,6 +1592,13 @@ try {
   } else if (args.command === 'log') {
     const result = await logEvent(args);
     console.log(`Created ${result.written.length} log file(s) in ${result.root}.`);
+  } else if (args.command === 'review') {
+    const result = await addReview(args);
+    console.log(`Prepared ${args.eventType} review for milestone ${result.milestoneId} in ${result.root}.`);
+    console.log(`Created ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Review add does not overwrite review records.`);
+    }
   } else if (args.command === 'feature') {
     const result = await addFeature(args);
     console.log(`Prepared feature ${result.featureId} in ${result.root}.`);

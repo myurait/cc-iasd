@@ -22,6 +22,7 @@ cc-iasd escalate <id>
 cc-iasd report <id>
 cc-iasd index evidence
 cc-iasd log event
+cc-iasd review add <milestone-id>
 cc-iasd feature add <id>
 cc-iasd roadmap add <id>
 cc-iasd spec add <id>
@@ -306,8 +307,6 @@ MVP の初期実装では、既存 roadmap file は上書きしない。
 
 ---
 
-## 11. 初期 workflow
-
 ## 11. cc-iasd spec add <id>
 
 ### 11.1 目的
@@ -403,7 +402,34 @@ Reviewer workflow:
 
 ---
 
-## 15. ChatLobby 連携時の workflow
+## 15. cc-iasd review add <milestone-id>
+
+### 15.1 目的
+
+milestone に紐づく review record を `ops/milestones/<id>/reviews/` に作成する。
+
+### 15.2 処理
+
+```text
+処理:
+1. milestone id を受け取る
+2. review type を受け取る
+3. summary と result を受け取る
+4. ops/milestones/<id>/reviews/ に review file を作成する
+5. ops/logs/ に review event を記録する
+```
+
+### 15.3 出力
+
+```text
+ops/milestones/<id>/reviews/review_<timestamp>_<summary>.md
+```
+
+MVP の初期実装では、既存 review file は上書きしない。
+
+---
+
+## 16. ChatLobby 連携時の workflow
 
 ChatLobby 連携は MVP では必須ではない。
 
@@ -425,13 +451,13 @@ ChatLobby:
 
 ---
 
-## 16. cc-iasd doctor
+## 17. cc-iasd doctor
 
-### 16.1 目的
+### 17.1 目的
 
 project-context の整合性を検査する。
 
-### 16.2 処理
+### 17.2 処理
 
 ```text
 検査例:
@@ -451,27 +477,28 @@ milestone の `Linked Feature`、`Linked Roadmap`、`Linked Spec`、`Linked Task
 feature file は、file名、`Kind`、`Summary`、`Ideal Pillar` の最低限を検査する。
 roadmap file は、file名、`Summary`、`Goal`、`Status` の最低限を検査する。
 spec directory は、directory名、`requirements.md`、`plan.md`、`tasks.md` の存在と、`tasks.md` 内の checklist item の存在を検査する。
+review file は、file名、`Milestone ID`、`Review Type`、`Result` の最低限を検査する。
 
-### 16.3 cc-iasd sync
+### 17.3 cc-iasd sync
 
 Spec Kit / plugin / evidence index の参照整合を更新する。
 
-### 16.4 cc-iasd update-profile
+### 17.4 cc-iasd update-profile
 
 ledger profile を更新する。ただし、過去実行時の lock は上書きしない。
 
-### 16.5 cc-iasd audit
+### 17.5 cc-iasd audit
 
 長期的な evidence / decision / review の整合性を確認する。
 
 ---
 
-## 12. command 設計の原則
+## 18. command 設計の原則
 
 ```text
 原則:
 - 既存 framework command を再実装しない
-- ledger command は統合・委譲・状態管理を担う
+- cc-iasd command は統合・委譲・状態管理を担う
 - src/ root を常に明示する
 - 自走前に scope を確認する
 - 停止時は escalation に変換する

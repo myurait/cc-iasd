@@ -41,6 +41,7 @@ npx cc-iasd@latest escalate mvp-001
 npx cc-iasd@latest report mvp-001
 npx cc-iasd@latest index evidence
 npx cc-iasd@latest log event --summary "Updated project context"
+npx cc-iasd@latest review add mvp-001 --type light --summary "Review implementation result" --result "No blocking findings"
 npx cc-iasd@latest feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience"
 npx cc-iasd@latest roadmap add roadmap-a --summary "MVP roadmap" --goal "Ship the first usable flow"
 npx cc-iasd@latest spec add spec-a --summary "Define the first implementation slice"
@@ -56,6 +57,7 @@ node bin/cc-iasd.js escalate mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js report mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js index evidence --root /tmp/my-project-context
 node bin/cc-iasd.js log event --summary "Updated project context" --root /tmp/my-project-context
+node bin/cc-iasd.js review add mvp-001 --type light --summary "Review implementation result" --result "No blocking findings" --root /tmp/my-project-context
 node bin/cc-iasd.js feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience" --root /tmp/my-project-context
 node bin/cc-iasd.js roadmap add roadmap-a --summary "MVP roadmap" --goal "Ship the first usable flow" --root /tmp/my-project-context
 node bin/cc-iasd.js spec add spec-a --summary "Define the first implementation slice" --root /tmp/my-project-context
@@ -106,7 +108,7 @@ src/
 
 This repository is in early migration from `myurait/ledger-flow`.
 
-The current npm CLI supports project-context initialization, structure validation, feature creation, roadmap creation, spec creation, minimal milestone handoff generation, escalation packet generation, completion report generation, evidence index generation, and global log event creation.
+The current npm CLI supports project-context initialization, structure validation, feature creation, roadmap creation, spec creation, minimal milestone handoff generation, review record creation, escalation packet generation, completion report generation, evidence index generation, and global log event creation.
 
 ## License
 
