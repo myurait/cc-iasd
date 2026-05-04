@@ -19,6 +19,7 @@ Usage:
   cc-iasd log event --summary <text> [--type <type>] [--milestone <id>] [--evidence <path>] [--root <project-context-path>]
   cc-iasd feature add <id> --summary <text> --pillar <name> [--kind epic|supporting] [--root <project-context-path>]
   cc-iasd roadmap add <id> --summary <text> --goal <text> [--root <project-context-path>]
+  cc-iasd spec add <id> --summary <text> [--root <project-context-path>]
   cc-iasd --help
 
 Options:
@@ -65,6 +66,7 @@ const parseArgs = (argv) => {
     idealPillar: '',
     roadmapId: '',
     roadmapGoal: '',
+    specId: '',
   };
 
   const tokens = [...argv];
@@ -72,7 +74,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'feature', 'roadmap'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'feature', 'roadmap', 'spec'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -117,6 +119,15 @@ const parseArgs = (argv) => {
     parsed.roadmapId = tokens.shift() ?? '';
     if (!parsed.roadmapId || parsed.roadmapId.startsWith('-')) {
       throw new Error('Usage: cc-iasd roadmap add <id> --summary <text> --goal <text>');
+    }
+  } else if (parsed.command === 'spec') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'add') {
+      throw new Error('Usage: cc-iasd spec add <id> --summary <text>');
+    }
+    parsed.specId = tokens.shift() ?? '';
+    if (!parsed.specId || parsed.specId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd spec add <id> --summary <text>');
     }
   } else if (tokens[0] && !tokens[0].startsWith('-')) {
     parsed.target = tokens.shift();
@@ -694,6 +705,53 @@ const roadmapFileTemplate = ({ roadmapId, summary, goal, now }) => [
   '',
 ].join('\n');
 
+const specRequirementsTemplate = ({ specId, summary, now }) => [
+  `# Requirements: ${specId}`,
+  '',
+  `- ID: ${specId}`,
+  `- Summary: ${summary}`,
+  `- Created At: ${now}`,
+  '',
+  '## User Value',
+  '',
+  '- TBD',
+  '',
+  '## Requirements',
+  '',
+  '- TBD',
+  '',
+].join('\n');
+
+const specPlanTemplate = ({ specId, summary, now }) => [
+  `# Plan: ${specId}`,
+  '',
+  `- ID: ${specId}`,
+  `- Summary: ${summary}`,
+  `- Created At: ${now}`,
+  '',
+  '## Approach',
+  '',
+  '- TBD',
+  '',
+  '## Dependencies',
+  '',
+  '- TBD',
+  '',
+].join('\n');
+
+const specTasksTemplate = ({ specId, summary, now }) => [
+  `# Tasks: ${specId}`,
+  '',
+  `- ID: ${specId}`,
+  `- Summary: ${summary}`,
+  `- Created At: ${now}`,
+  '',
+  '## Tasks',
+  '',
+  '- [ ] TBD',
+  '',
+].join('\n');
+
 const milestoneStatusTemplate = ({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
   `# Milestone Status: ${milestoneId}`,
   '',
@@ -1001,6 +1059,47 @@ const addRoadmap = async (args) => {
   });
 
   return { root, roadmapId: args.roadmapId, roadmapPath: relPath, written: created.written, skipped: created.skipped };
+};
+
+const addSpec = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for spec add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  if (slugify(args.specId) !== args.specId) {
+    throw new Error('Spec id must be lowercase kebab-case ASCII');
+  }
+  if (!args.eventSummary) {
+    throw new Error('Usage: cc-iasd spec add <id> --summary <text>');
+  }
+
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const specRoot = `ops/specs/${args.specId}`;
+  await writeText(root, `${specRoot}/requirements.md`, specRequirementsTemplate({
+    specId: args.specId,
+    summary: args.eventSummary,
+    now,
+  }), { ...args, force: false }, created);
+  await writeText(root, `${specRoot}/plan.md`, specPlanTemplate({
+    specId: args.specId,
+    summary: args.eventSummary,
+    now,
+  }), { ...args, force: false }, created);
+  await writeText(root, `${specRoot}/tasks.md`, specTasksTemplate({
+    specId: args.specId,
+    summary: args.eventSummary,
+    now,
+  }), { ...args, force: false }, created);
+
+  await writeLogEvent(root, {
+    eventType: 'spec-add',
+    summary: `Added spec ${args.specId}`,
+    relatedEvidence: `${specRoot}/tasks.md`,
+  });
+
+  return { root, specId: args.specId, specRoot, written: created.written, skipped: created.skipped };
 };
 
 const indexEvidence = async (args) => {
@@ -1347,6 +1446,13 @@ try {
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Roadmap add does not overwrite roadmap records.`);
+    }
+  } else if (args.command === 'spec') {
+    const result = await addSpec(args);
+    console.log(`Prepared spec ${result.specId} in ${result.root}.`);
+    console.log(`Created ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Spec add does not overwrite spec records.`);
     }
   } else {
     const result = await init(args);

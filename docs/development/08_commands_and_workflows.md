@@ -24,6 +24,7 @@ cc-iasd index evidence
 cc-iasd log event
 cc-iasd feature add <id>
 cc-iasd roadmap add <id>
+cc-iasd spec add <id>
 ```
 
 後段候補は別扱いにする。
@@ -307,6 +308,38 @@ MVP の初期実装では、既存 roadmap file は上書きしない。
 
 ## 11. 初期 workflow
 
+## 11. cc-iasd spec add <id>
+
+### 11.1 目的
+
+Spec Kit 互換の spec / plan / tasks 正本の最小受け皿を作成する。
+
+### 11.2 処理
+
+```text
+処理:
+1. spec id を受け取る
+2. summary を受け取る
+3. ops/specs/<id>/requirements.md を作成する
+4. ops/specs/<id>/plan.md を作成する
+5. ops/specs/<id>/tasks.md を作成する
+6. ops/logs/ に spec event を記録する
+```
+
+### 11.3 出力
+
+```text
+ops/specs/<id>/requirements.md
+ops/specs/<id>/plan.md
+ops/specs/<id>/tasks.md
+```
+
+MVP の初期実装では、既存 spec file は上書きしない。
+
+---
+
+## 12. 初期 workflow
+
 ```text
 0. project-context 作成
 1. cc-iasd init
@@ -327,7 +360,7 @@ MVP の初期実装では、既存 roadmap file は上書きしない。
 
 ---
 
-## 12. 実行 runtime への handoff
+## 13. 実行 runtime への handoff
 
 MVP では、runtime handoff は単純な Markdown packet でよい。
 
@@ -355,7 +388,7 @@ src/
 
 ---
 
-## 13. Reviewer workflow
+## 14. Reviewer workflow
 
 ```text
 Reviewer workflow:
@@ -370,7 +403,7 @@ Reviewer workflow:
 
 ---
 
-## 14. ChatLobby 連携時の workflow
+## 15. ChatLobby 連携時の workflow
 
 ChatLobby 連携は MVP では必須ではない。
 
@@ -392,13 +425,13 @@ ChatLobby:
 
 ---
 
-## 15. cc-iasd doctor
+## 16. cc-iasd doctor
 
-### 15.1 目的
+### 16.1 目的
 
 project-context の整合性を検査する。
 
-### 15.2 処理
+### 16.2 処理
 
 ```text
 検査例:
@@ -418,15 +451,15 @@ milestone の `Linked Feature`、`Linked Roadmap`、`Linked Spec`、`Linked Task
 feature file は、file名、`Kind`、`Summary`、`Ideal Pillar` の最低限を検査する。
 roadmap file は、file名、`Summary`、`Goal`、`Status` の最低限を検査する。
 
-### 15.3 cc-iasd sync
+### 16.3 cc-iasd sync
 
 Spec Kit / plugin / evidence index の参照整合を更新する。
 
-### 15.4 cc-iasd update-profile
+### 16.4 cc-iasd update-profile
 
 ledger profile を更新する。ただし、過去実行時の lock は上書きしない。
 
-### 15.5 cc-iasd audit
+### 16.5 cc-iasd audit
 
 長期的な evidence / decision / review の整合性を確認する。
 
