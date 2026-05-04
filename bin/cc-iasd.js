@@ -392,6 +392,7 @@ const doctor = async (args) => {
     }
 
     await validateMilestoneLinks(root, issues);
+    await validateFeatureFiles(root, issues);
   } else {
     issues.push(`Project-context path does not exist: ${root}`);
   }
@@ -511,6 +512,38 @@ const validateMilestoneLinks = async (root, issues) => {
       const resolved = await resolveExistingPath(root, linkedPathCandidates(kind, value, context));
       if (!resolved) {
         issues.push(`Broken milestone link in ${statusPath}: ${label} ${value}`);
+      }
+    }
+  }
+};
+
+const validateFeatureFiles = async (root, issues) => {
+  const featureDirs = [
+    ['ops/features/epics', 'epic'],
+    ['ops/features/supporting', 'supporting'],
+  ];
+
+  for (const [featureDir, expectedKind] of featureDirs) {
+    const files = await listMarkdownFiles(root, featureDir);
+    for (const file of files) {
+      const basename = path.basename(file);
+      if (!/^[a-z0-9][a-z0-9-]*\.md$/.test(basename)) {
+        issues.push(`Invalid feature file name: ${file}`);
+      }
+
+      const content = await readFile(path.join(root, file), 'utf8');
+      const kind = extractField(content, 'Kind');
+      const summary = extractField(content, 'Summary');
+      const idealPillar = extractField(content, 'Ideal Pillar');
+
+      if (kind !== expectedKind) {
+        issues.push(`Invalid feature kind in ${file}: ${kind || 'missing'}`);
+      }
+      if (isUnset(summary)) {
+        issues.push(`Missing feature summary in ${file}`);
+      }
+      if (isUnset(idealPillar)) {
+        issues.push(`Missing feature ideal pillar in ${file}`);
       }
     }
   }

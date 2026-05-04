@@ -390,6 +390,7 @@ MVP の初期実装では、project-context scaffold の必須パスと旧 ledge
 `cc-iasd index evidence` 実装後は、`ops/evidence-index.md` 内の `ops/` 参照が実在することも検査する。
 `cc-iasd log event` 実装後は、`ops/logs/log_<timestamp>_<type>.md` の命名と log 内の related evidence 参照が実在することも検査する。
 milestone の `Linked Feature`、`Linked Roadmap`、`Linked Spec`、`Linked Tasks` が `TBD` でない場合は、対応する `ops/` 配下の参照が実在することも検査する。
+feature file は、file名、`Kind`、`Summary`、`Ideal Pillar` の最低限を検査する。
 
 ### 14.3 cc-iasd sync
 
