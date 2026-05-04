@@ -327,6 +327,7 @@ project-context の整合性を検査する。
 ```
 
 MVP の初期実装では、project-context scaffold の必須パスと旧 ledger 由来パスの混入を検査する。
+`cc-iasd index evidence` 実装後は、`ops/evidence-index.md` 内の `ops/` 参照が実在することも検査する。
 
 ### 12.3 cc-iasd sync
 

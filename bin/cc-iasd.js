@@ -237,6 +237,15 @@ const forbiddenContent = [
   'ops/reviews/',
 ];
 
+const extractProjectRefs = (content) => {
+  const refs = new Set();
+  const matches = content.matchAll(/ops\/[A-Za-z0-9._~/-]+/g);
+  for (const match of matches) {
+    refs.add(match[0].replace(/[),.;:]+$/, ''));
+  }
+  return [...refs].sort();
+};
+
 const collectMarkdownFiles = async (root, current = '') => {
   const dir = path.join(root, current);
   const entries = await readdir(dir, { withFileTypes: true });
@@ -278,6 +287,16 @@ const doctor = async (args) => {
       for (const marker of forbiddenContent) {
         if (content.includes(marker)) {
           issues.push(`Forbidden legacy reference "${marker}" in ${file}`);
+        }
+      }
+    }
+
+    const evidenceIndex = path.join(root, 'ops/evidence-index.md');
+    if (await exists(evidenceIndex)) {
+      const content = await readFile(evidenceIndex, 'utf8');
+      for (const ref of extractProjectRefs(content)) {
+        if (!await exists(path.join(root, ref))) {
+          issues.push(`Broken evidence index reference: ${ref}`);
         }
       }
     }
