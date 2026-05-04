@@ -450,6 +450,7 @@ MVP の初期実装では、project-context scaffold の必須パスと旧 ledge
 milestone の `Linked Feature`、`Linked Roadmap`、`Linked Spec`、`Linked Tasks` が `TBD` でない場合は、対応する `ops/` 配下の参照が実在することも検査する。
 feature file は、file名、`Kind`、`Summary`、`Ideal Pillar` の最低限を検査する。
 roadmap file は、file名、`Summary`、`Goal`、`Status` の最低限を検査する。
+spec directory は、directory名、`requirements.md`、`plan.md`、`tasks.md` の存在と、`tasks.md` 内の checklist item の存在を検査する。
 
 ### 16.3 cc-iasd sync
 

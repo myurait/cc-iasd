@@ -421,6 +421,7 @@ const doctor = async (args) => {
     await validateMilestoneLinks(root, issues);
     await validateFeatureFiles(root, issues);
     await validateRoadmapFiles(root, issues);
+    await validateSpecFiles(root, issues);
   } else {
     issues.push(`Project-context path does not exist: ${root}`);
   }
@@ -598,6 +599,37 @@ const validateRoadmapFiles = async (root, issues) => {
     }
     if (isUnset(status)) {
       issues.push(`Missing roadmap status in ${file}`);
+    }
+  }
+};
+
+const validateSpecFiles = async (root, issues) => {
+  const specDirs = await listDirectories(root, 'ops/specs');
+  for (const specDir of specDirs) {
+    const basename = path.basename(specDir);
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(basename)) {
+      issues.push(`Invalid spec directory name: ${specDir}`);
+    }
+
+    const requiredSpecFiles = [
+      'requirements.md',
+      'plan.md',
+      'tasks.md',
+    ];
+
+    for (const fileName of requiredSpecFiles) {
+      const relPath = `${specDir}/${fileName}`;
+      if (!await exists(path.join(root, relPath))) {
+        issues.push(`Missing spec file: ${relPath}`);
+      }
+    }
+
+    const tasksPath = `${specDir}/tasks.md`;
+    if (await exists(path.join(root, tasksPath))) {
+      const tasks = await readFile(path.join(root, tasksPath), 'utf8');
+      if (!/^- \[[ xX]\] .+/m.test(tasks)) {
+        issues.push(`Missing spec task checklist in ${tasksPath}`);
+      }
     }
   }
 };
