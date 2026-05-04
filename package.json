@@ -1,0 +1,32 @@
+{
+  "name": "cc-iasd",
+  "version": "0.1.0",
+  "description": "Project-context framework for governed agentic software development.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "cc-iasd": "./bin/cc-iasd.js"
+  },
+  "files": [
+    "bin",
+    "rules",
+    "roles",
+    "templates/*.md",
+    "README.md",
+    "README.ja.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "agentic-sdlc",
+    "ai-development",
+    "project-context",
+    "governance",
+    "spec-driven-development"
+  ]
+}

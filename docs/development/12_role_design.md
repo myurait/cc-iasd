@@ -1,0 +1,1198 @@
+# 12. ledger Role 設計方針
+
+作成日: 2026-05-04  
+状態: 追加整理版 v0.1
+
+---
+
+## 1. この文書の目的
+
+この文書は、最近の「Ledger Role パッケージ調査」で得た前提をもとに、ledger における role 設計を再整理するためのものである。
+
+調査上の前提は次である。
+
+```text
+前提:
+ledger がそのまま正本として採用できる、独立した role パッケージ群は現時点では存在しない。
+```
+
+ここでいう role パッケージとは、次のような単位で独立配布され、ledger に部分採択できるものを指す。
+
+```text
+対象にしていた role パッケージ:
+- reviewer role
+- auditor role
+- planner role
+- architect role
+- devil's advocate role
+- security reviewer role
+- code quality reviewer role
+- documentation reviewer role
+- test reviewer role
+- requirements reviewer role
+- implementation reviewer role
+```
+
+調査結果として、これらを ledger の role 定義としてそのまま採用できる単一リポジトリは見つからない、という前提を置く。
+
+したがって、ledger は role 本体を自前で設計する必要がある。ただし、単なるハンドメイドの role プロンプト集として作るべきではない。
+
+この文書の目的は、次を明確にすることである。
+
+```text
+この文書で整理すること:
+- ledger が role を独自実装すべき理由
+- 参考にするべき既存リポジトリ / 仕様 / フレームワーク
+- role 定義に取り込むべきデファクトな方法論
+- ledger における role の責務境界
+- role 定義ソースと runtime prompt の分離
+- context / authority / tool / output の分離方針
+- MVP に含める role と後段に回す role
+```
+
+---
+
+## 2. 結論
+
+ledger の role は、既存の role prompt をコピーして作るのではなく、次のように設計する。
+
+```text
+ledger role
+  = source-defined operational role
+  + runtime-specific compiled agent prompt
+  + workflow / task dependency
+  + tool permission boundary
+  + context packet contract
+  + output / evidence contract
+```
+
+つまり、ledger における role は「人格」ではなく、project-context 内での責務分離単位である。
+
+```text
+role の本質:
+- 何を判断してよいか
+- 何を判断してはいけないか
+- どの入力だけを受け取るか
+- どの成果物を出すか
+- どの evidence を残すか
+- どの tool を使ってよいか
+- どの条件で Planning Lead または人間判断へ戻すか
+```
+
+したがって、ledger role は次のように扱う。
+
+```text
+採用方針:
+- role の中身は ledger が独自定義する
+- role 定義方式は Claude Code Subagents / BMAD / AGENTS.md / SuperClaude から方法論を取り込む
+- role は source YAML / source markdown で定義し、runtime 向け prompt に compile する
+- Claude Code subagent 形式は主要な compile target とする
+- BMAD 的な agent + workflow + task 分離を role 設計の中核参照とする
+- AGENTS.md は project-wide instruction として扱い、role の代替にはしない
+- SuperClaude は command / persona / mode / agent の分離方法を参照する
+```
+
+---
+
+## 3. 参考にするべきリポジトリ・仕様・設計方式
+
+### 3.1 AGENTS.md
+
+AGENTS.md は、AI coding agent に project-specific instructions を与えるための標準的な Markdown 形式である。
+
+参照元:
+
+```text
+https://agents.md/
+https://github.com/agentsmd/agents.md
+```
+
+AGENTS.md から取り込むべき考え方は次である。
+
+```text
+取り込むべき点:
+- agent 向け instruction を README から分離する
+- project root に予測可能な instruction file を置く
+- build / test / lint / style / security consideration を明示する
+- monorepo や subproject では近い instruction を優先する
+- 人間向け説明と agent 向け実行指示を分ける
+```
+
+ただし、AGENTS.md は role 定義の正本ではない。
+
+```text
+AGENTS.md の限界:
+- project-wide instruction であり、role ごとの責務境界ではない
+- reviewer / auditor / planner の独立した authority を表現しにくい
+- tool permission や output contract を role 単位で制御しにくい
+- Planning Lead / Worker / Auditor の分離は主眼ではない
+```
+
+ledger での位置づけは次である。
+
+```text
+ledger における AGENTS.md:
+- runtime adapter が参照する project-wide instruction
+- src/ 配下の coding agent 用補助文書
+- role prompt の代替ではない
+- role が参照する共通制約の一部
+```
+
+### 3.2 Claude Code Subagents
+
+Claude Code Subagents は、role 定義の runtime target として最も直接的に利用しやすい。
+
+参照元:
+
+```text
+https://docs.claude.com/en/docs/claude-code/subagents
+https://docs.claude.com/en/docs/agent-sdk/subagents
+```
+
+Claude Code Subagents から取り込むべき点は次である。
+
+```text
+取り込むべき点:
+- role ごとに独立した context window を持つ
+- role ごとに system prompt を分離する
+- role ごとに tool access を制限できる
+- project-level subagent と user-level subagent を分けられる
+- name / description / tools / model / prompt を明示する
+- description によって自動委譲の判断材料を与える
+```
+
+Claude Code Subagents の基本形は次である。
+
+```markdown
+---
+name: code-reviewer
+description: Reviews code for quality and best practices
+tools: Read, Glob, Grep
+model: sonnet
+---
+
+You are a code reviewer...
+```
+
+ledger は、この形式を手書きの正本にはしない。
+
+ledger 側では、より抽象度の高い role source を持ち、Claude Code Subagent は compile target とする。
+
+```text
+ledger role source
+  -> claude-code subagent markdown
+  -> codex instruction adapter
+  -> future runtime adapter
+```
+
+理由は、ledger が Claude Code 専用フレームワークにならないようにするためである。
+
+### 3.3 BMAD Method
+
+BMAD Method は、role 設計の方法論として最も重要な参照元である。
+
+参照元:
+
+```text
+https://docs.bmad-method.org/reference/agents/
+https://docs.bmad-method.org/explanation/agents/
+https://docs.bmad-method.org/how-to/customize-bmad/
+https://github.com/bmadcode/BMAD-METHOD
+```
+
+BMAD から取り込むべき点は次である。
+
+```text
+取り込むべき点:
+- agent を persona だけでなく workflow entrypoint として定義する
+- agent source を YAML として管理し、runtime markdown へ compile する
+- role / identity / communication style / core principles を分ける
+- agent が workflow / task / template を参照する
+- command menu により agent の実行可能範囲を明示する
+- customization を正本から分離し、更新耐性を持たせる
+```
+
+特に重要なのは、BMAD では agent がロジックを直接すべて抱え込むのではなく、workflow や task を参照する点である。
+
+ledger でも、role にすべての手順を詰め込まない。
+
+```text
+避けるべき構成:
+- Planning Lead prompt に全workflowを書く
+- Reviewer prompt に全review checklistを書く
+- Auditor prompt に全audit policyを書く
+- Worker prompt にproject全規約を読ませる
+```
+
+ledger で採用する構成は次である。
+
+```text
+採用する構成:
+role
+  -> workflow を参照する
+  -> task を参照する
+  -> checklist を参照する
+  -> template を参照する
+  -> output contract に従って結果を返す
+```
+
+### 3.4 SuperClaude Framework
+
+SuperClaude は、Claude Code を構造化された開発プラットフォームに近づける configuration framework である。
+
+参照元:
+
+```text
+https://github.com/SuperClaude-Org/SuperClaude_Framework
+https://superclaude.org/
+```
+
+SuperClaude から取り込むべき点は次である。
+
+```text
+取り込むべき点:
+- command と agent / persona / mode を分ける
+- domain expert agent を文脈設定として扱う
+- agent は別モデルや別プロセスではなく、behavioral context として扱える
+- command-agent mapping を持つ
+- document-only command と execution command を分ける
+- orchestration / discovery / implementation / quality の処理カテゴリを分ける
+```
+
+ただし、SuperClaude をそのまま ledger の role 正本にするべきではない。
+
+```text
+SuperClaude を正本にしない理由:
+- Claude Code 拡張としての色が強い
+- ledger の project-context / src isolation / evidence bridge と直接一致しない
+- agent 名や command 体系をそのまま取り込むと責務が衝突する
+- ledger は Spec Kit / cc-sdd / evidence model との統合が必要である
+```
+
+ledger での位置づけは次である。
+
+```text
+ledger における SuperClaude:
+- role / command / mode の分離方式の参照元
+- role を behavioral context として扱う実装例
+- specialist agent の粒度設計の参考
+- 直接採用対象ではない
+```
+
+### 3.5 OpenAI Codex / AGENTS.md 運用
+
+Codex は repository 内の AGENTS.md により、コードベースの移動方法、テストコマンド、標準的な作業規約を誘導できる。
+
+参照元:
+
+```text
+https://openai.com/index/introducing-codex/
+https://help.openai.com/en/articles/11096431-openai-codex-cli-getting-started
+https://github.com/openai/codex/blob/main/docs/agents_md.md
+```
+
+Codex / AGENTS.md 運用から取り込むべき点は次である。
+
+```text
+取り込むべき点:
+- repo 内に agent 向け instructions を置く
+- build / lint / test の実行方法を明示する
+- agent の作業結果は terminal log / test output / diff で検証する
+- agent が迷わないように project conventions を明文化する
+```
+
+ただし、Codex の AGENTS.md も role パッケージではない。
+
+```text
+Codex AGENTS.md の位置づけ:
+- Worker や implementation runtime へ渡す repo-level instruction
+- role の authority / context / output contract の代替ではない
+- ledger role source から生成される runtime adapter の補助対象
+```
+
+---
+
+## 4. 採用しない方がよいもの
+
+### 4.1 任意の role prompt 集
+
+GitHub 上には、reviewer、planner、architect、security reviewer などの名前を持つ prompt 集が存在し得る。しかし、それらを ledger role として採用するのは避ける。
+
+理由は次である。
+
+```text
+採用しない理由:
+- prompt の品質が検証しにくい
+- version / changelog / compatibility が不明確
+- context 境界が定義されていない
+- tool permission が定義されていない
+- output contract がない
+- evidence model と接続されていない
+- ledger の milestone autonomy と接続されていない
+```
+
+ledger では role prompt の文章そのものより、role を成立させる構造を重視する。
+
+### 4.2 包括的 multi-agent framework の丸ごと採用
+
+MetaGPT、ChatDev、BMAD、SuperClaude などは、role / workflow / command / artifact をそれぞれ持つ。
+
+これらを丸ごと採用すると、ledger の正本割り当てと衝突する。
+
+```text
+衝突する領域:
+- requirements / plan / tasks の正本
+- workflow の主導権
+- role の命名体系
+- review / audit の成果物形式
+- escalation の責任者
+- project-context の所有者
+```
+
+ledger の方針は、フレームワークを丸ごと入れることではない。
+
+```text
+ledger の方針:
+- Spec Kit は spec kernel として扱う
+- cc-sdd は implementation loop plugin として扱う
+- BMAD は role / SOP methodology の参照元として扱う
+- SuperClaude は command / persona / mode 分離の参照元として扱う
+- role 本体は ledger が自前で source-defined に設計する
+```
+
+---
+
+## 5. ledger role の設計原則
+
+### 5.1 role は人格ではなく責務境界である
+
+ledger role は、AI に雰囲気を与えるための persona ではない。
+
+```text
+role が定義するもの:
+- responsibility
+- authority
+- forbidden actions
+- input context
+- output artifact
+- evidence requirement
+- escalation condition
+- tool boundary
+```
+
+人格要素は、必要なら communication style として最小限に留める。
+
+```text
+避ける:
+- 過剰なキャラクター設定
+- 架空の肩書きに依存した能力定義
+- 「優秀な〜として振る舞え」だけの定義
+- 曖昧な「ベストプラクティス」要求
+```
+
+### 5.2 role source と runtime prompt を分ける
+
+ledger は、Claude Code Subagent 用 Markdown を直接正本にしない。
+
+正本は role source とする。
+
+```text
+role source:
+  ledger が所有する抽象 role 定義
+
+runtime prompt:
+  Claude Code / Codex / その他 runtime に渡すための生成物
+```
+
+推奨構造は次である。
+
+```text
+project-context/
+  rules/
+    roles/
+      source/
+        planning-lead.role.yaml
+        worker.role.yaml
+        code-reviewer.role.yaml
+        auditor.role.yaml
+    workflows/
+      plan-milestone.md
+      implement-task.md
+      review-change.md
+      audit-evidence.md
+    checklists/
+      code-review.md
+      test-review.md
+      security-review.md
+    templates/
+      review-report.md
+      audit-finding.md
+      role-handoff.md
+
+  runtime/
+    generated/
+      claude-code/
+        planning-lead.md
+        worker.md
+        code-reviewer.md
+        auditor.md
+      codex/
+        AGENTS.role-notes.md
+```
+
+`runtime/generated/` は生成物であり、正本ではない。
+
+### 5.3 role は workflow / task / checklist を参照する
+
+role prompt にすべての手順を埋め込むと、更新が困難になり、各 role 間で手順が重複する。
+
+ledger では、role と workflow を分ける。
+
+```text
+role:
+  誰が、何を、どの権限で行うか
+
+workflow:
+  どの順序で作業するか
+
+task:
+  具体的に何を実行するか
+
+checklist:
+  検査観点
+
+template:
+  出力形式
+```
+
+この分離は、BMAD の agent / workflow / task / template 分離を参照する。
+
+### 5.4 role ごとに context を制限する
+
+role 分離の目的は、名前を増やすことではない。
+
+重要なのは、各 role に渡す context を制限することである。
+
+```text
+context 分離の目的:
+- Worker に全体方針判断をさせない
+- Reviewer に実装者の思考過程を過剰に読ませない
+- Auditor に修正実行権限を持たせない
+- Planning Lead に個別実装の詳細を抱え込ませない
+- Devil's Advocate に成果物の最終決裁をさせない
+```
+
+role ごとの context は `Context Packet` として明示する。
+
+```text
+Role Context Packet:
+- role_id
+- invocation_reason
+- scope
+- allowed_sources
+- excluded_sources
+- input_artifacts
+- expected_output
+- evidence_required
+- escalation_conditions
+```
+
+### 5.5 role ごとに tool permission を制限する
+
+role は、使える tool も分ける。
+
+```text
+例:
+Planning Lead:
+  read docs, write planning docs, generate escalation/report
+
+Worker:
+  read specs, edit src, run tests, write implementation notes
+
+Reviewer:
+  read diff, read relevant specs, run read-only checks, write review report
+
+Auditor:
+  read evidence, inspect reports, write findings, cannot edit src
+
+Security Reviewer:
+  read diff, inspect configs, run security-oriented checks if available, cannot silently change code
+```
+
+Claude Code Subagents の `tools` 指定は、この runtime target として利用できる。
+
+### 5.6 role output は成果物契約に従う
+
+role の出力は自由文だけにしない。
+
+```text
+出力に必要なもの:
+- conclusion
+- scope_checked
+- evidence
+- findings
+- severity
+- unresolved_questions
+- recommended_next_action
+- escalation_required
+```
+
+これは Evidence Bridge と接続するために必要である。
+
+### 5.7 role は Planning Lead の代替ではない
+
+各 specialist role は、Planning Lead の判断を置き換えない。
+
+```text
+Planning Lead:
+  milestone 内の進行責任を持つ
+
+Worker:
+  task を実装する
+
+Reviewer:
+  実装を検査する
+
+Auditor:
+  証跡と規律を検査する
+
+Specialist:
+  特定観点の判断材料を提供する
+```
+
+最終的に milestone 内で次に進めるか、停止するか、Escalation Packet を作るかは Planning Lead が判断する。
+
+---
+
+## 6. role source schema
+
+ledger の role source は、次のような schema を持つ。
+
+```yaml
+id: code-reviewer
+name: Code Quality Reviewer
+category: review
+version: 0.1.0
+
+purpose: >
+  実装差分が requirements / plan / tasks に対して妥当であり、
+  保守性・可読性・局所的品質の観点で問題がないかを検査する。
+
+non_goals:
+  - プロダクト方針を変更しない
+  - milestone scope を拡大しない
+  - 実装者として修正を行わない
+  - セキュリティ監査全体を代替しない
+
+invocation:
+  when:
+    - Worker が task 実装を完了したとき
+    - diff が生成されたとき
+    - Completion Report 前の品質確認が必要なとき
+  by:
+    - planning-lead
+
+authority:
+  can:
+    - review source diff
+    - compare implementation with task requirements
+    - request bounded remediation
+    - mark finding as blocking / non-blocking
+  cannot:
+    - edit src directly
+    - approve roadmap changes
+    - waive unresolved high-severity findings
+
+context_policy:
+  required:
+    - task.md
+    - relevant requirements excerpt
+    - implementation diff
+    - test result summary
+  optional:
+    - architecture notes
+    - previous review findings
+  excluded:
+    - unrelated chat history
+    - full roadmap unless necessary
+
+tool_policy:
+  read:
+    - src
+    - specs
+    - evidence
+  write:
+    - review report
+  execute:
+    - lint
+    - unit test if safe
+  forbidden:
+    - direct production operation
+    - dependency upgrade without approval
+    - broad refactor execution
+
+outputs:
+  primary: review-report.md
+  fields:
+    - summary
+    - scope_checked
+    - findings
+    - evidence
+    - severity
+    - blocking_status
+    - remediation_request
+    - unresolved_risks
+
+escalation:
+  required_when:
+    - requirement conflict is found
+    - implementation requires scope change
+    - high-severity finding remains unresolved
+    - test result contradicts completion claim
+
+runtime_targets:
+  claude_code_subagent: true
+  codex_instruction_adapter: true
+  bmad_style_agent: false
+```
+
+この schema により、role は単なる prompt ではなく、検証可能な operation unit になる。
+
+---
+
+## 7. MVP role set
+
+MVP で必要な role は、最小限にする。
+
+```text
+MVP role set:
+- Planning Lead
+- Worker
+- Reviewer
+- Auditor
+```
+
+### 7.1 Planning Lead
+
+```text
+責務:
+- milestone の自走範囲を確認する
+- task を Worker に渡す
+- Reviewer / Auditor を呼び出す
+- 停止条件を判定する
+- Escalation Packet / Completion Report を作成する
+```
+
+```text
+禁止:
+- roadmap を勝手に変更する
+- milestone 目的を変更する
+- 技術スタックを勝手に変更する
+- 人間判断が必要な事項を軽微判断として処理する
+```
+
+### 7.2 Worker
+
+```text
+責務:
+- task に基づいて src/ を変更する
+- 必要なテストを実行する
+- implementation notes を残す
+- 不明点や scope conflict を Planning Lead に戻す
+```
+
+```text
+禁止:
+- task 外の大規模改修
+- specs の黙った変更
+- review finding の自己承認
+- evidence を残さない実装完了宣言
+```
+
+### 7.3 Reviewer
+
+```text
+責務:
+- 実装差分を requirements / tasks と照合する
+- 品質・保守性・テスト妥当性を確認する
+- blocking finding と non-blocking finding を分ける
+- bounded remediation を要求する
+```
+
+```text
+禁止:
+- 実装を直接修正する
+- product 判断を行う
+- unresolved risk を黙って許容する
+```
+
+### 7.4 Auditor
+
+```text
+責務:
+- evidence が揃っているか確認する
+- review / test / decision / escalation の記録欠落を確認する
+- no silent overwrite の原則に反していないか確認する
+- Completion Report に残すべきリスクを整理する
+```
+
+```text
+禁止:
+- 実装の詳細修正
+- 仕様判断
+- Planning Lead の停止判断の代替
+```
+
+---
+
+## 8. 後段 role set
+
+MVP 後に、必要に応じて role を分割する。
+
+```text
+後段 role:
+- Architect
+- Requirements Reviewer
+- Code Quality Reviewer
+- Test Reviewer
+- Security Reviewer
+- Documentation Reviewer
+- Devil's Advocate / Risk Reviewer
+- Compliance Auditor
+```
+
+### 8.1 Architect
+
+Architect は、技術構成や境界設計を扱う。
+
+ただし、初期から常設しない。
+
+```text
+起動条件:
+- milestone 内で設計判断が必要
+- 既存 architecture との整合確認が必要
+- src/ isolation や adapter 設計に影響する
+```
+
+```text
+注意:
+Architect は roadmap や技術スタックを勝手に変更できない。
+大きな変更は Planning Lead 経由で Escalation Packet にする。
+```
+
+### 8.2 Requirements Reviewer
+
+Requirements Reviewer は、実装が requirements を満たしているかを見る。
+
+```text
+役割:
+- requirements と implementation の対応確認
+- scope creep の検出
+- 要件未充足の検出
+```
+
+### 8.3 Code Quality Reviewer
+
+Code Quality Reviewer は、Reviewer を品質観点に分割した後段 role である。
+
+```text
+役割:
+- readability
+- maintainability
+- local design
+- error handling
+- unnecessary complexity
+```
+
+### 8.4 Test Reviewer
+
+Test Reviewer は、テスト観点の専門 role である。
+
+```text
+役割:
+- test coverage の妥当性
+- regression risk
+- test command の結果確認
+- flaky / shallow test の検出
+```
+
+### 8.5 Security Reviewer
+
+Security Reviewer は、security 観点の専門 role である。
+
+```text
+役割:
+- secrets exposure
+- auth / authorization
+- input validation
+- dependency risk
+- unsafe command / config
+```
+
+Security Reviewer は、すべてのタスクで必須にしない。security-sensitive な変更時に起動する。
+
+### 8.6 Documentation Reviewer
+
+Documentation Reviewer は、実装後の文書整合性を見る。
+
+```text
+役割:
+- specs / README / usage docs の更新要否
+- Completion Report の明確性
+- implementation notes の不足確認
+```
+
+### 8.7 Devil's Advocate / Risk Reviewer
+
+Devil's Advocate は、反対意見を出すための role である。
+
+ただし、常時起動するとノイズが増える。
+
+```text
+起動条件:
+- 複数案がある
+- AI 開発チームが安易に完了扱いしている可能性がある
+- 大きな設計判断を伴う
+- 未検証の前提が多い
+```
+
+```text
+出力:
+- challenged_assumptions
+- failure_modes
+- missing_evidence
+- recommended_stop_or_continue
+```
+
+---
+
+## 9. role と artifact / evidence の接続
+
+role は、必ず artifact または evidence に接続する。
+
+```text
+Planning Lead:
+  - milestone status
+  - task assignment
+  - escalation packet
+  - completion report
+
+Worker:
+  - source diff
+  - implementation notes
+  - test result summary
+
+Reviewer:
+  - review report
+  - finding list
+  - remediation request
+
+Auditor:
+  - audit findings
+  - evidence completeness report
+  - unresolved risk summary
+```
+
+role の出力は Evidence Bridge に索引される。
+
+```text
+Evidence Bridge:
+  spec / task
+    -> implementation notes
+    -> review report
+    -> audit findings
+    -> escalation / completion report
+```
+
+---
+
+## 10. role compile targets
+
+### 10.1 Claude Code Subagent target
+
+Claude Code 用には、role source から `.claude/agents/*.md` 相当を生成する。
+
+```text
+生成先例:
+project-context/runtime/generated/claude-code/agents/code-reviewer.md
+```
+
+形式は次である。
+
+```markdown
+---
+name: ledger-code-reviewer
+description: Review implementation diffs against ledger task scope, quality expectations, and evidence requirements.
+tools: Read, Grep, Glob, Bash
+model: sonnet
+---
+
+<compiled role prompt>
+```
+
+ただし、生成物には次を入れすぎない。
+
+```text
+入れないもの:
+- 全プロジェクト履歴
+- 全spec全文
+- 全review policy
+- 他roleの詳細責務
+```
+
+必要なものは、呼び出し時の Role Context Packet で渡す。
+
+### 10.2 Codex / AGENTS.md target
+
+Codex には role ごとの subagent 概念を直接表現しにくい場合がある。
+
+その場合、AGENTS.md には project-wide instruction を置き、role は prompt wrapper または command 側で表現する。
+
+```text
+Codex adapter:
+- AGENTS.md に project-wide rules を置く
+- role invocation prompt で role_id / scope / expected_output を渡す
+- review / audit は別 run として実行する
+```
+
+### 10.3 BMAD-style target
+
+BMAD 風の target は、後段で検討する。
+
+```text
+BMAD-style target:
+- role source YAML
+- command menu
+- workflow references
+- template references
+- customization overlay
+```
+
+MVP では、BMAD をそのまま生成先にする必要はない。
+
+---
+
+## 11. role invocation flow
+
+標準的な role 呼び出しは次である。
+
+```text
+1. Planning Lead が milestone / task scope を確認する
+2. Planning Lead が対象 role を選択する
+3. Role Context Packet を生成する
+4. runtime adapter が role source を runtime prompt に変換する
+5. role が作業する
+6. role が output contract に従って結果を返す
+7. Planning Lead が結果を Evidence Bridge に接続する
+8. 継続 / remediation / escalation / completion を判断する
+```
+
+重要なのは、role が勝手に次の role を呼び続ける構成にしないことである。
+
+```text
+制御原則:
+- Planning Lead が role orchestration の中心
+- Worker は Reviewer を自己承認に使わない
+- Reviewer は Auditor を代替しない
+- Auditor は Planning Lead を代替しない
+```
+
+---
+
+## 12. role 設計における anti-pattern
+
+### 12.1 すべての role に同じ巨大コンテキストを渡す
+
+```text
+問題:
+- context 分離が成立しない
+- role ごとの判断境界が消える
+- token 使用量が増える
+- 誰が何を見て判断したか追跡しづらい
+```
+
+### 12.2 role prompt にすべての規約を書く
+
+```text
+問題:
+- role 間で重複する
+- 更新漏れが起きる
+- runtime ごとの差分管理が破綻する
+- prompt が長くなり重要指示が埋もれる
+```
+
+### 12.3 role を細かく分けすぎる
+
+```text
+問題:
+- orchestration cost が上がる
+- role 間 handoff が増える
+- 小さな変更でも大掛かりになる
+- 初期MVPが成立しにくい
+```
+
+MVP は Planning Lead / Worker / Reviewer / Auditor に留める。
+
+### 12.4 role に authority を明記しない
+
+```text
+問題:
+- Reviewer が product 判断をする
+- Worker が scope を拡大する
+- Auditor が実装を修正する
+- Architect が技術スタックを変更する
+```
+
+role source には `can` と `cannot` を必ず書く。
+
+### 12.5 role output を自由文にする
+
+```text
+問題:
+- Evidence Bridge に接続しにくい
+- blocking / non-blocking が曖昧になる
+- Completion Report に転記しにくい
+- 後続AIが再利用しにくい
+```
+
+role output は template に従わせる。
+
+---
+
+## 13. MVP 実装方針
+
+MVP では、role runtime を完全自動化しない。
+
+まずは次を作る。
+
+```text
+MVPで作るもの:
+- role source schema
+- 4 role source
+  - planning-lead
+  - worker
+  - reviewer
+  - auditor
+- Role Context Packet template
+- Review Report template
+- Audit Finding template
+- Role Handoff template
+- Claude Code Subagent 生成方針
+```
+
+MVP では次を作らない。
+
+```text
+MVPで作らないもの:
+- role marketplace
+- third-party role package resolver
+- BMAD互換module生成
+- 全roleの自動orchestration
+- role evaluation harness
+- role prompt自動最適化
+- 複数runtime完全対応
+```
+
+---
+
+## 14. 推奨ディレクトリ構成
+
+```text
+project-context/
+  rules/
+    roles/
+      source/
+        planning-lead.role.yaml
+        worker.role.yaml
+        reviewer.role.yaml
+        auditor.role.yaml
+    context-packets/
+      role-context-packet.md
+      planning-lead-context.md
+      worker-context.md
+      reviewer-context.md
+      auditor-context.md
+    templates/
+      role-handoff.md
+      review-report.md
+      audit-finding.md
+      remediation-request.md
+    checklists/
+      reviewer-checklist.md
+      auditor-checklist.md
+
+  runtime/
+    adapters/
+      claude-code-role-adapter.md
+      codex-role-adapter.md
+    generated/
+      claude-code/
+        planning-lead.md
+        worker.md
+        reviewer.md
+        auditor.md
+```
+
+`source/` が正本である。  
+`runtime/generated/` は生成物である。  
+`adapters/` は runtime ごとの差分を扱う。
+
+---
+
+## 15. 既存 ledger 文書との接続
+
+この文書は、既存ドキュメント群のうち次に接続する。
+
+```text
+01_requirements.md:
+  role は ledger の自律開発体験を成立させる責務分離単位である。
+
+02_conceptual_design.md:
+  role は project-context 内の運営概念であり、実行runtimeそのものではない。
+
+04_mvp.md:
+  MVP role set は Planning Lead / Worker / Reviewer / Auditor に限定する。
+
+05_autonomy_protocol.md:
+  Planning Lead の権限境界、自走条件、停止条件と接続する。
+
+06_artifact_and_evidence_model.md:
+  role output は Evidence Bridge / Escalation Packet / Completion Report に接続する。
+
+07_framework_integration.md:
+  BMAD / SuperClaude / Claude Code Subagents / AGENTS.md の方法論を参照する。
+
+08_commands_and_workflows.md:
+  cc-iasd run / escalate / report の内部で role invocation が発生する。
+```
+
+---
+
+## 16. 最終整理
+
+ledger の role 設計は、既存 role prompt を探して貼り合わせる方向では成立しない。
+
+調査上の前提として、ledger にそのまま導入できる独立 role パッケージは存在しない。
+
+したがって、ledger は role を自前で定義する。ただし、ハンドメイドの prompt 集としてではなく、次のデファクトな方法論を踏襲する。
+
+```text
+踏襲する方法論:
+- AGENTS.md 的な agent 向け project instruction 分離
+- Claude Code Subagents 的な role ごとの context / tools / model 分離
+- BMAD 的な source YAML -> runtime MD compile、agent / workflow / task / template 分離
+- SuperClaude 的な command / agent / persona / mode 分離
+- Codex 的な repo instruction と検証 evidence の重視
+```
+
+ledger の role は、次の一点に集約される。
+
+```text
+ledger role
+  = milestone 自走を安全に進めるために、
+    Planning Lead / Worker / Reviewer / Auditor などの責務、権限、入力文脈、出力成果物、証跡要件を分離する、
+    source-defined な operation unit
+```
+
+MVP では role の数を増やさない。  
+まずは Planning Lead / Worker / Reviewer / Auditor の4 role で、context 分離、authority 分離、output contract、Evidence Bridge 接続を成立させる。

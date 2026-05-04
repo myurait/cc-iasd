@@ -1,0 +1,306 @@
+# 08. Commands / Workflows
+
+作成日: 2026-05-04  
+状態: 統合整理版 v0.1
+
+---
+
+## 1. この文書の目的
+
+この文書は、ledger の主要 command と workflow を定義する。
+
+MVP では、command は完全な実行基盤でなくてよい。Markdown scaffold、外部 framework 呼び出し、テンプレート生成、状態更新を行う薄い CLI で成立させる。
+
+---
+
+## 2. 主要 command
+
+```text
+cc-iasd init
+cc-iasd run milestone <id>
+cc-iasd escalate <id>
+cc-iasd report <id>
+```
+
+後段候補は別扱いにする。
+
+```text
+後段候補:
+cc-iasd doctor
+cc-iasd sync
+cc-iasd update-profile
+cc-iasd add-plugin
+cc-iasd audit
+```
+
+---
+
+## 3. cc-iasd init
+
+### 3.1 目的
+
+project-context を初期化する。
+
+### 3.2 入力
+
+```text
+cc-iasd init <project-context-path>
+```
+
+### 3.3 処理
+
+```text
+処理:
+1. project-context directory を作成する
+2. runtime/ を作成する
+3. lock.json を作成する
+4. rules/ を作成する
+5. user/ を作成する
+6. ops/ を作成する
+7. ops/specs/ を作成する、または Spec Kit 初期化を実行する
+8. src/ を作成する
+9. 最小 template を配置する
+10. framework version を記録する
+```
+
+### 3.4 出力
+
+```text
+project-context/
+  runtime/
+  rules/
+  user/
+  ops/
+  src/
+```
+
+---
+
+## 4. cc-iasd run milestone <id>
+
+### 4.1 目的
+
+対象 milestone の自走実行を開始、または実行に必要な handoff packet を作る。
+
+### 4.2 MVP での扱い
+
+MVP では、完全自動実行でなくてよい。
+
+```text
+MVP の run:
+- 対象 spec / tasks を解決する
+- 自走条件を確認する
+- 実行 runtime に渡す prompt / task packet を生成する
+- status を更新する
+- evidence の空枠を作る
+```
+
+### 4.3 処理
+
+```text
+処理:
+1. milestone id を解決
+2. linked spec を確認
+3. linked tasks を確認
+4. autonomy protocol を確認
+5. blocker の有無を確認
+6. 実行 runtime 用の作業内容を作成
+7. status.md を更新
+8. evidence.md に run 開始を記録
+```
+
+### 4.4 停止条件
+
+次の場合は run を開始せず escalation を促す。
+
+```text
+停止:
+- 対象 spec がない
+- tasks がない
+- milestone scope が曖昧
+- user decision が未解決
+- src/ root が解決不能
+- roadmap / milestone 目的変更が必要
+```
+
+---
+
+## 5. cc-iasd escalate <id>
+
+### 5.1 目的
+
+人間判断が必要な停止状態を Escalation Packet に整形する。
+
+### 5.2 処理
+
+```text
+処理:
+1. status.md から blocker を読む
+2. linked spec / tasks を読む
+3. evidence.md を読む
+4. 停止理由を整理する
+5. 選択肢を整理する
+6. 推奨案を出す
+7. escalation.md に追記する
+```
+
+### 5.3 出力
+
+```text
+ops/milestones/<milestone-id>/escalation.md
+```
+
+---
+
+## 6. cc-iasd report <id>
+
+### 6.1 目的
+
+milestone 完了報告を生成する。
+
+### 6.2 処理
+
+```text
+処理:
+1. status.md を読む
+2. evidence.md を読む
+3. completed tasks を集計する
+4. test / lint / build 結果を整理する
+5. review / audit 結果を整理する
+6. 軽微判断を整理する
+7. 残リスクを整理する
+8. completion-report.md を生成する
+```
+
+### 6.3 出力
+
+```text
+ops/milestones/<milestone-id>/completion-report.md
+```
+
+---
+
+## 7. 初期 workflow
+
+```text
+0. project-context 作成
+1. cc-iasd init
+2. user/ に意図と制約を書く
+3. ops/ideal/ を作成または更新する
+4. ops/roadmaps/ で roadmap を定義する
+5. Spec Kit で requirements / plan / tasks を ops/specs/ に作る
+6. milestone を定義する
+7. cc-iasd run milestone <id>
+8. Worker runtime が src/ を編集する
+9. Reviewer runtime または人間が review する
+10. evidence.md を更新する
+11. 問題があれば cc-iasd escalate <id>
+12. 完了したら cc-iasd report <id>
+```
+
+---
+
+## 8. 実行 runtime への handoff
+
+MVP では、runtime handoff は単純な Markdown packet でよい。
+
+```markdown
+# Implementation Handoff
+
+## Scope
+
+## Source Root
+
+src/
+
+## Linked Spec
+
+## Linked Tasks
+
+## Constraints
+
+## Do Not Change
+
+## Expected Output
+
+## Evidence To Record
+```
+
+---
+
+## 9. Reviewer workflow
+
+```text
+Reviewer workflow:
+1. Worker の変更を確認
+2. tasks.md の完了条件と照合
+3. test / lint / build 結果を確認
+4. scope 外変更がないか確認
+5. findings を evidence.md に記録
+6. bounded remediation か escalation かを判定
+```
+
+---
+
+## 10. ChatLobby 連携時の workflow
+
+ChatLobby 連携は MVP では必須ではない。
+
+将来的には次になる。
+
+```text
+ChatLobby:
+  ユーザー入力を受ける
+  対象 project-context を特定する
+  ledger に作業依頼を渡す
+
+ledger:
+  milestone / spec / tasks を解決する
+  run / escalate / report を行う
+
+ChatLobby:
+  escalation / report を conversation に表示する
+```
+
+---
+
+## 11. 後段 command
+
+### 11.1 cc-iasd doctor
+
+project-context の整合性を検査する。
+
+```text
+検査例:
+- src/ が存在するか
+- ops/specs/ が存在するか
+- lock.json があるか
+- linked tasks が解決できるか
+- evidence references が壊れていないか
+```
+
+### 11.2 cc-iasd sync
+
+Spec Kit / plugin / evidence index の参照整合を更新する。
+
+### 11.3 cc-iasd update-profile
+
+ledger profile を更新する。ただし、過去実行時の lock は上書きしない。
+
+### 11.4 cc-iasd audit
+
+長期的な evidence / decision / review の整合性を確認する。
+
+---
+
+## 12. command 設計の原則
+
+```text
+原則:
+- 既存 framework command を再実装しない
+- ledger command は統合・委譲・状態管理を担う
+- src/ root を常に明示する
+- 自走前に scope を確認する
+- 停止時は escalation に変換する
+- 完了時は completion report に変換する
+```
