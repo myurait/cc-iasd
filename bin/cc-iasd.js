@@ -294,6 +294,147 @@ const extractField = (content, label) => {
 
 const linkStatus = (label, value) => value || `UNRESOLVED (${label} not set)`;
 
+const featureIndexTemplate = () => [
+  '# Feature Index',
+  '',
+  'This file maps ideal pillars to epics and supporting features.',
+  '',
+  '## Ideal Pillar Mapping',
+  '',
+  '- Pillar: TBD',
+  '- Linked Epics: TBD',
+  '- Linked Supporting Features: TBD',
+  '- Current Roadmap Coverage: TBD',
+  '',
+  '## Active Epics',
+  '',
+  '- TBD',
+  '',
+  '## Supporting Features',
+  '',
+  '- TBD',
+  '',
+  '## Maintenance Notes',
+  '',
+  '- Keep detailed backlog items in `ops/features/backlog.md`.',
+  '- Keep roadmap sequencing in `ops/roadmaps/`.',
+  '',
+].join('\n');
+
+const featureBacklogTemplate = () => [
+  '# Feature Backlog',
+  '',
+  'Deferred requests, debt, and future feature candidates outside the active roadmap.',
+  '',
+  '## Item Format',
+  '',
+  '- ID: backlog-000',
+  '- Type: feature / debt / request',
+  '- Summary: TBD',
+  '- Priority: low / medium / high',
+  '- Experience Tie: TBD',
+  '- Impact Scope: TBD',
+  '- Blockers: none / TBD',
+  '- Design Constraints: TBD',
+  '- Target Destination: epic / supporting / roadmap / deferred',
+  '',
+  '## Backlog Items',
+  '',
+  '- None',
+  '',
+].join('\n');
+
+const milestoneStatusTemplate = ({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
+  `# Milestone Status: ${milestoneId}`,
+  '',
+  `- Milestone ID: ${milestoneId}`,
+  '- Current Status: ready-for-handoff',
+  `- Linked Feature: ${linkedFeature || 'TBD'}`,
+  `- Linked Roadmap: ${linkedRoadmap || 'TBD'}`,
+  `- Linked Spec: ${linkedSpec || 'TBD'}`,
+  `- Linked Tasks: ${linkedTasks || 'TBD'}`,
+  '- Active Blocker: none recorded',
+  `- Last Update: ${now}`,
+  '',
+  '## Scope',
+  '',
+  '- Included: TBD',
+  '- Excluded: TBD',
+  '',
+  '## Current Decision State',
+  '',
+  '- Human Decisions Required: none recorded',
+  '- Autonomous Proceed Status: TBD',
+  '',
+].join('\n');
+
+const milestoneEvidenceTemplate = ({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
+  `# Milestone Evidence: ${milestoneId}`,
+  '',
+  '## Run Start',
+  '',
+  `- Started At: ${now}`,
+  `- Linked Feature: ${linkStatus('Linked Feature', linkedFeature)}`,
+  `- Linked Roadmap: ${linkStatus('Linked Roadmap', linkedRoadmap)}`,
+  `- Linked Spec: ${linkStatus('Linked Spec', linkedSpec)}`,
+  `- Linked Tasks: ${linkStatus('Linked Tasks', linkedTasks)}`,
+  '',
+  '## Execution Evidence',
+  '',
+  '- Implementation Result: TBD',
+  '- Changed Files: TBD',
+  '- Commands Run: TBD',
+  '- Test / Lint / Build Result: TBD',
+  '',
+  '## Review Evidence',
+  '',
+  '- Review Directory: `reviews/`',
+  '- Review Result: TBD',
+  '',
+  '## Remaining Risk',
+  '',
+  '- TBD',
+  '',
+].join('\n');
+
+const milestoneHandoffTemplate = ({ milestoneId, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
+  `# Implementation Handoff: ${milestoneId}`,
+  '',
+  '## Scope',
+  '',
+  `Milestone: ${milestoneId}`,
+  '',
+  '## Source Root',
+  '',
+  'src/',
+  '',
+  '## Linked Planning Artifacts',
+  '',
+  `- Feature: ${linkStatus('Linked Feature', linkedFeature)}`,
+  `- Roadmap: ${linkStatus('Linked Roadmap', linkedRoadmap)}`,
+  `- Spec: ${linkStatus('Linked Spec', linkedSpec)}`,
+  `- Tasks: ${linkStatus('Linked Tasks', linkedTasks)}`,
+  '',
+  '## Constraints',
+  '',
+  '- Do not change roadmap, feature scope, or milestone purpose without human approval.',
+  '- Keep implementation changes inside `src/` unless the milestone explicitly requires project-context changes.',
+  '',
+  '## Expected Output',
+  '',
+  '- Code or project artifact changes',
+  '- Test / lint / build results',
+  '- Evidence summary for `evidence.md`',
+  '',
+  '## Evidence To Record',
+  '',
+  '- Changed files',
+  '- Commands run',
+  '- Review result',
+  '- Remaining risks',
+  '',
+].join('\n');
+
 const runMilestone = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
@@ -311,76 +452,11 @@ const runMilestone = async (args) => {
   const linkedSpec = extractField(existingStatus, 'Linked Spec');
   const linkedTasks = extractField(existingStatus, 'Linked Tasks');
 
-  await writeText(root, `${milestoneRoot}/status.md`, [
-    `# Milestone Status: ${milestoneId}`,
-    '',
-    `- Milestone ID: ${milestoneId}`,
-    `- Current Status: ready-for-handoff`,
-    `- Linked Feature: ${linkedFeature || 'TBD'}`,
-    `- Linked Roadmap: ${linkedRoadmap || 'TBD'}`,
-    `- Linked Spec: ${linkedSpec || 'TBD'}`,
-    `- Linked Tasks: ${linkedTasks || 'TBD'}`,
-    '- Active Blocker: none recorded',
-    `- Last Update: ${now}`,
-    '',
-  ].join('\n'), { ...args, force: false }, created);
+  await writeText(root, `${milestoneRoot}/status.md`, milestoneStatusTemplate({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
 
-  await writeText(root, `${milestoneRoot}/evidence.md`, [
-    `# Milestone Evidence: ${milestoneId}`,
-    '',
-    '## Run Start',
-    '',
-    `- Started At: ${now}`,
-    `- Linked Feature: ${linkStatus('Linked Feature', linkedFeature)}`,
-    `- Linked Roadmap: ${linkStatus('Linked Roadmap', linkedRoadmap)}`,
-    `- Linked Spec: ${linkStatus('Linked Spec', linkedSpec)}`,
-    `- Linked Tasks: ${linkStatus('Linked Tasks', linkedTasks)}`,
-    '',
-    '## Execution Evidence',
-    '',
-    '- Implementation Result: TBD',
-    '- Test / Lint / Build Result: TBD',
-    '- Review Result: TBD',
-    '',
-  ].join('\n'), { ...args, force: false }, created);
+  await writeText(root, `${milestoneRoot}/evidence.md`, milestoneEvidenceTemplate({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
 
-  await writeText(root, `${milestoneRoot}/handoff.md`, [
-    `# Implementation Handoff: ${milestoneId}`,
-    '',
-    '## Scope',
-    '',
-    `Milestone: ${milestoneId}`,
-    '',
-    '## Source Root',
-    '',
-    'src/',
-    '',
-    '## Linked Planning Artifacts',
-    '',
-    `- Feature: ${linkStatus('Linked Feature', linkedFeature)}`,
-    `- Roadmap: ${linkStatus('Linked Roadmap', linkedRoadmap)}`,
-    `- Spec: ${linkStatus('Linked Spec', linkedSpec)}`,
-    `- Tasks: ${linkStatus('Linked Tasks', linkedTasks)}`,
-    '',
-    '## Constraints',
-    '',
-    '- Do not change roadmap, feature scope, or milestone purpose without human approval.',
-    '- Keep implementation changes inside `src/` unless the milestone explicitly requires project-context changes.',
-    '',
-    '## Expected Output',
-    '',
-    '- Code or project artifact changes',
-    '- Test / lint / build results',
-    '- Evidence summary for `evidence.md`',
-    '',
-    '## Evidence To Record',
-    '',
-    '- Changed files',
-    '- Commands run',
-    '- Review result',
-    '- Remaining risks',
-    '',
-  ].join('\n'), { ...args, force: false }, created);
+  await writeText(root, `${milestoneRoot}/handoff.md`, milestoneHandoffTemplate({ milestoneId, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
 
   await writeText(root, `${milestoneRoot}/reviews/README.md`, [
     `# Reviews: ${milestoneId}`,
@@ -455,18 +531,8 @@ const init = async (args) => {
 
   await writeText(root, 'ops/ideal/ideal-experience.md', '# Ideal Experience\n', args, created);
   await writeText(root, 'ops/ideal/product-charter.md', '# Product Charter\n', args, created);
-  await writeText(root, 'ops/features/index.md', [
-    '# Feature Index',
-    '',
-    'Map ideal pillars to epics and supporting features.',
-    '',
-  ].join('\n'), args, created);
-  await writeText(root, 'ops/features/backlog.md', [
-    '# Feature Backlog',
-    '',
-    'Deferred requests, debt, and future feature candidates outside the active roadmap.',
-    '',
-  ].join('\n'), args, created);
+  await writeText(root, 'ops/features/index.md', featureIndexTemplate(), args, created);
+  await writeText(root, 'ops/features/backlog.md', featureBacklogTemplate(), args, created);
   await writeText(root, 'ops/features/epics/README.md', [
     '# Epics',
     '',

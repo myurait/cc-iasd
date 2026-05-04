@@ -8,6 +8,8 @@ Use flat bullets and headings. Do not use Markdown tables in review evidence.
 - Reviewer:
 - Base Commit:
 - Scope:
+- Milestone ID:
+- Review Path: ops/milestones/<milestone-id>/reviews/review_{YYYYMMDDhhmmss}_{scope_description}.md
 - Review Type: Light review / Full review
 - Review Roles:
   - Light review: Compliance Auditor, Code Quality Auditor

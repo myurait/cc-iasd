@@ -76,6 +76,8 @@ project-context/
   src/
 ```
 
+`rules/templates/` には、feature index、feature backlog、milestone status、milestone evidence、milestone handoff、review の最小テンプレートを配置する。
+
 ---
 
 ## 4. cc-iasd run milestone <id>

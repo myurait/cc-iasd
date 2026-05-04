@@ -24,7 +24,6 @@
 - user/ の最小構造
 - ops/ の最小構造
 - ops/ideal/ と ops/roadmaps/ の最小ファイル
-- ops/features/ の index / backlog / epics / supporting の最小ファイル
 - ops/specs/ を Spec Kit 生成に完全委譲するか
 - src/ の初期状態
 ```
