@@ -13,6 +13,7 @@ Usage:
   cc-iasd init [project-context-path] [options]
   cc-iasd doctor [project-context-path]
   cc-iasd run milestone <id> [--root <project-context-path>]
+  cc-iasd escalate <id> [--root <project-context-path>]
   cc-iasd report <id> [--root <project-context-path>]
   cc-iasd --help
 
@@ -43,7 +44,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'report'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -56,10 +57,10 @@ const parseArgs = (argv) => {
     if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
       throw new Error('Usage: cc-iasd run milestone <id>');
     }
-  } else if (parsed.command === 'report') {
+  } else if (parsed.command === 'escalate' || parsed.command === 'report') {
     parsed.milestoneId = tokens.shift() ?? '';
     if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
-      throw new Error('Usage: cc-iasd report <id>');
+      throw new Error(`Usage: cc-iasd ${parsed.command} <id>`);
     }
   } else if (tokens[0] && !tokens[0].startsWith('-')) {
     parsed.target = tokens.shift();
@@ -482,6 +483,56 @@ const completionReportTemplate = ({ milestoneId, now, status, evidence, reviewFi
   '',
 ].join('\n');
 
+const escalationTemplate = ({ milestoneId, now, status, evidence, activeBlocker, linkedSpec, linkedTasks }) => [
+  `# Escalation Packet: ${milestoneId}`,
+  '',
+  `- Milestone ID: ${milestoneId}`,
+  `- Generated At: ${now}`,
+  `- Active Blocker: ${activeBlocker || 'TBD'}`,
+  `- Linked Spec: ${linkedSpec || 'TBD'}`,
+  `- Linked Tasks: ${linkedTasks || 'TBD'}`,
+  '',
+  '## Stop Reason',
+  '',
+  activeBlocker || 'TBD',
+  '',
+  '## Current State',
+  '',
+  status.trim() || 'No status.md content found.',
+  '',
+  '## Evidence So Far',
+  '',
+  evidence.trim() || 'No evidence.md content found.',
+  '',
+  '## Human Decision Required',
+  '',
+  '- Decision: TBD',
+  '- Decision Owner: user',
+  '- Needed By: TBD',
+  '',
+  '## Options',
+  '',
+  '- Option A: TBD',
+  '- Option B: TBD',
+  '- Option C: TBD',
+  '',
+  '## Recommended Option',
+  '',
+  '- Recommendation: TBD',
+  '- Reason: TBD',
+  '',
+  '## Impact',
+  '',
+  '- If accepted: TBD',
+  '- If rejected: TBD',
+  '- If deferred: TBD',
+  '',
+  '## Resume Conditions',
+  '',
+  '- TBD',
+  '',
+].join('\n');
+
 const runMilestone = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
@@ -540,6 +591,40 @@ const reportMilestone = async (args) => {
     status,
     evidence,
     reviewFiles,
+  }), { ...args, force: false }, created);
+
+  return { root, milestoneId, written: created.written, skipped: created.skipped };
+};
+
+const escalateMilestone = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for escalation.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+
+  const milestoneId = args.milestoneId;
+  const milestoneRoot = `ops/milestones/${milestoneId}`;
+  if (!await exists(path.join(root, milestoneRoot))) {
+    throw new Error(`Milestone does not exist: ${milestoneRoot}`);
+  }
+
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const status = await readOptionalText(root, `${milestoneRoot}/status.md`);
+  const evidence = await readOptionalText(root, `${milestoneRoot}/evidence.md`);
+  const activeBlocker = extractField(status, 'Active Blocker');
+  const linkedSpec = extractField(status, 'Linked Spec');
+  const linkedTasks = extractField(status, 'Linked Tasks');
+
+  await writeText(root, `${milestoneRoot}/escalation.md`, escalationTemplate({
+    milestoneId,
+    now,
+    status,
+    evidence,
+    activeBlocker,
+    linkedSpec,
+    linkedTasks,
   }), { ...args, force: false }, created);
 
   return { root, milestoneId, written: created.written, skipped: created.skipped };
@@ -692,6 +777,13 @@ try {
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Use --force only with init; run does not overwrite milestone records.`);
+    }
+  } else if (args.command === 'escalate') {
+    const result = await escalateMilestone(args);
+    console.log(`Prepared escalation packet for milestone ${result.milestoneId} in ${result.root}.`);
+    console.log(`Created ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Escalate does not overwrite milestone records.`);
     }
   } else if (args.command === 'report') {
     const result = await reportMilestone(args);

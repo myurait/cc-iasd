@@ -157,6 +157,8 @@ MVP の初期実装では、`ops/milestones/<id>/status.md`、`ops/milestones/<i
 ops/milestones/<milestone-id>/escalation.md
 ```
 
+MVP の初期実装では、`status.md` の blocker と linked spec / tasks、`evidence.md` を集約し、判断事項、選択肢、推奨案、影響、再開条件の空欄を持つ `escalation.md` を作る。既存の `escalation.md` は上書きしない。
+
 ---
 
 ## 6. cc-iasd report <id>
