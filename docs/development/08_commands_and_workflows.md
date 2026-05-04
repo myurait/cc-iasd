@@ -104,6 +104,7 @@ MVP の run:
 
 MVP の初期実装では、`ops/milestones/<id>/status.md`、`ops/milestones/<id>/evidence.md`、`ops/milestones/<id>/handoff.md`、`ops/milestones/<id>/reviews/README.md` を作る。既存の milestone record は上書きしない。
 実行時には `ops/logs/` に run event を記録する。
+`--feature`、`--roadmap`、`--spec`、`--tasks` が指定された場合は、`status.md` と `handoff.md` の linked planning artifacts に初期記録する。
 
 ### 4.3 処理
 

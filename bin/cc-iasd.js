@@ -12,7 +12,7 @@ const usage = `cc-iasd ${VERSION}
 Usage:
   cc-iasd init [project-context-path] [options]
   cc-iasd doctor [project-context-path]
-  cc-iasd run milestone <id> [--root <project-context-path>]
+  cc-iasd run milestone <id> [--feature <ref>] [--roadmap <ref>] [--spec <ref>] [--tasks <ref>] [--root <project-context-path>]
   cc-iasd escalate <id> [--root <project-context-path>]
   cc-iasd report <id> [--root <project-context-path>]
   cc-iasd index evidence [--root <project-context-path>]
@@ -28,6 +28,10 @@ Options:
   --summary <text>        Log event summary
   --milestone <id>        Related milestone id for log events
   --evidence <path>       Related evidence path for log events
+  --feature <ref>         Linked feature for run milestone
+  --roadmap <ref>         Linked roadmap for run milestone
+  --spec <ref>            Linked spec for run milestone
+  --tasks <ref>           Linked tasks for run milestone
   --dry-run               Print planned writes without creating files
   --force                 Overwrite existing files
 `;
@@ -47,6 +51,10 @@ const parseArgs = (argv) => {
     eventSummary: '',
     relatedMilestone: '',
     relatedEvidence: '',
+    linkedFeature: '',
+    linkedRoadmap: '',
+    linkedSpec: '',
+    linkedTasks: '',
   };
 
   const tokens = [...argv];
@@ -121,6 +129,18 @@ const parseArgs = (argv) => {
         break;
       case '--evidence':
         parsed.relatedEvidence = readValue(token);
+        break;
+      case '--feature':
+        parsed.linkedFeature = readValue(token);
+        break;
+      case '--roadmap':
+        parsed.linkedRoadmap = readValue(token);
+        break;
+      case '--spec':
+        parsed.linkedSpec = readValue(token);
+        break;
+      case '--tasks':
+        parsed.linkedTasks = readValue(token);
         break;
       case '--dry-run':
         parsed.dryRun = true;
@@ -825,10 +845,10 @@ const runMilestone = async (args) => {
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
   const existingStatus = await readOptionalText(root, `${milestoneRoot}/status.md`);
-  const linkedFeature = extractField(existingStatus, 'Linked Feature');
-  const linkedRoadmap = extractField(existingStatus, 'Linked Roadmap');
-  const linkedSpec = extractField(existingStatus, 'Linked Spec');
-  const linkedTasks = extractField(existingStatus, 'Linked Tasks');
+  const linkedFeature = args.linkedFeature || extractField(existingStatus, 'Linked Feature');
+  const linkedRoadmap = args.linkedRoadmap || extractField(existingStatus, 'Linked Roadmap');
+  const linkedSpec = args.linkedSpec || extractField(existingStatus, 'Linked Spec');
+  const linkedTasks = args.linkedTasks || extractField(existingStatus, 'Linked Tasks');
 
   await writeText(root, `${milestoneRoot}/status.md`, milestoneStatusTemplate({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
 

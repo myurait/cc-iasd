@@ -36,7 +36,7 @@ Use npx from a project-context root:
 ```bash
 npx cc-iasd@latest init --doc-lang Japanese --dev-lang TypeScript
 npx cc-iasd@latest doctor
-npx cc-iasd@latest run milestone mvp-001
+npx cc-iasd@latest run milestone mvp-001 --feature feature-a --roadmap roadmap-a --spec spec-a --tasks spec-a
 npx cc-iasd@latest escalate mvp-001
 npx cc-iasd@latest report mvp-001
 npx cc-iasd@latest index evidence
@@ -48,7 +48,7 @@ For local development from this repository:
 ```bash
 node bin/cc-iasd.js init /tmp/my-project-context --doc-lang Japanese --dev-lang TypeScript
 node bin/cc-iasd.js doctor /tmp/my-project-context
-node bin/cc-iasd.js run milestone mvp-001 --root /tmp/my-project-context
+node bin/cc-iasd.js run milestone mvp-001 --feature feature-a --roadmap roadmap-a --spec spec-a --tasks spec-a --root /tmp/my-project-context
 node bin/cc-iasd.js escalate mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js report mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js index evidence --root /tmp/my-project-context
