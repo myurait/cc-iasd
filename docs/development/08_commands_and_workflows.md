@@ -103,6 +103,7 @@ MVP の run:
 ```
 
 MVP の初期実装では、`ops/milestones/<id>/status.md`、`ops/milestones/<id>/evidence.md`、`ops/milestones/<id>/handoff.md`、`ops/milestones/<id>/reviews/README.md` を作る。既存の milestone record は上書きしない。
+実行時には `ops/logs/` に run event を記録する。
 
 ### 4.3 処理
 
@@ -160,6 +161,7 @@ ops/milestones/<milestone-id>/escalation.md
 ```
 
 MVP の初期実装では、`status.md` の blocker と linked spec / tasks、`evidence.md` を集約し、判断事項、選択肢、推奨案、影響、再開条件の空欄を持つ `escalation.md` を作る。既存の `escalation.md` は上書きしない。
+実行時には `ops/logs/` に escalation event を記録する。
 
 ---
 
@@ -190,6 +192,7 @@ ops/milestones/<milestone-id>/completion-report.md
 ```
 
 MVP の初期実装では、`status.md`、`evidence.md`、`reviews/` の review ファイル一覧を集約し、既存の `completion-report.md` は上書きしない。
+実行時には `ops/logs/` に report event を記録する。
 
 ---
 
@@ -215,7 +218,7 @@ milestone ごとの証跡成果物を走査し、project-context 全体の evide
 ops/evidence-index.md
 ```
 
-MVP の初期実装では、明示的に `cc-iasd index evidence` を実行したときだけ index を再生成する。`run`、`escalate`、`report` からの自動更新は行わない。
+MVP の初期実装では、明示的に `cc-iasd index evidence` を実行したときだけ index を再生成する。`run`、`escalate`、`report` からの自動更新は行わない。実行時には `ops/logs/` に index event を記録する。
 
 ---
 

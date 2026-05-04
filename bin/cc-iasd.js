@@ -706,6 +706,11 @@ const indexEvidence = async (args) => {
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
   await writeText(root, 'ops/evidence-index.md', evidenceIndexTemplate({ now, entries }), { ...args, force: true }, created);
+  await writeLogEvent(root, {
+    eventType: 'index-evidence',
+    summary: `Rebuilt evidence index with ${entries.length} milestone(s)`,
+    relatedEvidence: 'ops/evidence-index.md',
+  });
   return { root, written: created.written, entries };
 };
 
@@ -739,6 +744,13 @@ const runMilestone = async (args) => {
     '',
   ].join('\n'), { ...args, force: false }, created);
 
+  await writeLogEvent(root, {
+    eventType: 'run',
+    summary: `Prepared milestone handoff for ${milestoneId}`,
+    relatedMilestone: milestoneId,
+    relatedEvidence: `${milestoneRoot}/evidence.md`,
+  });
+
   return { root, milestoneId, written: created.written, skipped: created.skipped };
 };
 
@@ -768,6 +780,13 @@ const reportMilestone = async (args) => {
     evidence,
     reviewFiles,
   }), { ...args, force: false }, created);
+
+  await writeLogEvent(root, {
+    eventType: 'report',
+    summary: `Prepared completion report for ${milestoneId}`,
+    relatedMilestone: milestoneId,
+    relatedEvidence: `${milestoneRoot}/completion-report.md`,
+  });
 
   return { root, milestoneId, written: created.written, skipped: created.skipped };
 };
@@ -802,6 +821,13 @@ const escalateMilestone = async (args) => {
     linkedSpec,
     linkedTasks,
   }), { ...args, force: false }, created);
+
+  await writeLogEvent(root, {
+    eventType: 'escalate',
+    summary: `Prepared escalation packet for ${milestoneId}`,
+    relatedMilestone: milestoneId,
+    relatedEvidence: `${milestoneRoot}/escalation.md`,
+  });
 
   return { root, milestoneId, written: created.written, skipped: created.skipped };
 };
