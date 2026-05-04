@@ -17,6 +17,7 @@ Usage:
   cc-iasd report <id> [--root <project-context-path>]
   cc-iasd index evidence [--root <project-context-path>]
   cc-iasd log event --summary <text> [--type <type>] [--milestone <id>] [--evidence <path>] [--root <project-context-path>]
+  cc-iasd feature add <id> --summary <text> --pillar <name> [--kind epic|supporting] [--root <project-context-path>]
   cc-iasd --help
 
 Options:
@@ -32,6 +33,8 @@ Options:
   --roadmap <ref>         Linked roadmap for run milestone
   --spec <ref>            Linked spec for run milestone
   --tasks <ref>           Linked tasks for run milestone
+  --kind <kind>           Feature kind. Default: epic
+  --pillar <name>         Ideal pillar for feature add
   --dry-run               Print planned writes without creating files
   --force                 Overwrite existing files
 `;
@@ -55,6 +58,9 @@ const parseArgs = (argv) => {
     linkedRoadmap: '',
     linkedSpec: '',
     linkedTasks: '',
+    featureId: '',
+    featureKind: 'epic',
+    idealPillar: '',
   };
 
   const tokens = [...argv];
@@ -62,7 +68,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'feature'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -89,6 +95,15 @@ const parseArgs = (argv) => {
     parsed.runTarget = tokens.shift() ?? '';
     if (parsed.runTarget !== 'event') {
       throw new Error('Usage: cc-iasd log event --summary <text>');
+    }
+  } else if (parsed.command === 'feature') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'add') {
+      throw new Error('Usage: cc-iasd feature add <id> --summary <text> --pillar <name>');
+    }
+    parsed.featureId = tokens.shift() ?? '';
+    if (!parsed.featureId || parsed.featureId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd feature add <id> --summary <text> --pillar <name>');
     }
   } else if (tokens[0] && !tokens[0].startsWith('-')) {
     parsed.target = tokens.shift();
@@ -141,6 +156,12 @@ const parseArgs = (argv) => {
         break;
       case '--tasks':
         parsed.linkedTasks = readValue(token);
+        break;
+      case '--kind':
+        parsed.featureKind = readValue(token);
+        break;
+      case '--pillar':
+        parsed.idealPillar = readValue(token);
         break;
       case '--dry-run':
         parsed.dryRun = true;
@@ -554,6 +575,27 @@ const featureBacklogTemplate = () => [
   '',
 ].join('\n');
 
+const featureFileTemplate = ({ featureId, featureKind, summary, idealPillar, now }) => [
+  `# Feature: ${featureId}`,
+  '',
+  `- ID: ${featureId}`,
+  `- Kind: ${featureKind}`,
+  `- Summary: ${summary}`,
+  `- Ideal Pillar: ${idealPillar}`,
+  '- Status: proposed',
+  `- Created At: ${now}`,
+  '',
+  '## Scope',
+  '',
+  '- Included: TBD',
+  '- Excluded: TBD',
+  '',
+  '## Roadmap Notes',
+  '',
+  '- TBD',
+  '',
+].join('\n');
+
 const milestoneStatusTemplate = ({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
   `# Milestone Status: ${milestoneId}`,
   '',
@@ -787,6 +829,45 @@ const logEvent = async (args) => {
     relatedMilestone: args.relatedMilestone,
     relatedEvidence: args.relatedEvidence,
   });
+};
+
+const addFeature = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for feature add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  if (!['epic', 'supporting'].includes(args.featureKind)) {
+    throw new Error('Feature kind must be epic or supporting');
+  }
+  if (slugify(args.featureId) !== args.featureId) {
+    throw new Error('Feature id must be lowercase kebab-case ASCII');
+  }
+  if (!args.eventSummary) {
+    throw new Error('Usage: cc-iasd feature add <id> --summary <text> --pillar <name>');
+  }
+  if (!args.idealPillar) {
+    throw new Error('Usage: cc-iasd feature add <id> --summary <text> --pillar <name>');
+  }
+
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const relPath = `ops/features/${args.featureKind === 'epic' ? 'epics' : 'supporting'}/${args.featureId}.md`;
+  await writeText(root, relPath, featureFileTemplate({
+    featureId: args.featureId,
+    featureKind: args.featureKind,
+    summary: args.eventSummary,
+    idealPillar: args.idealPillar,
+    now,
+  }), { ...args, force: false }, created);
+
+  await writeLogEvent(root, {
+    eventType: 'feature-add',
+    summary: `Added ${args.featureKind} feature ${args.featureId}`,
+    relatedEvidence: relPath,
+  });
+
+  return { root, featureId: args.featureId, featurePath: relPath, written: created.written, skipped: created.skipped };
 };
 
 const indexEvidence = async (args) => {
@@ -1120,6 +1201,13 @@ try {
   } else if (args.command === 'log') {
     const result = await logEvent(args);
     console.log(`Created ${result.written.length} log file(s) in ${result.root}.`);
+  } else if (args.command === 'feature') {
+    const result = await addFeature(args);
+    console.log(`Prepared feature ${result.featureId} in ${result.root}.`);
+    console.log(`Created ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Feature add does not overwrite feature records.`);
+    }
   } else {
     const result = await init(args);
     console.log(`${args.dryRun ? 'Planned' : 'Created'} ${result.written.length} file(s).`);
