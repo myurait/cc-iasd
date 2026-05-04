@@ -15,6 +15,7 @@ Usage:
   cc-iasd run milestone <id> [--root <project-context-path>]
   cc-iasd escalate <id> [--root <project-context-path>]
   cc-iasd report <id> [--root <project-context-path>]
+  cc-iasd index evidence [--root <project-context-path>]
   cc-iasd --help
 
 Options:
@@ -44,7 +45,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -61,6 +62,11 @@ const parseArgs = (argv) => {
     parsed.milestoneId = tokens.shift() ?? '';
     if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
       throw new Error(`Usage: cc-iasd ${parsed.command} <id>`);
+    }
+  } else if (parsed.command === 'index') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'evidence') {
+      throw new Error('Usage: cc-iasd index evidence');
     }
   } else if (tokens[0] && !tokens[0].startsWith('-')) {
     parsed.target = tokens.shift();
@@ -304,6 +310,19 @@ const listMarkdownFiles = async (root, relDir) => {
   }
 };
 
+const listDirectories = async (root, relDir) => {
+  const dir = assertInside(path.join(root, relDir), root);
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
+    return entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => path.join(relDir, entry.name))
+      .sort();
+  } catch {
+    return [];
+  }
+};
+
 const extractField = (content, label) => {
   const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const match = content.match(new RegExp(`^- ${escaped}:\\s*(.+)$`, 'm'));
@@ -532,6 +551,65 @@ const escalationTemplate = ({ milestoneId, now, status, evidence, activeBlocker,
   '- TBD',
   '',
 ].join('\n');
+
+const evidenceIndexTemplate = ({ now, entries }) => [
+  '# Evidence Index',
+  '',
+  `- Generated At: ${now}`,
+  '',
+  '## Milestone Evidence',
+  '',
+  ...(entries.length ? entries.flatMap((entry) => [
+    `### ${entry.milestoneId}`,
+    '',
+    `- Status: ${entry.status || 'missing'}`,
+    `- Evidence: ${entry.evidence || 'missing'}`,
+    `- Escalation: ${entry.escalation || 'missing'}`,
+    `- Completion Report: ${entry.completionReport || 'missing'}`,
+    '- Reviews:',
+    ...(entry.reviews.length ? entry.reviews.map((review) => `  - ${review}`) : ['  - none']),
+    '',
+  ]) : ['- No milestone evidence found.', '']),
+].join('\n');
+
+const indexEvidence = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for evidence indexing.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+
+  const milestoneDirs = await listDirectories(root, 'ops/milestones');
+  const entries = [];
+  for (const milestoneDir of milestoneDirs) {
+    const milestoneId = path.basename(milestoneDir);
+    const status = `${milestoneDir}/status.md`;
+    const evidence = `${milestoneDir}/evidence.md`;
+    const escalation = `${milestoneDir}/escalation.md`;
+    const completionReport = `${milestoneDir}/completion-report.md`;
+    const reviews = await listMarkdownFiles(root, `${milestoneDir}/reviews`);
+    const hasStatus = await exists(path.join(root, status));
+    const hasEvidence = await exists(path.join(root, evidence));
+    const hasEscalation = await exists(path.join(root, escalation));
+    const hasCompletionReport = await exists(path.join(root, completionReport));
+    if (!hasStatus && !hasEvidence && !hasEscalation && !hasCompletionReport && !reviews.length) {
+      continue;
+    }
+    entries.push({
+      milestoneId,
+      status: hasStatus ? status : '',
+      evidence: hasEvidence ? evidence : '',
+      escalation: hasEscalation ? escalation : '',
+      completionReport: hasCompletionReport ? completionReport : '',
+      reviews,
+    });
+  }
+
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  await writeText(root, 'ops/evidence-index.md', evidenceIndexTemplate({ now, entries }), { ...args, force: true }, created);
+  return { root, written: created.written, entries };
+};
 
 const runMilestone = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
@@ -792,6 +870,10 @@ try {
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Report does not overwrite milestone records.`);
     }
+  } else if (args.command === 'index') {
+    const result = await indexEvidence(args);
+    console.log(`Rebuilt evidence index in ${result.root}.`);
+    console.log(`Indexed ${result.entries.length} milestone(s).`);
   } else {
     const result = await init(args);
     console.log(`${args.dryRun ? 'Planned' : 'Created'} ${result.written.length} file(s).`);

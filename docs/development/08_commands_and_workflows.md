@@ -20,6 +20,7 @@ cc-iasd init
 cc-iasd run milestone <id>
 cc-iasd escalate <id>
 cc-iasd report <id>
+cc-iasd index evidence
 ```
 
 後段候補は別扱いにする。
@@ -193,6 +194,34 @@ MVP の初期実装では、`status.md`、`evidence.md`、`reviews/` の review 
 
 ## 7. 初期 workflow
 
+## 7. cc-iasd index evidence
+
+### 7.1 目的
+
+milestone ごとの証跡成果物を走査し、project-context 全体の evidence index を再生成する。
+
+### 7.2 処理
+
+```text
+処理:
+1. ops/milestones/ 配下の milestone を列挙する
+2. status.md / evidence.md / escalation.md / completion-report.md を確認する
+3. reviews/ 配下の review file を確認する
+4. ops/evidence-index.md を再生成する
+```
+
+### 7.3 出力
+
+```text
+ops/evidence-index.md
+```
+
+MVP の初期実装では、明示的に `cc-iasd index evidence` を実行したときだけ index を再生成する。`run`、`escalate`、`report` からの自動更新は行わない。
+
+---
+
+## 8. 初期 workflow
+
 ```text
 0. project-context 作成
 1. cc-iasd init
@@ -213,7 +242,7 @@ MVP の初期実装では、`status.md`、`evidence.md`、`reviews/` の review 
 
 ---
 
-## 8. 実行 runtime への handoff
+## 9. 実行 runtime への handoff
 
 MVP では、runtime handoff は単純な Markdown packet でよい。
 
@@ -241,7 +270,7 @@ src/
 
 ---
 
-## 9. Reviewer workflow
+## 10. Reviewer workflow
 
 ```text
 Reviewer workflow:
@@ -256,7 +285,7 @@ Reviewer workflow:
 
 ---
 
-## 10. ChatLobby 連携時の workflow
+## 11. ChatLobby 連携時の workflow
 
 ChatLobby 連携は MVP では必須ではない。
 
@@ -278,13 +307,13 @@ ChatLobby:
 
 ---
 
-## 11. cc-iasd doctor
+## 12. cc-iasd doctor
 
-### 11.1 目的
+### 12.1 目的
 
 project-context の整合性を検査する。
 
-### 11.2 処理
+### 12.2 処理
 
 ```text
 検査例:
@@ -299,15 +328,15 @@ project-context の整合性を検査する。
 
 MVP の初期実装では、project-context scaffold の必須パスと旧 ledger 由来パスの混入を検査する。
 
-### 11.3 cc-iasd sync
+### 12.3 cc-iasd sync
 
 Spec Kit / plugin / evidence index の参照整合を更新する。
 
-### 11.4 cc-iasd update-profile
+### 12.4 cc-iasd update-profile
 
 ledger profile を更新する。ただし、過去実行時の lock は上書きしない。
 
-### 11.5 cc-iasd audit
+### 12.5 cc-iasd audit
 
 長期的な evidence / decision / review の整合性を確認する。
 
