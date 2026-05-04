@@ -409,6 +409,7 @@ const doctor = async (args) => {
 
     await validateMilestoneLinks(root, issues);
     await validateFeatureFiles(root, issues);
+    await validateRoadmapFiles(root, issues);
   } else {
     issues.push(`Project-context path does not exist: ${root}`);
   }
@@ -561,6 +562,31 @@ const validateFeatureFiles = async (root, issues) => {
       if (isUnset(idealPillar)) {
         issues.push(`Missing feature ideal pillar in ${file}`);
       }
+    }
+  }
+};
+
+const validateRoadmapFiles = async (root, issues) => {
+  const files = await listMarkdownFiles(root, 'ops/roadmaps');
+  for (const file of files) {
+    const basename = path.basename(file);
+    if (!/^[a-z0-9][a-z0-9-]*\.md$/.test(basename)) {
+      issues.push(`Invalid roadmap file name: ${file}`);
+    }
+
+    const content = await readFile(path.join(root, file), 'utf8');
+    const summary = extractField(content, 'Summary');
+    const goal = extractField(content, 'Goal');
+    const status = extractField(content, 'Status');
+
+    if (isUnset(summary)) {
+      issues.push(`Missing roadmap summary in ${file}`);
+    }
+    if (isUnset(goal)) {
+      issues.push(`Missing roadmap goal in ${file}`);
+    }
+    if (isUnset(status)) {
+      issues.push(`Missing roadmap status in ${file}`);
     }
   }
 };
