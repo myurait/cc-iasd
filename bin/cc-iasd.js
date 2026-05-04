@@ -16,6 +16,7 @@ Usage:
   cc-iasd escalate <id> [--root <project-context-path>]
   cc-iasd report <id> [--root <project-context-path>]
   cc-iasd index evidence [--root <project-context-path>]
+  cc-iasd log event --summary <text> [--type <type>] [--milestone <id>] [--evidence <path>] [--root <project-context-path>]
   cc-iasd --help
 
 Options:
@@ -23,6 +24,10 @@ Options:
   --dev-lang <language>   Development language. Default: unspecified
   --product-lang <lang>   Product language. Default: same as --doc-lang
   --root <path>           Project-context root for milestone commands. Default: current directory
+  --type <type>           Log event type. Default: manual
+  --summary <text>        Log event summary
+  --milestone <id>        Related milestone id for log events
+  --evidence <path>       Related evidence path for log events
   --dry-run               Print planned writes without creating files
   --force                 Overwrite existing files
 `;
@@ -38,6 +43,10 @@ const parseArgs = (argv) => {
     force: false,
     runTarget: '',
     milestoneId: '',
+    eventType: 'manual',
+    eventSummary: '',
+    relatedMilestone: '',
+    relatedEvidence: '',
   };
 
   const tokens = [...argv];
@@ -45,7 +54,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -67,6 +76,11 @@ const parseArgs = (argv) => {
     parsed.runTarget = tokens.shift() ?? '';
     if (parsed.runTarget !== 'evidence') {
       throw new Error('Usage: cc-iasd index evidence');
+    }
+  } else if (parsed.command === 'log') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'event') {
+      throw new Error('Usage: cc-iasd log event --summary <text>');
     }
   } else if (tokens[0] && !tokens[0].startsWith('-')) {
     parsed.target = tokens.shift();
@@ -95,6 +109,18 @@ const parseArgs = (argv) => {
         break;
       case '--root':
         parsed.target = readValue(token);
+        break;
+      case '--type':
+        parsed.eventType = readValue(token);
+        break;
+      case '--summary':
+        parsed.eventSummary = readValue(token);
+        break;
+      case '--milestone':
+        parsed.relatedMilestone = readValue(token);
+        break;
+      case '--evidence':
+        parsed.relatedEvidence = readValue(token);
         break;
       case '--dry-run':
         parsed.dryRun = true;
@@ -352,6 +378,13 @@ const extractField = (content, label) => {
 
 const linkStatus = (label, value) => value || `UNRESOLVED (${label} not set)`;
 
+const slugify = (value) => value
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '') || 'event';
+
+const timestampForFile = (value) => value.replace(/[^0-9]/g, '');
+
 const featureIndexTemplate = () => [
   '# Feature Index',
   '',
@@ -590,6 +623,52 @@ const evidenceIndexTemplate = ({ now, entries }) => [
     '',
   ]) : ['- No milestone evidence found.', '']),
 ].join('\n');
+
+const logEventTemplate = ({ now, eventType, summary, relatedMilestone, relatedEvidence }) => [
+  '# Log Event',
+  '',
+  `- Date: ${now}`,
+  `- Type: ${eventType}`,
+  `- Summary: ${summary}`,
+  `- Related Milestone: ${relatedMilestone || 'none'}`,
+  `- Related Evidence: ${relatedEvidence || 'none'}`,
+  '',
+  '## Notes',
+  '',
+  '- TBD',
+  '',
+].join('\n');
+
+const writeLogEvent = async (root, { eventType, summary, relatedMilestone = '', relatedEvidence = '' }) => {
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const relPath = `ops/logs/log_${timestampForFile(now)}_${slugify(eventType)}.md`;
+  await writeText(root, relPath, logEventTemplate({
+    now,
+    eventType,
+    summary,
+    relatedMilestone,
+    relatedEvidence,
+  }), { force: false, dryRun: false }, created);
+  return { root, written: created.written, skipped: created.skipped };
+};
+
+const logEvent = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for logging.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  if (!args.eventSummary) {
+    throw new Error('Usage: cc-iasd log event --summary <text>');
+  }
+  return writeLogEvent(root, {
+    eventType: args.eventType,
+    summary: args.eventSummary,
+    relatedMilestone: args.relatedMilestone,
+    relatedEvidence: args.relatedEvidence,
+  });
+};
 
 const indexEvidence = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
@@ -893,6 +972,9 @@ try {
     const result = await indexEvidence(args);
     console.log(`Rebuilt evidence index in ${result.root}.`);
     console.log(`Indexed ${result.entries.length} milestone(s).`);
+  } else if (args.command === 'log') {
+    const result = await logEvent(args);
+    console.log(`Created ${result.written.length} log file(s) in ${result.root}.`);
   } else {
     const result = await init(args);
     console.log(`${args.dryRun ? 'Planned' : 'Created'} ${result.written.length} file(s).`);
