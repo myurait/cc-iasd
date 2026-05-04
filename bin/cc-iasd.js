@@ -18,6 +18,7 @@ Usage:
   cc-iasd index evidence [--root <project-context-path>]
   cc-iasd log event --summary <text> [--type <type>] [--milestone <id>] [--evidence <path>] [--root <project-context-path>]
   cc-iasd feature add <id> --summary <text> --pillar <name> [--kind epic|supporting] [--root <project-context-path>]
+  cc-iasd roadmap add <id> --summary <text> --goal <text> [--root <project-context-path>]
   cc-iasd --help
 
 Options:
@@ -35,6 +36,7 @@ Options:
   --tasks <ref>           Linked tasks for run milestone
   --kind <kind>           Feature kind. Default: epic
   --pillar <name>         Ideal pillar for feature add
+  --goal <text>           Goal for roadmap add
   --dry-run               Print planned writes without creating files
   --force                 Overwrite existing files
 `;
@@ -61,6 +63,8 @@ const parseArgs = (argv) => {
     featureId: '',
     featureKind: 'epic',
     idealPillar: '',
+    roadmapId: '',
+    roadmapGoal: '',
   };
 
   const tokens = [...argv];
@@ -68,7 +72,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'feature'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'feature', 'roadmap'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -104,6 +108,15 @@ const parseArgs = (argv) => {
     parsed.featureId = tokens.shift() ?? '';
     if (!parsed.featureId || parsed.featureId.startsWith('-')) {
       throw new Error('Usage: cc-iasd feature add <id> --summary <text> --pillar <name>');
+    }
+  } else if (parsed.command === 'roadmap') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'add') {
+      throw new Error('Usage: cc-iasd roadmap add <id> --summary <text> --goal <text>');
+    }
+    parsed.roadmapId = tokens.shift() ?? '';
+    if (!parsed.roadmapId || parsed.roadmapId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd roadmap add <id> --summary <text> --goal <text>');
     }
   } else if (tokens[0] && !tokens[0].startsWith('-')) {
     parsed.target = tokens.shift();
@@ -162,6 +175,9 @@ const parseArgs = (argv) => {
         break;
       case '--pillar':
         parsed.idealPillar = readValue(token);
+        break;
+      case '--goal':
+        parsed.roadmapGoal = readValue(token);
         break;
       case '--dry-run':
         parsed.dryRun = true;
@@ -629,6 +645,29 @@ const featureFileTemplate = ({ featureId, featureKind, summary, idealPillar, now
   '',
 ].join('\n');
 
+const roadmapFileTemplate = ({ roadmapId, summary, goal, now }) => [
+  `# Roadmap: ${roadmapId}`,
+  '',
+  `- ID: ${roadmapId}`,
+  `- Summary: ${summary}`,
+  `- Goal: ${goal}`,
+  '- Status: proposed',
+  `- Created At: ${now}`,
+  '',
+  '## Milestones',
+  '',
+  '- TBD',
+  '',
+  '## Feature Inputs',
+  '',
+  '- TBD',
+  '',
+  '## Deferred',
+  '',
+  '- TBD',
+  '',
+].join('\n');
+
 const milestoneStatusTemplate = ({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
   `# Milestone Status: ${milestoneId}`,
   '',
@@ -901,6 +940,41 @@ const addFeature = async (args) => {
   });
 
   return { root, featureId: args.featureId, featurePath: relPath, written: created.written, skipped: created.skipped };
+};
+
+const addRoadmap = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for roadmap add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  if (slugify(args.roadmapId) !== args.roadmapId) {
+    throw new Error('Roadmap id must be lowercase kebab-case ASCII');
+  }
+  if (!args.eventSummary) {
+    throw new Error('Usage: cc-iasd roadmap add <id> --summary <text> --goal <text>');
+  }
+  if (!args.roadmapGoal) {
+    throw new Error('Usage: cc-iasd roadmap add <id> --summary <text> --goal <text>');
+  }
+
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const relPath = `ops/roadmaps/${args.roadmapId}.md`;
+  await writeText(root, relPath, roadmapFileTemplate({
+    roadmapId: args.roadmapId,
+    summary: args.eventSummary,
+    goal: args.roadmapGoal,
+    now,
+  }), { ...args, force: false }, created);
+
+  await writeLogEvent(root, {
+    eventType: 'roadmap-add',
+    summary: `Added roadmap ${args.roadmapId}`,
+    relatedEvidence: relPath,
+  });
+
+  return { root, roadmapId: args.roadmapId, roadmapPath: relPath, written: created.written, skipped: created.skipped };
 };
 
 const indexEvidence = async (args) => {
@@ -1240,6 +1314,13 @@ try {
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Feature add does not overwrite feature records.`);
+    }
+  } else if (args.command === 'roadmap') {
+    const result = await addRoadmap(args);
+    console.log(`Prepared roadmap ${result.roadmapId} in ${result.root}.`);
+    console.log(`Created ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Roadmap add does not overwrite roadmap records.`);
     }
   } else {
     const result = await init(args);

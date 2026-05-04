@@ -42,6 +42,7 @@ npx cc-iasd@latest report mvp-001
 npx cc-iasd@latest index evidence
 npx cc-iasd@latest log event --summary "Updated project context"
 npx cc-iasd@latest feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience"
+npx cc-iasd@latest roadmap add roadmap-a --summary "MVP roadmap" --goal "Ship the first usable flow"
 ```
 
 このリポジトリからローカルに確認する場合は次です。
@@ -55,6 +56,7 @@ node bin/cc-iasd.js report mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js index evidence --root /tmp/my-project-context
 node bin/cc-iasd.js log event --summary "Updated project context" --root /tmp/my-project-context
 node bin/cc-iasd.js feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience" --root /tmp/my-project-context
+node bin/cc-iasd.js roadmap add roadmap-a --summary "MVP roadmap" --goal "Ship the first usable flow" --root /tmp/my-project-context
 ```
 
 ## `init` が作る構成
@@ -102,7 +104,7 @@ src/
 
 このリポジトリは `myurait/ledger-flow` からの移行初期段階です。
 
-現在の npm CLI は project-context 初期化、構造検査、feature 作成、最小 milestone handoff 生成、escalation packet 生成、completion report 生成、evidence index 生成、global log event 作成に対応しています。
+現在の npm CLI は project-context 初期化、構造検査、feature 作成、roadmap 作成、最小 milestone handoff 生成、escalation packet 生成、completion report 生成、evidence index 生成、global log event 作成に対応しています。
 
 ## ライセンス
 
