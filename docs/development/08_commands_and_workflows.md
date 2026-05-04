@@ -57,10 +57,12 @@ cc-iasd init <project-context-path>
 4. rules/ を作成する
 5. user/ を作成する
 6. ops/ を作成する
-7. ops/specs/ を作成する、または Spec Kit 初期化を実行する
-8. src/ を作成する
-9. 最小 template を配置する
-10. framework version を記録する
+7. ops/features/ を作成する
+8. ops/specs/ を作成する、または Spec Kit 初期化を実行する
+9. ops/logs/ を作成する
+10. src/ を作成する
+11. 最小 template を配置する
+12. framework version を記録する
 ```
 
 ### 3.4 出力
@@ -89,6 +91,7 @@ MVP では、完全自動実行でなくてよい。
 ```text
 MVP の run:
 - 対象 spec / tasks を解決する
+- linked roadmap / feature を確認する
 - 自走条件を確認する
 - 実行 runtime に渡す prompt / task packet を生成する
 - status を更新する
@@ -166,7 +169,7 @@ milestone 完了報告を生成する。
 2. evidence.md を読む
 3. completed tasks を集計する
 4. test / lint / build 結果を整理する
-5. review / audit 結果を整理する
+5. ops/milestones/<id>/reviews/ の review / audit 結果を整理する
 6. 軽微判断を整理する
 7. 残リスクを整理する
 8. completion-report.md を生成する
@@ -187,15 +190,17 @@ ops/milestones/<milestone-id>/completion-report.md
 1. cc-iasd init
 2. user/ に意図と制約を書く
 3. ops/ideal/ を作成または更新する
-4. ops/roadmaps/ で roadmap を定義する
-5. Spec Kit で requirements / plan / tasks を ops/specs/ に作る
-6. milestone を定義する
-7. cc-iasd run milestone <id>
-8. Worker runtime が src/ を編集する
-9. Reviewer runtime または人間が review する
-10. evidence.md を更新する
-11. 問題があれば cc-iasd escalate <id>
-12. 完了したら cc-iasd report <id>
+4. ops/features/ で feature layer を整理する
+5. ops/roadmaps/ で roadmap を定義する
+6. Spec Kit で requirements / plan / tasks を ops/specs/ に作る
+7. milestone を定義する
+8. 必要に応じて ops/milestones/<id>/planning-package.md を作る
+9. cc-iasd run milestone <id>
+10. Worker runtime が src/ を編集する
+11. Reviewer runtime または人間が ops/milestones/<id>/reviews/ に review を記録する
+12. ops/logs/ と evidence.md を更新する
+13. 問題があれば cc-iasd escalate <id>
+14. 完了したら cc-iasd report <id>
 ```
 
 ---
@@ -236,8 +241,9 @@ Reviewer workflow:
 2. tasks.md の完了条件と照合
 3. test / lint / build 結果を確認
 4. scope 外変更がないか確認
-5. findings を evidence.md に記録
-6. bounded remediation か escalation かを判定
+5. review を ops/milestones/<id>/reviews/ に記録
+6. review への参照と要約を evidence.md に記録
+7. bounded remediation か escalation かを判定
 ```
 
 ---
@@ -273,7 +279,9 @@ project-context の整合性を検査する。
 ```text
 検査例:
 - src/ が存在するか
+- ops/features/ が存在するか
 - ops/specs/ が存在するか
+- ops/logs/ が存在するか
 - lock.json があるか
 - linked tasks が解決できるか
 - evidence references が壊れていないか

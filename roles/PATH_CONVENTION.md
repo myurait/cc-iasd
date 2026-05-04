@@ -10,7 +10,7 @@ Paths like `rules/policies/...`, `rules/roles/...`, `rules/templates/...` are re
 
 ### Project paths (inside ops/)
 
-Paths like `ops/logs/`, `ops/reviews/`, `ops/roadmaps/`, `ops/design/`, `ops/roadmaps/`, `ops/decisions.md`, `ops/knowledge.md` are relative to the project root.
+Paths like `ops/logs/`, `ops/features/`, `ops/roadmaps/`, `ops/specs/`, `ops/milestones/`, `ops/decisions.md`, and `ops/knowledge.md` are relative to the project root.
 
 ### Path mapping from framework source to project
 
@@ -20,10 +20,10 @@ After transcription, the mapping is:
 - `roles/` -> `rules/roles/`
 - `templates/` -> `rules/templates/`
 - `logs/` -> `ops/logs/`
-- `reviews/` -> `ops/reviews/`
+- `reviews/` -> `ops/milestones/<milestone-id>/reviews/`
 - `roadmap/` -> `ops/roadmaps/`
-- `design/` -> `ops/design/`
-- `features/` -> `ops/roadmaps/`
+- `design/` -> `ops/specs/<spec-id>/`
+- `features/` -> `ops/features/`
 - `decisions.md` -> `ops/decisions.md`
 - `knowledge.md` -> `ops/knowledge.md`
 - `project-policies.md` -> `rules/project-policies.md`

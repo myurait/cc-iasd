@@ -28,10 +28,12 @@ milestone 単位の自走境界を文書化し、
 MVP 対象:
 - project-context 初期化
 - src/ isolation
-- ideal / roadmap の正本配置
+- ideal / features / roadmap の正本配置
 - Spec Kit 由来の spec / plan / tasks の配置
 - rules/ による制約レイヤー
 - milestone status
+- global logs
+- milestone reviews
 - autonomy protocol
 - escalation packet
 - completion report
@@ -92,11 +94,20 @@ project-context/
     ideal/
       ideal-experience.md
       product-charter.md
+    features/
+      index.md
+      backlog.md
+      epics/
+      supporting/
     roadmaps/
       README.md
     specs/
       README.md
     milestones/
+      README.md
+      project-context/
+        reviews/
+    logs/
       README.md
     evidence-index.md
 
@@ -130,7 +141,9 @@ project-context を初期化する。
 - rules/ 作成
 - user/ 作成
 - ops/ 作成
+- ops/features/ 作成
 - ops/specs/ 作成または Spec Kit 初期化
+- ops/logs/ 作成
 - src/ 作成
 - 最小テンプレート配置
 ```
@@ -180,13 +193,15 @@ Completion Report を生成する。
 1. cc-iasd init
 2. user が product-intent / constraints を記述
 3. ops/ideal/ を作成または更新する
-4. ops/roadmaps/ で roadmap を定義する
-5. Spec Kit で requirements / plan / tasks を作る
-6. milestone を定義する
-7. cc-iasd run milestone <id>
-8. 必要に応じて cc-iasd escalate <id>
-9. 人間判断後に再開
-10. cc-iasd report <id>
+4. ops/features/ で epics / supporting features / backlog を整理する
+5. ops/roadmaps/ で roadmap を定義する
+6. Spec Kit で requirements / plan / tasks を作る
+7. milestone を定義する
+8. 必要に応じて ops/milestones/<id>/planning-package.md を作る
+9. cc-iasd run milestone <id>
+10. 必要に応じて cc-iasd escalate <id>
+11. 人間判断後に再開
+12. cc-iasd report <id>
 ```
 
 ---
@@ -197,8 +212,9 @@ Completion Report を生成する。
 成功条件:
 - project-context の構造が安定している
 - 成果物 project が src/ に分離されている
-- ideal / roadmap / spec / milestone の階層が明確である
+- ideal / features / roadmap / spec / milestone の階層が明確である
 - spec / plan / tasks の正本が二重化していない
+- logs は global、reviews は milestone 配下という証跡配置が明確である
 - milestone の自走可否を判断できる
 - Escalation Packet が人間判断に足る情報を持つ
 - Completion Report が作業結果と残リスクを示す
@@ -255,6 +271,7 @@ ledger MVP は、次のように定義する。
 ledger MVP
   = project-context scaffold
   + Spec Kit 正本の受け皿
+  + ideal / features / roadmap planning layer
   + src/ isolation
   + milestone autonomy protocol
   + escalation / completion / evidence templates

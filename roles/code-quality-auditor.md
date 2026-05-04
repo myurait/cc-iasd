@@ -18,7 +18,7 @@ Before reviewing any changes, read the following files in full. Do not rely on m
 
 1. `rules/policies/coding-conventions.md` (coding rules, ~197 lines)
 2. `rules/policies/testing.md` (testing rules, ~64 lines)
-3. Any `ops/design/*.md` files related to the changed code (variable — read only those relevant to the changes under review)
+3. Any related `ops/specs/<spec-id>/*.md` or `ops/milestones/<milestone-id>/planning-package.md` files (variable — read only those relevant to the changes under review)
 
 ## Review Criteria
 
@@ -48,7 +48,7 @@ Check every changed code file against all of the following.
 
 ### Design Document Drift
 
-- If the changed code has a related design document (`ops/design/*.md`), check whether the implementation matches the design.
+- If the changed code has a related spec or planning package, check whether the implementation matches it.
 - Flag any discrepancy between the design document description and the actual implementation.
 
 ## Trigger Conditions

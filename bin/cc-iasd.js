@@ -227,9 +227,50 @@ const init = async (args) => {
 
   await writeText(root, 'ops/ideal/ideal-experience.md', '# Ideal Experience\n', args, created);
   await writeText(root, 'ops/ideal/product-charter.md', '# Product Charter\n', args, created);
+  await writeText(root, 'ops/features/index.md', [
+    '# Feature Index',
+    '',
+    'Map ideal pillars to epics and supporting features.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'ops/features/backlog.md', [
+    '# Feature Backlog',
+    '',
+    'Deferred requests, debt, and future feature candidates outside the active roadmap.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'ops/features/epics/README.md', [
+    '# Epics',
+    '',
+    'Large feature areas linked to ideal pillars.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'ops/features/supporting/README.md', [
+    '# Supporting Features',
+    '',
+    'Concrete feature candidates or blockers that support roadmap execution.',
+    '',
+  ].join('\n'), args, created);
   await writeText(root, 'ops/roadmaps/README.md', '# Roadmaps\n', args, created);
   await writeText(root, 'ops/specs/README.md', '# Specs\n', args, created);
-  await writeText(root, 'ops/milestones/README.md', '# Milestones\n', args, created);
+  await writeText(root, 'ops/milestones/README.md', [
+    '# Milestones',
+    '',
+    'Milestones contain status, evidence, planning packages, reviews, escalations, and completion reports.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'ops/milestones/project-context/reviews/README.md', [
+    '# Project Context Reviews',
+    '',
+    'Reviews that are not tied to a product milestone, such as project-context initialization, rules changes, runtime adapter changes, or repository-wide audits.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'ops/logs/README.md', [
+    '# Logs',
+    '',
+    'Global chronological work ledger for project-context operations that may span milestones.',
+    '',
+  ].join('\n'), args, created);
   await writeText(root, 'ops/decisions.md', '# Ops Decisions\n', args, created);
   await writeText(root, 'ops/evidence-index.md', '# Evidence Index\n', args, created);
   await writeText(root, 'ops/knowledge.md', '# Ops Knowledge\n', args, created);
@@ -244,7 +285,7 @@ const init = async (args) => {
     '',
     '- `rules/`: stable constraints, roles, templates, and checklists',
     '- `user/`: human-authored intent, constraints, decisions, and preferences',
-    '- `ops/`: ideal, roadmaps, specs, milestones, evidence, and reports',
+    '- `ops/`: ideal, features, roadmaps, specs, milestones, logs, evidence, and reports',
     '- `runtime/`: cc-iasd runtime configuration and generated adapters',
     '- `src/`: source project root',
     '',

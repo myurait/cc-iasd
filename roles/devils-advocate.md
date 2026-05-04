@@ -22,7 +22,7 @@ Before reviewing any changes, read the following project rules in full. Do not r
 3. `rules/policies/language-policy.md` (~112 lines)
 4. `rules/policies/coding-conventions.md` (if code changes are in scope, ~197 lines)
 5. `rules/policies/testing.md` (if test changes are in scope, ~64 lines)
-6. Any `ops/design/*.md` files related to the changed code (variable — read only those relevant to the changes under review)
+6. Any related `ops/specs/<spec-id>/*.md` or `ops/milestones/<milestone-id>/planning-package.md` files (variable — read only those relevant to the changes under review)
 
 ## Scope
 

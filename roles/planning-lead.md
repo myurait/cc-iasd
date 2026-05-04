@@ -18,11 +18,11 @@ Before performing any planning task, read the following files. Do not rely on me
 
 1. `ops/ideal/ideal-experience.md` (ideal experience — the north star, ~156 lines)
 2. The single active roadmap file at the root of `ops/roadmaps/` (~134 lines)
-3. `ops/roadmaps/backlog.md` (structured backlog, ~263 lines)
+3. `ops/features/backlog.md` (structured backlog, ~263 lines)
 4. `rules/templates/roadmap_consultation_template.md` (consultation template — lightweight and full versions, ~135 lines)
 5. `rules/templates/roadmap_share_template.md` (sharing template, ~76 lines)
 6. Development logs in `ops/logs/` for the relevant period only (~190 lines) — match the roadmap creation date against log dates and read only logs from that period onward. Do not read all log files.
-7. Devil's Advocate review records in `ops/reviews/` — read only the Findings sections and resolution status (~100 lines). Do not read the full template structure or Implementation Response Plan details.
+7. Devil's Advocate review records in the relevant `ops/milestones/<milestone-id>/reviews/` directory — read only the Findings sections and resolution status (~100 lines). Do not read the full template structure or Implementation Response Plan details.
 
 ## Responsibilities
 

@@ -19,7 +19,7 @@ Before reviewing any changes, read the following files in full. Do not rely on m
 1. `rules/policies/language-policy.md` (language rules — the canonical source, ~214 lines)
 2. `rules/templates/review_template.md` (review format — the canonical source, ~111 lines)
 3. `ops/knowledge.md` (project knowledge — audit target, ~71 lines)
-4. Backlog format rules within `ops/roadmaps/backlog.md` (~30 lines of format rules)
+4. Backlog format rules within `ops/features/backlog.md` (~30 lines of format rules)
 5. The project root `CLAUDE.md` (line count audit target)
 
 ## Review Criteria
@@ -31,15 +31,15 @@ Check every changed file against all of the following.
 Determine the file category and verify the correct language is used:
 
 - **Master rule files** (`rules/policies/`, `rules/roles/`, `rules/templates/`): Must be written in English.
-- **Project progress files** (`ops/logs/`, `ops/reviews/`, `ops/roadmaps/`, `ops/design/`, `ops/roadmaps/`, `ops/decisions.md`, `ops/knowledge.md`): Must be written in the Documentation Language defined in `rules/policies/language-policy.md`.
+- **Project progress files** (`ops/logs/`, `ops/features/`, `ops/roadmaps/`, `ops/specs/`, `ops/milestones/`, `ops/decisions.md`, `ops/knowledge.md`): Must be written in the Documentation Language defined in `rules/policies/language-policy.md`.
 - **Code** (identifiers and comments): Must be in English per coding conventions.
 
 ### Format Compliance
 
 - **Backlog format**: Items with `type: feature` must include an Experience Tie (link to ideal experience). Items with `type: debt` must include an Impact Scope.
 - **Backlog required fields**: Each item must have common required fields (type, summary, priority, blockers, design constraints) with valid values.
-- **Review evidence**: Review files in `ops/reviews/` must follow `rules/templates/review_template.md`.
-- **Review evidence limit**: No more than 5 review files in `ops/reviews/`. Excess files must be moved to `ops/reviews/archives/`.
+- **Review evidence**: Review files in `ops/milestones/<milestone-id>/reviews/` must follow `rules/templates/review_template.md`.
+- **Review evidence limit**: No more than 5 review files in each milestone review directory. Excess files must be moved to `ops/milestones/<milestone-id>/reviews/archives/`.
 - **CLAUDE.md line count**: Must be 100 lines or fewer.
 - **Broken links**: Local links in changed Markdown files must resolve to existing files.
 

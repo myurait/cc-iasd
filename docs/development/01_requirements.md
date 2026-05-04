@@ -101,6 +101,12 @@ ledger は以下を初期化できること:
 - rules/
 - user/
 - ops/
+- ops/ideal/
+- ops/features/
+- ops/roadmaps/
+- ops/specs/
+- ops/milestones/
+- ops/logs/
 - src/
 - profile / lock / framework version
 - 最小テンプレート
@@ -191,7 +197,7 @@ Completion Report:
 - 実装した内容
 - 変更した構成
 - 実施した test / lint / build
-- review / audit 結果
+- ops/milestones/<id>/reviews/ に置かれた review / audit 結果
 - AI が軽微判断した事項
 - 残リスク
 - 未完了事項
@@ -252,8 +258,9 @@ ledger MVP が成立している状態は次である。
 成立条件:
 - 新規 project-context を作成できる
 - src/ に成果物 project を隔離できる
-- ideal / roadmap を開発運営上の正本として扱える
+- ideal / features / roadmap を開発運営上の正本として扱える
 - spec / plan / tasks を正本として扱える
+- logs は global に、reviews は milestone 配下に記録できる
 - milestone 自走範囲を明示できる
 - 実装 runtime に渡す作業単位を定義できる
 - 停止時に Escalation Packet を生成できる

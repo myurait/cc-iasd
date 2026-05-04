@@ -62,7 +62,7 @@ Worker spawns review roles after completing Steps 1-4.
 - When: Trigger B conditions, rule changes (`rules/policies/` or CLAUDE.md rule sections), feature completion, milestone achievement, explicit user request
 - Additional steps:
   1. Spawn Devil's Advocate
-  2. Create a review evidence file (see Section 2.4)
+  2. Create a review evidence file in the relevant milestone review directory (see Section 2.4)
 
 **Trigger E — Planning Lead:**
 
@@ -96,7 +96,7 @@ Worker spawns review roles after completing Steps 1-4.
 
 - Roles: Devil's Advocate (+ Planning Lead when Trigger E applies)
 - Scope: architecture judgment, design quality, cross-cutting consistency
-- Evidence: review evidence file in `ops/reviews/`
+- Evidence: review evidence file in `ops/milestones/<milestone-id>/reviews/`
 - Trigger: Trigger D and/or Trigger E conditions only
 
 Full review does not re-check items covered by Light review. Responsibilities are separated, not duplicated.
@@ -130,8 +130,9 @@ Each review role checks only the items within its responsibility. Items are not 
 - Use one review evidence file per review thread.
 - Name review evidence files as `review_{YYYYMMDDhhmmss}_{scope_description}.md`.
 - Keep `scope_description` concise, ASCII, and kebab-case.
-- Keep only the newest 5 review evidence files in `ops/reviews/`. Move older files to `ops/reviews/archives/`.
-- `ops/reviews/README.md`, `rules/templates/review_template.md`, and `ops/reviews/archives/` are not counted as review evidence files.
+- Store review evidence in `ops/milestones/<milestone-id>/reviews/`. Reviews not tied to a product milestone go in `ops/milestones/project-context/reviews/`.
+- Keep only the newest 5 review evidence files in each milestone review directory. Move older files to `ops/milestones/<milestone-id>/reviews/archives/`.
+- `README.md`, `rules/templates/review_template.md`, and `archives/` are not counted as review evidence files.
 - Record severity, affected files, decision rationale, implementation response plan, and follow-up result.
 - Record `Date` as the exact execution timestamp with timezone.
 - Record `Reviewer` explicitly. When the reviewer is AI, write the model name in the publicly disclosable form.
@@ -144,7 +145,7 @@ Each review role checks only the items within its responsibility. Items are not 
 - Critical and High: must be fixed before commit.
 - Medium: fix or record as future work with justification.
 - Low and design-only: recording is sufficient.
-- When a temporary workaround is accepted, add it to the integrated backlog (`ops/roadmaps/backlog.md` with `type: debt`).
+- When a temporary workaround is accepted, add it to the integrated backlog (`ops/features/backlog.md` with `type: debt`).
 
 ### 2.6 Post-Fix Re-Review
 
@@ -216,10 +217,10 @@ Master rule files are always written in English and are reusable across projects
 ### Project Progress Files (updated during development)
 
 - `ops/logs/` — development logs
-- `ops/reviews/` — review evidence
+- `ops/features/` — feature index, backlog, epics, and supporting features
 - `ops/roadmaps/` — roadmaps
-- `ops/design/` — design documents
-- `ops/roadmaps/` — backlog and epics
+- `ops/specs/` — requirements, plan, and tasks
+- `ops/milestones/` — milestone status, evidence, reviews, escalation, and reports
 - `ops/decisions.md` — ADR
 - `ops/knowledge.md` — reusable lessons
 

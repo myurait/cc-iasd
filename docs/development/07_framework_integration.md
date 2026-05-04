@@ -159,6 +159,7 @@ ledger が担当する:
 | plan | Spec Kit | 初期化・参照 |
 | tasks | Spec Kit | milestone / plugin へ接続 |
 | ideal | ops/ideal/ | user/ 入力を正規化した開発判断の正本 |
+| features | ops/features/ | ideal と roadmap の間の planning layer |
 | roadmap | ops/roadmaps/ | ideal から milestone への計画正本 |
 | implementation loop | cc-sdd または同等 plugin | 委譲・結果集約 |
 | role / SOP | rules/ + BMAD / MetaGPT 参照 | 最小定義 |
@@ -207,6 +208,7 @@ MVP では、統合を浅くする。
 ```text
 MVP 統合:
 - Spec Kit 互換の ops/specs/ 構造
+- ops/features/ による feature / backlog 分離
 - cc-sdd 互換の tasks 実行想定
 - role / SOP は rules/ 内の最小文書
 - governance は rules/ の制約と ops/ の evidence index / report に限定

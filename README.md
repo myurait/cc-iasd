@@ -4,7 +4,7 @@ English | [日本語](README.ja.md)
 
 cc-iasd is a project-context framework for governed agentic software development.
 
-It does not replace coding agents such as Codex, Claude Code, or cc-sdd. It creates the project-context around them: constraints, user input, ideal state, roadmaps, specs, milestones, evidence, escalation packets, and completion reports.
+It does not replace coding agents such as Codex, Claude Code, or cc-sdd. It creates the project-context around them: constraints, user input, ideal state, features, roadmaps, specs, milestones, logs, evidence, escalation packets, and completion reports.
 
 ## Core Structure
 
@@ -13,7 +13,7 @@ project-context/
   runtime/   # cc-iasd config, lock, adapters, generated runtime files
   rules/     # stable policies, roles, templates, checklists
   user/      # human-authored intent, constraints, decisions, preferences
-  ops/       # ideal, roadmaps, specs, milestones, evidence, reports
+  ops/       # ideal, features, roadmaps, specs, milestones, logs, evidence, reports
   src/       # source project root
 ```
 
@@ -22,6 +22,7 @@ The main flow is:
 ```text
 user input
   -> ops/ideal
+  -> ops/features
   -> ops/roadmaps
   -> ops/specs
   -> ops/milestones
@@ -64,9 +65,17 @@ user/
 
 ops/
   ideal/
+  features/
+    index.md
+    backlog.md
+    epics/
+    supporting/
   roadmaps/
   specs/
   milestones/
+    project-context/
+      reviews/
+  logs/
   decisions.md
   evidence-index.md
   knowledge.md

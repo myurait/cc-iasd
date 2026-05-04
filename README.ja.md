@@ -4,7 +4,7 @@
 
 cc-iasd は、AI 駆動開発のための project-context framework です。
 
-Codex、Claude Code、cc-sdd のような実装エージェントを置き換えるものではありません。それらの外側で、制約、ユーザー入力、理想状態、ロードマップ、仕様、マイルストーン、証跡、エスカレーション、完了報告を管理する project-context を作ります。
+Codex、Claude Code、cc-sdd のような実装エージェントを置き換えるものではありません。それらの外側で、制約、ユーザー入力、理想状態、features、ロードマップ、仕様、マイルストーン、logs、証跡、エスカレーション、完了報告を管理する project-context を作ります。
 
 ## 基本構造
 
@@ -13,7 +13,7 @@ project-context/
   runtime/   # cc-iasd 設定、lock、adapter、生成物
   rules/     # 安定的な policy、role、template、checklist
   user/      # 人間が書いた意図、制約、判断、好み
-  ops/       # ideal、roadmap、spec、milestone、evidence、report
+  ops/       # ideal、features、roadmap、spec、milestone、logs、evidence、report
   src/       # 成果物 project root
 ```
 
@@ -22,6 +22,7 @@ project-context/
 ```text
 user input
   -> ops/ideal
+  -> ops/features
   -> ops/roadmaps
   -> ops/specs
   -> ops/milestones
@@ -64,9 +65,17 @@ user/
 
 ops/
   ideal/
+  features/
+    index.md
+    backlog.md
+    epics/
+    supporting/
   roadmaps/
   specs/
   milestones/
+    project-context/
+      reviews/
+  logs/
   decisions.md
   evidence-index.md
   knowledge.md

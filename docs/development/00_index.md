@@ -144,7 +144,7 @@ ledger は最初から完全な multi-agent 開発 OS として作らない。
 ```text
 MVP:
 - project-context を初期化できる
-- ideal / roadmap を開発運営上の正本として扱える
+- ideal / features / roadmap を開発運営上の正本として扱える
 - Spec Kit 由来の spec / plan / tasks を正本として扱える
 - 成果物 project を src/ に隔離できる
 - milestone の自走境界を文書で定義できる

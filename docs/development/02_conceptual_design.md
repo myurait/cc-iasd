@@ -50,7 +50,7 @@ project-context/
 
 ```text
 project-context:
-  制約、ユーザー入力、ideal、roadmap、仕様、計画、タスク、証跡、escalation、completion report
+  制約、ユーザー入力、ideal、features、roadmap、仕様、計画、タスク、証跡、escalation、completion report
 
 src/:
   成果物 project のコード、設定、テスト、ビルド構成
@@ -67,7 +67,7 @@ ledger は、すべてを独自形式で再実装しない。
 - spec / plan / tasks: Spec Kit（ops/specs/）
 - task implementation loop: cc-sdd または同等 plugin
 - role / SOP: ledger が最小定義し、BMAD / MetaGPT を参照
-- ideal / roadmap: ledger が開発運営上の正本として扱う
+- ideal / features / roadmap: ledger が開発運営上の正本として扱う
 - milestone autonomy: ledger 固有
 - escalation: ledger 固有
 - evidence index: ledger 固有

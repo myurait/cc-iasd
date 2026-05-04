@@ -76,6 +76,11 @@ project-context/
     ideal/
       ideal-experience.md
       product-charter.md
+    features/
+      index.md
+      backlog.md
+      epics/
+      supporting/
     roadmaps/
       <roadmap-id>.md
     specs/
@@ -89,6 +94,11 @@ project-context/
         escalation.md
         completion-report.md
         evidence.md
+        planning-package.md
+        reviews/
+          review_<timestamp>_<scope>.md
+    logs/
+      log_<timestamp>.md
     decisions.md
     evidence-index.md
     knowledge.md
@@ -231,7 +241,35 @@ ops/ideal/
 
 `ops/ideal/` は、`user/` の入力を開発判断に使える形へ正規化した正本を置く。ユーザー入力そのものではなく、Planning Lead や Reviewer が参照する開発運営上の正本である。
 
-### 6.2 ops/roadmaps/
+### 6.2 ops/features/
+
+```text
+ops/features/
+  index.md
+  backlog.md
+  epics/
+  supporting/
+```
+
+`ops/features/` は、ideal と roadmap の間に置く feature planning layer である。ChatLobby の旧 ledger 運用では backlog が早期に肥大化し、単独ファイルでは管理不能になった。そのため、MVP から index、backlog、epics、supporting を分ける。
+
+```text
+index.md:
+  ideal pillar と epics / supporting features の対応を示す planning index
+
+backlog.md:
+  active roadmap 外の deferred request ledger
+
+epics/:
+  ideal pillar に紐づく大きな機能領域
+
+supporting/:
+  roadmap 候補または blocker 解消に使う具体寄りの feature
+```
+
+roadmap は `ops/features/` の情報を入力にして作る。roadmap 外の要望や将来構想を roadmap 本体へ直接混ぜない。
+
+### 6.3 ops/roadmaps/
 
 ```text
 ops/roadmaps/
@@ -240,7 +278,7 @@ ops/roadmaps/
 
 `ops/roadmaps/` は、ideal をどの順序で実現へ近づけるかを定義する計画正本である。milestone は roadmap の一部を実行可能な自走単位に切り出したものであり、roadmap 自体を AI が勝手に変更してはならない。
 
-### 6.3 ops/specs/
+### 6.4 ops/specs/
 
 `ops/specs/` は Spec Kit の正本領域である。
 
@@ -266,19 +304,37 @@ ledger が行わないこと:
 - BMAD 側の task と Spec Kit 側の task を並列正本にする
 ```
 
-### 6.4 ops/milestones/
+### 6.5 ops/milestones/
 
-milestone ごとの進捗、evidence、escalation、completion report を置く。
+milestone ごとの進捗、evidence、review、escalation、completion report を置く。
 
 ```text
 ops/milestones/<milestone-id>/
   status.md
   evidence.md
+  planning-package.md
+  reviews/
+    review_<timestamp>_<scope>.md
   escalation.md
   completion-report.md
 ```
 
-### 6.5 ops/evidence-index.md
+`planning-package.md` は milestone 固有の補助文書である。原則として `ops/specs/<spec-id>/plan.md` が plan の正本であり、`planning-package.md` は milestone の scope、pilot 方針、validation scenario、未解決判断をまとめる補助文書として扱う。
+
+review は原則として milestone 配下に置く。review は completion 判定、残リスク、implementation response plan、follow-up review と強く結びつくため、global review store ではなく `ops/milestones/<milestone-id>/reviews/` を正本配置とする。
+
+milestone に紐づかない project-context 初期化、rules 変更、runtime adapter 変更、repo 全体監査などの review は、専用 milestone として `ops/milestones/project-context/reviews/` に置く。`ops/reviews/` は原則作らない。
+
+### 6.6 ops/logs/
+
+```text
+ops/logs/
+  log_<timestamp>.md
+```
+
+`ops/logs/` は project-context 全体の時系列作業台帳である。logs は milestone をまたぐ準備作業、設計判断、方針変更、初期化、環境確認も記録するため global に置く。
+
+### 6.7 ops/evidence-index.md
 
 `ops/evidence-index.md` は、spec、milestone、review、escalation、completion report への索引である。巨大ログではなく、正本成果物を後から追える evidence bridge として扱う。
 
@@ -366,9 +422,11 @@ project-context/
 
   ops/
     ideal/
+    features/
     roadmaps/
     specs/
     milestones/
+    logs/
     evidence-index.md
 
   src/

@@ -26,7 +26,7 @@ Additionally, read the source files directly related to the task at hand.
 
 Follow this sequence for every task:
 
-1. **Read** — Read the existing code and any design documents (`ops/design/*.md`) related to the change.
+1. **Read** — Read the existing code and any related `ops/specs/<spec-id>/*.md` or `ops/milestones/<milestone-id>/planning-package.md` files.
 2. **Implement** — Write the code following `rules/policies/coding-conventions.md`. Run the linter.
 3. **Test** — Add tests for new code. Verify all existing tests pass. Follow `rules/policies/testing.md`.
 4. **Log** — Record a development log entry in `ops/logs/`.
