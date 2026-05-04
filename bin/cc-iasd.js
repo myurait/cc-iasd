@@ -12,12 +12,14 @@ const usage = `cc-iasd ${VERSION}
 Usage:
   cc-iasd init [project-context-path] [options]
   cc-iasd doctor [project-context-path]
+  cc-iasd run milestone <id> [--root <project-context-path>]
   cc-iasd --help
 
 Options:
   --doc-lang <language>   Documentation language. Default: Japanese
   --dev-lang <language>   Development language. Default: unspecified
   --product-lang <lang>   Product language. Default: same as --doc-lang
+  --root <path>           Project-context root for run commands. Default: current directory
   --dry-run               Print planned writes without creating files
   --force                 Overwrite existing files
 `;
@@ -31,6 +33,8 @@ const parseArgs = (argv) => {
     productLang: undefined,
     dryRun: false,
     force: false,
+    runTarget: '',
+    milestoneId: '',
   };
 
   const tokens = [...argv];
@@ -38,11 +42,20 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
-  if (tokens[0] && !tokens[0].startsWith('-')) {
+  if (parsed.command === 'run') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'milestone') {
+      throw new Error('Usage: cc-iasd run milestone <id>');
+    }
+    parsed.milestoneId = tokens.shift() ?? '';
+    if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd run milestone <id>');
+    }
+  } else if (tokens[0] && !tokens[0].startsWith('-')) {
     parsed.target = tokens.shift();
   }
 
@@ -66,6 +79,9 @@ const parseArgs = (argv) => {
         break;
       case '--product-lang':
         parsed.productLang = readValue(token);
+        break;
+      case '--root':
+        parsed.target = readValue(token);
         break;
       case '--dry-run':
         parsed.dryRun = true;
@@ -259,6 +275,123 @@ const doctor = async (args) => {
   return { root, issues };
 };
 
+const readOptionalText = async (root, relPath) => {
+  const target = assertInside(path.join(root, relPath), root);
+  try {
+    return await readFile(target, 'utf8');
+  } catch {
+    return '';
+  }
+};
+
+const extractField = (content, label) => {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = content.match(new RegExp(`^- ${escaped}:\\s*(.+)$`, 'm'));
+  if (!match) return '';
+  const value = match[1].trim();
+  return value === 'TBD' ? '' : value;
+};
+
+const linkStatus = (label, value) => value || `UNRESOLVED (${label} not set)`;
+
+const runMilestone = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for milestone run.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+
+  const milestoneId = args.milestoneId;
+  const milestoneRoot = `ops/milestones/${milestoneId}`;
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const existingStatus = await readOptionalText(root, `${milestoneRoot}/status.md`);
+  const linkedFeature = extractField(existingStatus, 'Linked Feature');
+  const linkedRoadmap = extractField(existingStatus, 'Linked Roadmap');
+  const linkedSpec = extractField(existingStatus, 'Linked Spec');
+  const linkedTasks = extractField(existingStatus, 'Linked Tasks');
+
+  await writeText(root, `${milestoneRoot}/status.md`, [
+    `# Milestone Status: ${milestoneId}`,
+    '',
+    `- Milestone ID: ${milestoneId}`,
+    `- Current Status: ready-for-handoff`,
+    `- Linked Feature: ${linkedFeature || 'TBD'}`,
+    `- Linked Roadmap: ${linkedRoadmap || 'TBD'}`,
+    `- Linked Spec: ${linkedSpec || 'TBD'}`,
+    `- Linked Tasks: ${linkedTasks || 'TBD'}`,
+    '- Active Blocker: none recorded',
+    `- Last Update: ${now}`,
+    '',
+  ].join('\n'), { ...args, force: false }, created);
+
+  await writeText(root, `${milestoneRoot}/evidence.md`, [
+    `# Milestone Evidence: ${milestoneId}`,
+    '',
+    '## Run Start',
+    '',
+    `- Started At: ${now}`,
+    `- Linked Feature: ${linkStatus('Linked Feature', linkedFeature)}`,
+    `- Linked Roadmap: ${linkStatus('Linked Roadmap', linkedRoadmap)}`,
+    `- Linked Spec: ${linkStatus('Linked Spec', linkedSpec)}`,
+    `- Linked Tasks: ${linkStatus('Linked Tasks', linkedTasks)}`,
+    '',
+    '## Execution Evidence',
+    '',
+    '- Implementation Result: TBD',
+    '- Test / Lint / Build Result: TBD',
+    '- Review Result: TBD',
+    '',
+  ].join('\n'), { ...args, force: false }, created);
+
+  await writeText(root, `${milestoneRoot}/handoff.md`, [
+    `# Implementation Handoff: ${milestoneId}`,
+    '',
+    '## Scope',
+    '',
+    `Milestone: ${milestoneId}`,
+    '',
+    '## Source Root',
+    '',
+    'src/',
+    '',
+    '## Linked Planning Artifacts',
+    '',
+    `- Feature: ${linkStatus('Linked Feature', linkedFeature)}`,
+    `- Roadmap: ${linkStatus('Linked Roadmap', linkedRoadmap)}`,
+    `- Spec: ${linkStatus('Linked Spec', linkedSpec)}`,
+    `- Tasks: ${linkStatus('Linked Tasks', linkedTasks)}`,
+    '',
+    '## Constraints',
+    '',
+    '- Do not change roadmap, feature scope, or milestone purpose without human approval.',
+    '- Keep implementation changes inside `src/` unless the milestone explicitly requires project-context changes.',
+    '',
+    '## Expected Output',
+    '',
+    '- Code or project artifact changes',
+    '- Test / lint / build results',
+    '- Evidence summary for `evidence.md`',
+    '',
+    '## Evidence To Record',
+    '',
+    '- Changed files',
+    '- Commands run',
+    '- Review result',
+    '- Remaining risks',
+    '',
+  ].join('\n'), { ...args, force: false }, created);
+
+  await writeText(root, `${milestoneRoot}/reviews/README.md`, [
+    `# Reviews: ${milestoneId}`,
+    '',
+    'Review evidence for this milestone.',
+    '',
+  ].join('\n'), { ...args, force: false }, created);
+
+  return { root, milestoneId, written: created.written, skipped: created.skipped };
+};
+
 const init = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const created = { written: [], skipped: [] };
@@ -410,6 +543,13 @@ try {
       process.exit(1);
     }
     console.log(`cc-iasd doctor passed for ${result.root}`);
+  } else if (args.command === 'run') {
+    const result = await runMilestone(args);
+    console.log(`Prepared milestone ${result.milestoneId} in ${result.root}.`);
+    console.log(`Created ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Use --force only with init; run does not overwrite milestone records.`);
+    }
   } else {
     const result = await init(args);
     console.log(`${args.dryRun ? 'Planned' : 'Created'} ${result.written.length} file(s).`);

@@ -98,6 +98,8 @@ MVP の run:
 - evidence の空枠を作る
 ```
 
+MVP の初期実装では、`ops/milestones/<id>/status.md`、`ops/milestones/<id>/evidence.md`、`ops/milestones/<id>/handoff.md`、`ops/milestones/<id>/reviews/README.md` を作る。既存の milestone record は上書きしない。
+
 ### 4.3 処理
 
 ```text

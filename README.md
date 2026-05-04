@@ -36,6 +36,7 @@ Use npx from a project-context root:
 ```bash
 npx cc-iasd@latest init --doc-lang Japanese --dev-lang TypeScript
 npx cc-iasd@latest doctor
+npx cc-iasd@latest run milestone mvp-001
 ```
 
 For local development from this repository:
@@ -43,6 +44,7 @@ For local development from this repository:
 ```bash
 node bin/cc-iasd.js init /tmp/my-project-context --doc-lang Japanese --dev-lang TypeScript
 node bin/cc-iasd.js doctor /tmp/my-project-context
+node bin/cc-iasd.js run milestone mvp-001 --root /tmp/my-project-context
 ```
 
 ## What `init` Creates
@@ -90,7 +92,7 @@ src/
 
 This repository is in early migration from `myurait/ledger-flow`.
 
-The current npm CLI supports project-context initialization and structure validation. Additional commands for milestone run, escalation, reporting, and evidence maintenance are planned but not implemented yet.
+The current npm CLI supports project-context initialization, structure validation, and minimal milestone handoff generation. Additional commands for escalation, reporting, and evidence maintenance are planned but not implemented yet.
 
 ## License
 
