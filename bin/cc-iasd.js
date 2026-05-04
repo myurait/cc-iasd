@@ -272,6 +272,15 @@ const extractProjectRefs = (content) => {
   return [...refs].sort();
 };
 
+const extractRelatedEvidenceRefs = (content) => {
+  const refs = [];
+  const matches = content.matchAll(/^- Related Evidence:\s*(ops\/\S+)$/gm);
+  for (const match of matches) {
+    refs.push(match[1].replace(/[),.;:]+$/, ''));
+  }
+  return refs;
+};
+
 const collectMarkdownFiles = async (root, current = '') => {
   const dir = path.join(root, current);
   const entries = await readdir(dir, { withFileTypes: true });
@@ -323,6 +332,20 @@ const doctor = async (args) => {
       for (const ref of extractProjectRefs(content)) {
         if (!await exists(path.join(root, ref))) {
           issues.push(`Broken evidence index reference: ${ref}`);
+        }
+      }
+    }
+
+    const logFiles = await listMarkdownFiles(root, 'ops/logs');
+    for (const logFile of logFiles) {
+      const basename = path.basename(logFile);
+      if (!/^log_[0-9]{17}_[a-z0-9-]+\.md$/.test(basename)) {
+        issues.push(`Invalid log file name: ${logFile}`);
+      }
+      const content = await readFile(path.join(root, logFile), 'utf8');
+      for (const ref of extractRelatedEvidenceRefs(content)) {
+        if (!await exists(path.join(root, ref))) {
+          issues.push(`Broken log evidence reference in ${logFile}: ${ref}`);
         }
       }
     }
