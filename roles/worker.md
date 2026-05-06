@@ -26,10 +26,10 @@ Additionally, read the source files directly related to the task at hand.
 
 Follow this sequence for every task:
 
-1. **Read** — Read the existing code and any related `ops/specs/<spec-id>/*.md` or `ops/milestones/<milestone-id>/planning-package.md` files.
+1. **Read** — Read the existing code and any related `product/specs/<spec-id>/*.md` or `ops/cycles/<cycle-id>/*.md` files.
 2. **Implement** — Write the code following `rules/policies/coding-conventions.md`. Run the linter.
 3. **Test** — Add tests for new code. Verify all existing tests pass. Follow `rules/policies/testing.md`.
-4. **Log** — Record a development log entry in `ops/logs/`.
+4. **Log** — Record a development log entry in `ops/evidence/logs/`.
 5. **Review** — Spawn review roles according to the spawn rules below.
 6. **Commit** — After review findings are addressed, commit the changes.
 

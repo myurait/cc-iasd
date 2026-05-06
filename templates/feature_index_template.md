@@ -19,5 +19,5 @@ This file maps ideal pillars to epics and supporting features.
 
 ## Maintenance Notes
 
-- Keep detailed backlog items in `ops/features/backlog.md`.
-- Keep roadmap sequencing in `ops/roadmaps/`.
+- Keep feature scopes in `ops/scopes/features/`.
+- Keep roadmap scopes in `ops/scopes/roadmaps/`.

@@ -49,7 +49,7 @@ File classification is defined in `rules/development-process.md` Section 5. The 
 
 ### Project Progress Files
 
-- `ops/logs/`, `ops/features/`, `ops/roadmaps/`, `ops/specs/`, `ops/milestones/`, `ops/decisions.md`, `ops/knowledge.md`
+- `product/ideal/`, `product/specs/`, `ops/scopes/`, `ops/cycles/`, `ops/evidence/`, `reference/`
 - Written in Documentation Language.
 
 ### Project Configuration Files

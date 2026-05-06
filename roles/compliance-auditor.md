@@ -14,13 +14,13 @@ You are a Compliance Auditor. Your sole purpose is to inspect language policy co
 
 > **Path resolution**: All paths are relative to the project root. See `rules/roles/PATH_CONVENTION.md` for details.
 
-Before reviewing any changes, read the following files in full. Do not rely on memory or summaries. Do not skip any item. Total: ~426 lines.
+Before reviewing any changes, read the following files in full. Do not rely on memory or summaries. Do not skip any item.
 
 1. `rules/policies/language-policy.md` (language rules — the canonical source, ~214 lines)
 2. `rules/templates/review_template.md` (review format — the canonical source, ~111 lines)
-3. `ops/knowledge.md` (project knowledge — audit target, ~71 lines)
-4. Backlog format rules within `ops/features/backlog.md` (~30 lines of format rules)
-5. The project root `CLAUDE.md` (line count audit target)
+3. Related `ops/cycles/<cycle-id>/knowledge.md` files when the change updates cycle-local knowledge
+4. Related `ops/scopes/features/<feature-id>.md` files when the change updates feature scopes
+5. The project root `AGENTS.md` (line count audit target)
 
 ## Review Criteria
 
@@ -31,22 +31,22 @@ Check every changed file against all of the following.
 Determine the file category and verify the correct language is used:
 
 - **Master rule files** (`rules/policies/`, `rules/roles/`, `rules/templates/`): Must be written in English.
-- **Project progress files** (`ops/logs/`, `ops/features/`, `ops/roadmaps/`, `ops/specs/`, `ops/milestones/`, `ops/decisions.md`, `ops/knowledge.md`): Must be written in the Documentation Language defined in `rules/policies/language-policy.md`.
+- **Project progress files** (`product/ideal/`, `product/specs/`, `ops/scopes/`, `ops/cycles/`, `ops/evidence/`, `reference/`): Must be written in the Documentation Language defined in `rules/policies/language-policy.md`.
 - **Code** (identifiers and comments): Must be in English per coding conventions.
 
 ### Format Compliance
 
 - **Backlog format**: Items with `type: feature` must include an Experience Tie (link to ideal experience). Items with `type: debt` must include an Impact Scope.
 - **Backlog required fields**: Each item must have common required fields (type, summary, priority, blockers, design constraints) with valid values.
-- **Review evidence**: Review files in `ops/milestones/<milestone-id>/reviews/` must follow `rules/templates/review_template.md`.
-- **Review evidence limit**: No more than 5 review files in each milestone review directory. Excess files must be moved to `ops/milestones/<milestone-id>/reviews/archives/`.
-- **CLAUDE.md line count**: Must be 100 lines or fewer.
+- **Review evidence**: Review files in `ops/evidence/reviews/` must follow `rules/templates/review_template.md`.
+- **Review evidence limit**: No more than 5 review files outside `ops/evidence/reviews/archived/`. Excess files must be moved to `ops/evidence/reviews/archived/`.
+- **AGENTS.md line count**: Must be 100 lines or fewer.
 - **Broken links**: Local links in changed Markdown files must resolve to existing files.
 
-### knowledge.md Management
+### Cycle Knowledge Management
 
-- **Line count check**: If `ops/knowledge.md` exceeds 100 lines, report a warning.
-- **Rule promotion check**: If any lesson in `ops/knowledge.md` should be promoted to a master rule file (`rules/policies/*.md` or similar), report it as a "Rule Promotion Proposal" finding.
+- **Line count check**: If a cycle-local `knowledge.md` exceeds 100 lines, report a warning.
+- **Rule promotion check**: If any lesson in cycle-local knowledge should be promoted to a master rule file (`rules/policies/*.md` or similar), report it as a "Rule Promotion Proposal" finding.
 
 ## Trigger Conditions
 

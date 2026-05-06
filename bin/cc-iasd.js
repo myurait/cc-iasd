@@ -316,27 +316,41 @@ const requiredPaths = [
   'user/decisions.md',
   'user/preferences.md',
   'user/scratch.md',
-  'ops/ideal/ideal-experience.md',
-  'ops/ideal/product-charter.md',
-  'ops/features/index.md',
-  'ops/features/backlog.md',
-  'ops/features/epics',
-  'ops/features/supporting',
-  'ops/roadmaps',
-  'ops/specs',
-  'ops/milestones',
-  'ops/milestones/project-context/reviews',
-  'ops/logs',
-  'ops/decisions.md',
-  'ops/evidence-index.md',
-  'ops/knowledge.md',
+  'product/ideal',
+  'product/ideal/outdated',
+  'product/specs',
+  'product/specs/outdated',
+  'ops/scopes/features',
+  'ops/scopes/features/archived',
+  'ops/scopes/roadmaps',
+  'ops/scopes/roadmaps/archived',
+  'ops/scopes/milestones',
+  'ops/scopes/milestones/archived',
+  'ops/cycles',
+  'ops/cycles/archived',
+  'ops/evidence/logs',
+  'ops/evidence/logs/archived',
+  'ops/evidence/reviews',
+  'ops/evidence/reviews/archived',
+  'ops/evidence/reports',
+  'ops/evidence/reports/archived',
+  'reference/INDEX.md',
   'src',
 ];
 
 const forbiddenPaths = [
   '.ledger',
   'development-docs',
+  'ops/ideal',
+  'ops/specs',
+  'ops/features',
+  'ops/roadmaps',
+  'ops/milestones/project-context/reviews',
+  'ops/logs',
   'ops/reviews',
+  'ops/decisions.md',
+  'ops/evidence-index.md',
+  'ops/knowledge.md',
 ];
 
 const forbiddenContent = [
@@ -344,7 +358,16 @@ const forbiddenContent = [
   'development-docs',
   'ledger.py',
   'ledger.yaml',
+  'ops/ideal/',
+  'ops/specs/',
+  'ops/features/',
+  'ops/roadmaps/',
+  'ops/milestones/project-context/reviews',
+  'ops/logs/',
   'ops/reviews/',
+  'ops/decisions.md',
+  'ops/evidence-index.md',
+  'ops/knowledge.md',
 ];
 
 const extractProjectRefs = (content) => {
@@ -410,17 +433,7 @@ const doctor = async (args) => {
       }
     }
 
-    const evidenceIndex = path.join(root, 'ops/evidence-index.md');
-    if (await exists(evidenceIndex)) {
-      const content = await readFile(evidenceIndex, 'utf8');
-      for (const ref of extractProjectRefs(content)) {
-        if (!await exists(path.join(root, ref))) {
-          issues.push(`Broken evidence index reference: ${ref}`);
-        }
-      }
-    }
-
-    const logFiles = await listMarkdownFiles(root, 'ops/logs');
+    const logFiles = await listMarkdownFiles(root, 'ops/evidence/logs');
     for (const logFile of logFiles) {
       const basename = path.basename(logFile);
       if (!/^log_[0-9]{17}_[a-z0-9-]+\.md$/.test(basename)) {
@@ -502,33 +515,27 @@ const resolveExistingPath = async (root, candidates) => {
 
 const linkedPathCandidates = (kind, value, linkedSpec = '') => {
   if (isUnset(value)) return [];
-  if (value.startsWith('ops/')) return [value];
+  if (value.startsWith('ops/') || value.startsWith('product/')) return [value];
 
   switch (kind) {
     case 'feature':
       return [
-        `ops/features/${value}.md`,
-        `ops/features/${value}/README.md`,
-        `ops/features/epics/${value}.md`,
-        `ops/features/epics/${value}/README.md`,
-        `ops/features/supporting/${value}.md`,
-        `ops/features/supporting/${value}/README.md`,
+        `ops/scopes/features/${value}.md`,
       ];
     case 'roadmap':
       return [
-        `ops/roadmaps/${value}.md`,
-        `ops/roadmaps/${value}/README.md`,
+        `ops/scopes/roadmaps/${value}.md`,
       ];
     case 'spec':
       return [
-        `ops/specs/${value}`,
-        `ops/specs/${value}/requirements.md`,
+        `product/specs/${value}`,
+        `product/specs/${value}/requirements.md`,
       ];
     case 'tasks':
       return [
-        `ops/specs/${value}/tasks.md`,
-        linkedSpec && !linkedSpec.startsWith('ops/') ? `ops/specs/${linkedSpec}/tasks.md` : '',
-        linkedSpec && linkedSpec.startsWith('ops/') ? `${linkedSpec.replace(/\/$/, '')}/tasks.md` : '',
+        `product/specs/${value}/tasks.md`,
+        linkedSpec && !linkedSpec.startsWith('ops/') && !linkedSpec.startsWith('product/') ? `product/specs/${linkedSpec}/tasks.md` : '',
+        linkedSpec && (linkedSpec.startsWith('ops/') || linkedSpec.startsWith('product/')) ? `${linkedSpec.replace(/\/$/, '')}/tasks.md` : '',
       ];
     default:
       return [];
@@ -536,16 +543,13 @@ const linkedPathCandidates = (kind, value, linkedSpec = '') => {
 };
 
 const validateMilestoneLinks = async (root, issues) => {
-  const milestoneDirs = await listDirectories(root, 'ops/milestones');
-  for (const milestoneDir of milestoneDirs) {
-    const statusPath = `${milestoneDir}/status.md`;
-    if (!await exists(path.join(root, statusPath))) continue;
-
-    const status = await readFile(path.join(root, statusPath), 'utf8');
-    const linkedFeature = extractField(status, 'Linked Feature');
-    const linkedRoadmap = extractField(status, 'Linked Roadmap');
-    const linkedSpec = extractField(status, 'Linked Spec');
-    const linkedTasks = extractField(status, 'Linked Tasks');
+  const milestoneFiles = await listMarkdownFiles(root, 'ops/scopes/milestones');
+  for (const milestoneFile of milestoneFiles) {
+    const content = await readFile(path.join(root, milestoneFile), 'utf8');
+    const linkedFeature = extractField(content, 'Linked Feature');
+    const linkedRoadmap = extractField(content, 'Linked Roadmap');
+    const linkedSpec = extractField(content, 'Linked Spec');
+    const linkedTasks = extractField(content, 'Linked Tasks');
     const checks = [
       ['feature', 'Linked Feature', linkedFeature, ''],
       ['roadmap', 'Linked Roadmap', linkedRoadmap, ''],
@@ -557,46 +561,35 @@ const validateMilestoneLinks = async (root, issues) => {
       if (isUnset(value)) continue;
       const resolved = await resolveExistingPath(root, linkedPathCandidates(kind, value, context));
       if (!resolved) {
-        issues.push(`Broken milestone link in ${statusPath}: ${label} ${value}`);
+        issues.push(`Broken milestone link in ${milestoneFile}: ${label} ${value}`);
       }
     }
   }
 };
 
 const validateFeatureFiles = async (root, issues) => {
-  const featureDirs = [
-    ['ops/features/epics', 'epic'],
-    ['ops/features/supporting', 'supporting'],
-  ];
+  const files = await listMarkdownFiles(root, 'ops/scopes/features');
+  for (const file of files) {
+    const basename = path.basename(file);
+    if (!/^[a-z0-9][a-z0-9-]*\.md$/.test(basename)) {
+      issues.push(`Invalid feature file name: ${file}`);
+    }
 
-  for (const [featureDir, expectedKind] of featureDirs) {
-    const files = await listMarkdownFiles(root, featureDir);
-    for (const file of files) {
-      const basename = path.basename(file);
-      if (!/^[a-z0-9][a-z0-9-]*\.md$/.test(basename)) {
-        issues.push(`Invalid feature file name: ${file}`);
-      }
+    const content = await readFile(path.join(root, file), 'utf8');
+    const summary = extractField(content, 'Summary');
+    const idealPillar = extractField(content, 'Ideal Pillar');
 
-      const content = await readFile(path.join(root, file), 'utf8');
-      const kind = extractField(content, 'Kind');
-      const summary = extractField(content, 'Summary');
-      const idealPillar = extractField(content, 'Ideal Pillar');
-
-      if (kind !== expectedKind) {
-        issues.push(`Invalid feature kind in ${file}: ${kind || 'missing'}`);
-      }
-      if (isUnset(summary)) {
-        issues.push(`Missing feature summary in ${file}`);
-      }
-      if (isUnset(idealPillar)) {
-        issues.push(`Missing feature ideal pillar in ${file}`);
-      }
+    if (isUnset(summary)) {
+      issues.push(`Missing feature summary in ${file}`);
+    }
+    if (isUnset(idealPillar)) {
+      issues.push(`Missing feature ideal pillar in ${file}`);
     }
   }
 };
 
 const validateRoadmapFiles = async (root, issues) => {
-  const files = await listMarkdownFiles(root, 'ops/roadmaps');
+  const files = await listMarkdownFiles(root, 'ops/scopes/roadmaps');
   for (const file of files) {
     const basename = path.basename(file);
     if (!/^[a-z0-9][a-z0-9-]*\.md$/.test(basename)) {
@@ -621,8 +614,9 @@ const validateRoadmapFiles = async (root, issues) => {
 };
 
 const validateSpecFiles = async (root, issues) => {
-  const specDirs = await listDirectories(root, 'ops/specs');
+  const specDirs = await listDirectories(root, 'product/specs');
   for (const specDir of specDirs) {
+    if (path.basename(specDir) === 'outdated') continue;
     const basename = path.basename(specDir);
     if (!/^[a-z0-9][a-z0-9-]*$/.test(basename)) {
       issues.push(`Invalid spec directory name: ${specDir}`);
@@ -652,30 +646,22 @@ const validateSpecFiles = async (root, issues) => {
 };
 
 const validateReviewFiles = async (root, issues) => {
-  const milestoneDirs = await listDirectories(root, 'ops/milestones');
-  for (const milestoneDir of milestoneDirs) {
-    const reviewFiles = await listMarkdownFiles(root, `${milestoneDir}/reviews`);
-    for (const file of reviewFiles) {
-      const basename = path.basename(file);
-      if (!/^review_[0-9]{17}_[a-z0-9-]+\.md$/.test(basename)) {
-        issues.push(`Invalid review file name: ${file}`);
-      }
+  const reviewFiles = await listMarkdownFiles(root, 'ops/evidence/reviews');
+  for (const file of reviewFiles) {
+    const basename = path.basename(file);
+    if (!/^review_[0-9]{17}_[a-z0-9-]+\.md$/.test(basename)) {
+      issues.push(`Invalid review file name: ${file}`);
+    }
 
-      const content = await readFile(path.join(root, file), 'utf8');
-      const milestoneId = extractField(content, 'Milestone ID');
-      const reviewType = extractField(content, 'Review Type');
-      const result = extractField(content, 'Result');
-      const expectedMilestoneId = path.basename(milestoneDir);
+    const content = await readFile(path.join(root, file), 'utf8');
+    const reviewType = extractField(content, 'Review Type');
+    const result = extractField(content, 'Result');
 
-      if (milestoneId !== expectedMilestoneId) {
-        issues.push(`Invalid review milestone id in ${file}: ${milestoneId || 'missing'}`);
-      }
-      if (!['light', 'full'].includes(reviewType)) {
-        issues.push(`Invalid review type in ${file}: ${reviewType || 'missing'}`);
-      }
-      if (isUnset(result)) {
-        issues.push(`Missing review result in ${file}`);
-      }
+    if (!['light', 'full'].includes(reviewType)) {
+      issues.push(`Invalid review type in ${file}: ${reviewType || 'missing'}`);
+    }
+    if (isUnset(result)) {
+      issues.push(`Missing review result in ${file}`);
     }
   }
 };
@@ -1446,8 +1432,13 @@ const init = async (args) => {
     'src_root: src',
     'rules_root: rules',
     'user_root: user',
+    'product_root: product',
     'ops_root: ops',
-    'specs_root: ops/specs',
+    'specs_root: product/specs',
+    'scopes_root: ops/scopes',
+    'cycles_root: ops/cycles',
+    'evidence_root: ops/evidence',
+    'reference_root: reference',
     '',
   ].join('\n'), args, created);
 
@@ -1457,6 +1448,11 @@ const init = async (args) => {
     spec_kernel: 'spec-kit-compatible',
     implementation_plugin: 'cc-sdd-or-compatible',
     src_root: 'src',
+    product_root: 'product',
+    specs_root: 'product/specs',
+    scopes_root: 'ops/scopes',
+    cycles_root: 'ops/cycles',
+    evidence_root: 'ops/evidence',
     profile: 'default',
   }, null, 2)}\n`, args, created);
 
@@ -1484,45 +1480,92 @@ const init = async (args) => {
   await writeText(root, 'user/preferences.md', '# Preferences\n', args, created);
   await writeText(root, 'user/scratch.md', '# Scratch\n', args, created);
 
-  await writeText(root, 'ops/ideal/ideal-experience.md', '# Ideal Experience\n', args, created);
-  await writeText(root, 'ops/ideal/product-charter.md', '# Product Charter\n', args, created);
-  await writeText(root, 'ops/features/index.md', featureIndexTemplate(), args, created);
-  await writeText(root, 'ops/features/backlog.md', featureBacklogTemplate(), args, created);
-  await writeText(root, 'ops/features/epics/README.md', [
-    '# Epics',
+  await writeText(root, 'product/ideal/README.md', [
+    '# Ideal',
     '',
-    'Large feature areas linked to ideal pillars.',
+    'Product canon for normalized ideal artifacts. Files in `outdated/` are no longer current product canon.',
     '',
   ].join('\n'), args, created);
-  await writeText(root, 'ops/features/supporting/README.md', [
-    '# Supporting Features',
+  await writeText(root, 'product/ideal/outdated/README.md', [
+    '# Outdated Ideal',
     '',
-    'Concrete feature candidates or blockers that support roadmap execution.',
+    'Ideal artifacts that no longer hold product canon status.',
     '',
   ].join('\n'), args, created);
-  await writeText(root, 'ops/roadmaps/README.md', '# Roadmaps\n', args, created);
-  await writeText(root, 'ops/specs/README.md', '# Specs\n', args, created);
-  await writeText(root, 'ops/milestones/README.md', [
+  await writeText(root, 'product/specs/README.md', [
+    '# Specs',
+    '',
+    'Spec Kit compatible requirements, plan, and tasks live here.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'product/specs/outdated/README.md', [
+    '# Outdated Specs',
+    '',
+    'Spec directories that no longer hold product canon status.',
+    '',
+  ].join('\n'), args, created);
+
+  await writeText(root, 'ops/scopes/features/README.md', [
+    '# Feature Scopes',
+    '',
+    'Feature scope artifacts. Archived feature scopes move to `archived/`.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'ops/scopes/features/archived/README.md', '# Archived Feature Scopes\n', args, created);
+  await writeText(root, 'ops/scopes/roadmaps/README.md', [
+    '# Roadmap Scopes',
+    '',
+    'Roadmap scope artifacts. Archived roadmaps move to `archived/`.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'ops/scopes/roadmaps/archived/README.md', '# Archived Roadmap Scopes\n', args, created);
+  await writeText(root, 'ops/scopes/milestones/README.md', [
     '# Milestones',
     '',
-    'Milestones contain status, evidence, planning packages, reviews, escalations, and completion reports.',
+    'Milestones are roadmap endpoints or planning boundaries. Execution state lives in `ops/cycles/`.',
     '',
   ].join('\n'), args, created);
-  await writeText(root, 'ops/milestones/project-context/reviews/README.md', [
-    '# Project Context Reviews',
+  await writeText(root, 'ops/scopes/milestones/archived/README.md', '# Archived Milestones\n', args, created);
+
+  await writeText(root, 'ops/cycles/README.md', [
+    '# Cycles',
     '',
-    'Reviews that are not tied to a product milestone, such as project-context initialization, rules changes, runtime adapter changes, or repository-wide audits.',
+    'Cycle artifacts track autonomous execution state, handoff, and cycle-local knowledge.',
     '',
   ].join('\n'), args, created);
-  await writeText(root, 'ops/logs/README.md', [
+  await writeText(root, 'ops/cycles/archived/README.md', '# Archived Cycles\n', args, created);
+
+  await writeText(root, 'ops/evidence/logs/README.md', [
     '# Logs',
     '',
-    'Global chronological work ledger for project-context operations that may span milestones.',
+    'Global chronological work ledger. Archived logs move to `archived/`.',
     '',
   ].join('\n'), args, created);
-  await writeText(root, 'ops/decisions.md', '# Ops Decisions\n', args, created);
-  await writeText(root, 'ops/evidence-index.md', '# Evidence Index\n', args, created);
-  await writeText(root, 'ops/knowledge.md', '# Ops Knowledge\n', args, created);
+  await writeText(root, 'ops/evidence/logs/archived/README.md', '# Archived Logs\n', args, created);
+  await writeText(root, 'ops/evidence/reviews/README.md', [
+    '# Reviews',
+    '',
+    'Scope-crossing review evidence. Product, scope, and cycle artifacts refer to review IDs or paths.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'ops/evidence/reviews/archived/README.md', '# Archived Reviews\n', args, created);
+  await writeText(root, 'ops/evidence/reports/README.md', [
+    '# Reports',
+    '',
+    'Human-facing reports such as escalation, completion, and progress reports.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'ops/evidence/reports/archived/README.md', '# Archived Reports\n', args, created);
+
+  await writeText(root, 'reference/INDEX.md', [
+    '# Reference',
+    '',
+    'Non-canonical reference materials, historical documents, external sources, and notes.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'reference/historical-documents/README.md', '# Historical Documents\n', args, created);
+  await writeText(root, 'reference/external/README.md', '# External References\n', args, created);
+  await writeText(root, 'reference/notes/README.md', '# Reference Notes\n', args, created);
   await writeText(root, 'src/README.md', '# Source Project\n', args, created);
 
   await writeText(root, 'AGENTS.md', [
@@ -1534,7 +1577,9 @@ const init = async (args) => {
     '',
     '- `rules/`: stable constraints, roles, templates, and checklists',
     '- `user/`: human-authored intent, constraints, decisions, and preferences',
-    '- `ops/`: ideal, features, roadmaps, specs, milestones, logs, evidence, and reports',
+    '- `product/`: product canon such as ideal and specs',
+    '- `ops/`: scopes, cycles, and evidence',
+    '- `reference/`: non-canonical reference material',
     '- `runtime/`: cc-iasd runtime configuration and generated adapters',
     '- `src/`: source project root',
     '',

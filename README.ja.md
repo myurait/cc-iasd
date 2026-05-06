@@ -13,7 +13,9 @@ project-context/
   runtime/   # cc-iasd 設定、lock、adapter、生成物
   rules/     # 安定的な policy、role、template、checklist
   user/      # 人間が書いた意図、制約、判断、好み
-  ops/       # ideal、features、roadmap、spec、milestone、logs、evidence、report
+  product/   # ideal、spec などの product 正本
+  ops/       # scopes、cycles、evidence
+  reference/ # 正本ではない参照資料
   src/       # 成果物 project root
 ```
 
@@ -21,12 +23,13 @@ project-context/
 
 ```text
 user input
-  -> ops/ideal
-  -> ops/features
-  -> ops/roadmaps
-  -> ops/specs
-  -> ops/milestones
-  -> evidence / escalation / completion report
+  -> product/ideal
+  -> ops/scopes/features
+  -> ops/scopes/roadmaps
+  -> product/specs
+  -> ops/scopes/milestones
+  -> ops/cycles
+  -> ops/evidence
 ```
 
 ## インストール
@@ -84,21 +87,25 @@ user/
   scratch.md
 
 ops/
-  ideal/
-  features/
-    index.md
-    backlog.md
-    epics/
-    supporting/
-  roadmaps/
-  specs/
-  milestones/
-    project-context/
-      reviews/
-  logs/
-  decisions.md
-  evidence-index.md
-  knowledge.md
+  scopes/
+    features/
+      archived/
+    roadmaps/
+      archived/
+    milestones/
+      archived/
+  cycles/
+    archived/
+  evidence/
+    logs/
+      archived/
+    reviews/
+      archived/
+    reports/
+      archived/
+
+reference/
+  INDEX.md
 
 src/
   README.md
@@ -108,7 +115,7 @@ src/
 
 このリポジトリは `myurait/ledger-flow` からの移行初期段階です。
 
-現在の npm CLI は project-context 初期化、構造検査、feature 作成、roadmap 作成、spec 作成、最小 milestone handoff 生成、review record 作成、escalation packet 生成、completion report 生成、evidence index 生成、global log event 作成に対応しています。
+現在の npm CLI は新しい product / ops 構造へ移行中です。まず project-context 初期化と構造検査を新構造に合わせ、その他の artifact command は次段で移行します。
 
 ## ライセンス
 

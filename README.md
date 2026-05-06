@@ -13,7 +13,9 @@ project-context/
   runtime/   # cc-iasd config, lock, adapters, generated runtime files
   rules/     # stable policies, roles, templates, checklists
   user/      # human-authored intent, constraints, decisions, preferences
-  ops/       # ideal, features, roadmaps, specs, milestones, logs, evidence, reports
+  product/   # product canon such as ideal and specs
+  ops/       # scopes, cycles, and evidence
+  reference/ # non-canonical reference material
   src/       # source project root
 ```
 
@@ -21,12 +23,13 @@ The main flow is:
 
 ```text
 user input
-  -> ops/ideal
-  -> ops/features
-  -> ops/roadmaps
-  -> ops/specs
-  -> ops/milestones
-  -> evidence / escalation / completion report
+  -> product/ideal
+  -> ops/scopes/features
+  -> ops/scopes/roadmaps
+  -> product/specs
+  -> ops/scopes/milestones
+  -> ops/cycles
+  -> ops/evidence
 ```
 
 ## Install
@@ -84,21 +87,25 @@ user/
   scratch.md
 
 ops/
-  ideal/
-  features/
-    index.md
-    backlog.md
-    epics/
-    supporting/
-  roadmaps/
-  specs/
-  milestones/
-    project-context/
-      reviews/
-  logs/
-  decisions.md
-  evidence-index.md
-  knowledge.md
+  scopes/
+    features/
+      archived/
+    roadmaps/
+      archived/
+    milestones/
+      archived/
+  cycles/
+    archived/
+  evidence/
+    logs/
+      archived/
+    reviews/
+      archived/
+    reports/
+      archived/
+
+reference/
+  INDEX.md
 
 src/
   README.md
@@ -108,7 +115,7 @@ src/
 
 This repository is in early migration from `myurait/ledger-flow`.
 
-The current npm CLI supports project-context initialization, structure validation, feature creation, roadmap creation, spec creation, minimal milestone handoff generation, review record creation, escalation packet generation, completion report generation, evidence index generation, and global log event creation.
+The current npm CLI is being migrated to the new product / ops structure. Project-context initialization and structure validation are aligned first; other artifact commands are being moved next.
 
 ## License
 

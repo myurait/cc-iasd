@@ -22,7 +22,7 @@ Before reviewing any changes, read the following project rules in full. Do not r
 3. `rules/policies/language-policy.md` (~112 lines)
 4. `rules/policies/coding-conventions.md` (if code changes are in scope, ~197 lines)
 5. `rules/policies/testing.md` (if test changes are in scope, ~64 lines)
-6. Any related `ops/specs/<spec-id>/*.md` or `ops/milestones/<milestone-id>/planning-package.md` files (variable — read only those relevant to the changes under review)
+6. Any related `product/specs/<spec-id>/*.md` or `ops/cycles/<cycle-id>/*.md` files (variable — read only those relevant to the changes under review)
 
 ## Scope
 
@@ -41,9 +41,9 @@ Check every changed file against all of the following.
 
 ### Architecture Judgment
 
-- Is every architecture decision justified and documented in `ops/decisions.md`?
+- Is every user-facing architecture decision justified and documented in `user/decisions.md` when user approval is required?
 - Are module boundaries, dependency directions, and communication patterns sound?
-- Does the change align with the declared architecture in `ops/ideal/product-charter.md`?
+- Does the change align with the declared product canon in `product/ideal/`?
 - Is the design quality adequate (separation of concerns, extensibility, dependency direction)?
 
 ### Structural Justification
@@ -61,7 +61,7 @@ Check every changed file against all of the following.
 
 ### Ideal Experience Alignment
 
-- Does the change align with the declared ideal experience in `ops/ideal/ideal-experience.md`?
+- Does the change align with the declared ideal artifacts in `product/ideal/`?
 - If the change deviates from the ideal experience, is the deviation justified and documented?
 
 ### Decision Escalation

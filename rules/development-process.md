@@ -10,7 +10,7 @@ All changes must follow these six steps in order.
 Step 1: Read       — Read existing code and related documents before making changes
 Step 2: Implement  — Write code following rules/policies/coding-conventions.md, pass the linter
 Step 3: Test       — Follow rules/policies/testing.md, new code requires tests, all tests must pass
-Step 4: Log        — Record a development log entry in ops/logs/
+Step 4: Log        — Record a development log entry in ops/evidence/logs/
 Step 5: Review     — Spawn review roles (see Section 1.2)
 Step 6: Commit     — Stage files explicitly by name (git add -A is prohibited),
                      do not commit runtime or generated files
@@ -39,7 +39,7 @@ Worker spawns review roles after completing Steps 1-4.
 
 - When: starting implementation of a new feature (epic or supporting feature)
 - Additional steps:
-  1. Confirm ideal experience in `ops/ideal/ideal-experience.md`
+  1. Confirm ideal artifact in `product/ideal/`
   2. Select or revise the roadmap item from the active roadmap
   3. Define completion criteria and validation method
 
@@ -47,8 +47,8 @@ Worker spawns review roles after completing Steps 1-4.
 
 - When: module boundary changes, new service addition, communication pattern changes, major directory restructuring
 - Additional steps:
-  1. Record an ADR in `ops/decisions.md`
-  2. Update `ops/ideal/product-charter.md`
+  1. Record human decisions in `user/decisions.md` when user approval is required
+  2. Update the relevant `product/ideal/` artifact when product canon changes
 
 **Trigger C — Document structure change:**
 
@@ -62,7 +62,7 @@ Worker spawns review roles after completing Steps 1-4.
 - When: Trigger B conditions, rule changes (`rules/policies/` or CLAUDE.md rule sections), feature completion, milestone achievement, explicit user request
 - Additional steps:
   1. Spawn Devil's Advocate
-  2. Create a review evidence file in the relevant milestone review directory (see Section 2.4)
+  2. Create a review evidence file in `ops/evidence/reviews/` (see Section 2.4)
 
 **Trigger E — Planning Lead:**
 
@@ -74,12 +74,12 @@ Worker spawns review roles after completing Steps 1-4.
 
 ### 1.4 Development Log Entry
 
-- Record in `ops/logs/`.
+- Record in `ops/evidence/logs/`.
 - Active log file name: `log_{YYYYMMDDhhmmss}.md` (timestamp is the file creation time).
 - Every entry must include `Date` (exact execution timestamp with timezone) and `Author`.
 - Fields: Date, Author, Task, Changes, Verification, Issues, Follow-up, Reusable lesson.
 - Keep at most 20 entries in one active log file.
-- If the next append would exceed 20 entries, move the current file to `ops/logs/archives/` and create a new active file.
+- If the next append would exceed 20 entries, move the current file to `ops/evidence/logs/archived/` and create a new active file.
 
 ## 2. Review Rules
 
@@ -96,7 +96,7 @@ Worker spawns review roles after completing Steps 1-4.
 
 - Roles: Devil's Advocate (+ Planning Lead when Trigger E applies)
 - Scope: architecture judgment, design quality, cross-cutting consistency
-- Evidence: review evidence file in `ops/milestones/<milestone-id>/reviews/`
+- Evidence: review evidence file in `ops/evidence/reviews/`
 - Trigger: Trigger D and/or Trigger E conditions only
 
 Full review does not re-check items covered by Light review. Responsibilities are separated, not duplicated.
@@ -130,8 +130,8 @@ Each review role checks only the items within its responsibility. Items are not 
 - Use one review evidence file per review thread.
 - Name review evidence files as `review_{YYYYMMDDhhmmss}_{scope_description}.md`.
 - Keep `scope_description` concise, ASCII, and kebab-case.
-- Store review evidence in `ops/milestones/<milestone-id>/reviews/`. Reviews not tied to a product milestone go in `ops/milestones/project-context/reviews/`.
-- Keep only the newest 5 review evidence files in each milestone review directory. Move older files to `ops/milestones/<milestone-id>/reviews/archives/`.
+- Store review evidence in `ops/evidence/reviews/`.
+- Keep only the newest 5 review evidence files outside `archived/`. Move older files to `ops/evidence/reviews/archived/`.
 - `README.md`, `rules/templates/review_template.md`, and `archives/` are not counted as review evidence files.
 - Record severity, affected files, decision rationale, implementation response plan, and follow-up result.
 - Record `Date` as the exact execution timestamp with timezone.
@@ -145,7 +145,7 @@ Each review role checks only the items within its responsibility. Items are not 
 - Critical and High: must be fixed before commit.
 - Medium: fix or record as future work with justification.
 - Low and design-only: recording is sufficient.
-- When a temporary workaround is accepted, add it to the integrated backlog (`ops/features/backlog.md` with `type: debt`).
+- When a temporary workaround is accepted, add it to an appropriate feature scope in `ops/scopes/features/` with `type: debt`.
 
 ### 2.6 Post-Fix Re-Review
 
@@ -194,15 +194,15 @@ Post-fix re-review is mandatory after every review round that produced findings.
 ## 4. Documentation Rules
 
 - Treat the project repository as the canonical source for development-facing documentation.
-- Log all non-trivial architecture and policy decisions in `ops/decisions.md`.
-- Extract reusable lessons into `ops/knowledge.md`.
-- Keep at most one active roadmap file at the root of `ops/roadmaps/`.
+- Log human decisions in `user/decisions.md`; log cycle-local decisions in `ops/cycles/<cycle-id>/state.md`.
+- Extract reusable lessons into cycle-local `ops/cycles/<cycle-id>/knowledge.md` before promoting stable lessons to `rules/policies/`.
+- Keep current roadmap scopes outside `archived/` under `ops/scopes/roadmaps/`.
 - Name roadmap files `roadmap_{YYYYMMDDhhmmss}_{scope}.md`.
-- Move replaced, completed, cancelled, or superseded roadmap files to `ops/roadmaps/archives/`.
-- The canonical ideal experience planning source is `ops/ideal/ideal-experience.md`.
-- Raw interviews, imported user specifications, superseded drafts, and other historical planning inputs must be archived under `user/archives/`.
+- Move replaced, completed, cancelled, or superseded roadmap files to `ops/scopes/roadmaps/archived/`.
+- Canonical ideal artifacts live in `product/ideal/`.
+- Raw interviews, imported user specifications, superseded drafts, and other historical planning inputs must be archived under `reference/historical-documents/`.
 - Historical documents are preserved for traceability only. They are not authoritative for active planning once normalized.
-- Every historical document archive must have an entry in `user/archives/INDEX.md` with archive date, archive reason, summary, and canonical successor documents.
+- Every historical document archive must have an entry in `reference/INDEX.md` with archive date, summary, and canonical successor documents when applicable.
 
 ## 5. File Classification
 
@@ -216,13 +216,12 @@ Master rule files are always written in English and are reusable across projects
 
 ### Project Progress Files (updated during development)
 
-- `ops/logs/` — development logs
-- `ops/features/` — feature index, backlog, epics, and supporting features
-- `ops/roadmaps/` — roadmaps
-- `ops/specs/` — requirements, plan, and tasks
-- `ops/milestones/` — milestone status, evidence, reviews, escalation, and reports
-- `ops/decisions.md` — ADR
-- `ops/knowledge.md` — reusable lessons
+- `product/ideal/` — product ideal canon
+- `product/specs/` — requirements, plan, and tasks
+- `ops/scopes/` — features, roadmaps, and milestones
+- `ops/cycles/` — cycle state, handoff, and local knowledge
+- `ops/evidence/` — logs, reviews, and reports
+- `reference/` — non-canonical reference material
 
 Project progress files are written in Documentation Language as defined in `rules/policies/language-policy.md`.
 
@@ -248,13 +247,12 @@ Feature and debt items are managed in a single backlog file using tag-based inte
 - `type: feature` requires Experience Tie (link to an ideal experience pillar)
 - `type: debt` requires Impact Scope (affected files or directories)
 
-## 7. knowledge.md Management
+## 7. Cycle Knowledge Management
 
-- Worker may optionally append reusable lessons to `ops/knowledge.md` when recording development log entries.
-- Compliance Auditor checks `ops/knowledge.md` line count. A warning is issued when it exceeds 100 lines.
-- Compliance Auditor reviews `ops/knowledge.md` content and proposes rule promotion when a lesson should be elevated to a master rule file (`rules/policies/*.md`).
-- When a promotion proposal is approved, move the lesson to the appropriate master rule file and remove it from `ops/knowledge.md`.
-- Worker's required reading does not include `ops/knowledge.md`. Lessons reach Worker context through promotion to master rules.
+- Worker may append cycle-local lessons to `ops/cycles/<cycle-id>/knowledge.md`.
+- Compliance Auditor reviews cycle-local knowledge and proposes rule promotion when a lesson should be elevated to a master rule file (`rules/policies/*.md`).
+- When a promotion proposal is approved, move the lesson to the appropriate master rule file.
+- Worker's required reading does not include global knowledge files. Lessons reach Worker context through cycle handoff or promotion to master rules.
 
 ## 8. Testing Rules
 
