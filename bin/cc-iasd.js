@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -21,6 +21,9 @@ Usage:
   cc-iasd feature add <id> --summary <text> --pillar <name> [--kind epic|supporting] [--root <project-context-path>]
   cc-iasd roadmap add <id> --summary <text> --goal <text> [--root <project-context-path>]
   cc-iasd spec add <id> --summary <text> [--root <project-context-path>]
+  cc-iasd product outdate ideal <id> [--root <project-context-path>]
+  cc-iasd product outdate spec <id> [--root <project-context-path>]
+  cc-iasd ops archive feature|roadmap|milestone|cycle|log|review|report <id> [--root <project-context-path>]
   cc-iasd --help
 
 Options:
@@ -70,6 +73,10 @@ const parseArgs = (argv) => {
     roadmapId: '',
     roadmapGoal: '',
     specId: '',
+    productLayer: '',
+    productId: '',
+    archiveLayer: '',
+    archiveId: '',
   };
 
   const tokens = [...argv];
@@ -77,7 +84,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'review', 'feature', 'roadmap', 'spec'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'review', 'feature', 'roadmap', 'spec', 'product', 'ops'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -141,6 +148,26 @@ const parseArgs = (argv) => {
     parsed.specId = tokens.shift() ?? '';
     if (!parsed.specId || parsed.specId.startsWith('-')) {
       throw new Error('Usage: cc-iasd spec add <id> --summary <text>');
+    }
+  } else if (parsed.command === 'product') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'outdate') {
+      throw new Error('Usage: cc-iasd product outdate ideal|spec <id>');
+    }
+    parsed.productLayer = tokens.shift() ?? '';
+    parsed.productId = tokens.shift() ?? '';
+    if (!['ideal', 'spec'].includes(parsed.productLayer) || !parsed.productId || parsed.productId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd product outdate ideal|spec <id>');
+    }
+  } else if (parsed.command === 'ops') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'archive') {
+      throw new Error('Usage: cc-iasd ops archive feature|roadmap|milestone|cycle|log|review|report <id>');
+    }
+    parsed.archiveLayer = tokens.shift() ?? '';
+    parsed.archiveId = tokens.shift() ?? '';
+    if (!['feature', 'roadmap', 'milestone', 'cycle', 'log', 'review', 'report'].includes(parsed.archiveLayer) || !parsed.archiveId || parsed.archiveId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd ops archive feature|roadmap|milestone|cycle|log|review|report <id>');
     }
   } else if (tokens[0] && !tokens[0].startsWith('-')) {
     parsed.target = tokens.shift();
@@ -261,6 +288,22 @@ const writeText = async (root, relPath, content, options, created) => {
   if (options.dryRun) return;
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(target, content, 'utf8');
+};
+
+const movePath = async (root, sourceRel, destRel, options) => {
+  const source = assertInside(path.join(root, sourceRel), root);
+  const dest = assertInside(path.join(root, destRel), root);
+  if (!await exists(source)) {
+    throw new Error(`Source does not exist: ${sourceRel}`);
+  }
+  if (await exists(dest)) {
+    throw new Error(`Destination already exists: ${destRel}`);
+  }
+  if (!options.dryRun) {
+    await mkdir(path.dirname(dest), { recursive: true });
+    await rename(source, dest);
+  }
+  return { source: sourceRel, destination: destRel };
 };
 
 const copyTree = async (root, sourceDir, destDir, options, created, variables) => {
@@ -388,6 +431,26 @@ const extractRelatedEvidenceRefs = (content) => {
   return refs;
 };
 
+const archivedEvidenceCandidates = (ref) => {
+  const archiveRules = [
+    ['ops/scopes/features/', 'ops/scopes/features/archived/'],
+    ['ops/scopes/roadmaps/', 'ops/scopes/roadmaps/archived/'],
+    ['ops/scopes/milestones/', 'ops/scopes/milestones/archived/'],
+    ['ops/cycles/', 'ops/cycles/archived/'],
+    ['ops/evidence/logs/', 'ops/evidence/logs/archived/'],
+    ['ops/evidence/reviews/', 'ops/evidence/reviews/archived/'],
+    ['ops/evidence/reports/', 'ops/evidence/reports/archived/'],
+  ];
+  const candidates = [ref];
+  for (const [prefix, archivedPrefix] of archiveRules) {
+    if (ref.startsWith(prefix) && !ref.startsWith(archivedPrefix)) {
+      candidates.push(`${archivedPrefix}${ref.slice(prefix.length)}`);
+      break;
+    }
+  }
+  return candidates;
+};
+
 const collectMarkdownFiles = async (root, current = '') => {
   const dir = path.join(root, current);
   const entries = await readdir(dir, { withFileTypes: true });
@@ -441,7 +504,8 @@ const doctor = async (args) => {
       }
       const content = await readFile(path.join(root, logFile), 'utf8');
       for (const ref of extractRelatedEvidenceRefs(content)) {
-        if (!await exists(path.join(root, ref))) {
+        const resolved = await resolveExistingPath(root, archivedEvidenceCandidates(ref));
+        if (!resolved) {
           issues.push(`Broken log evidence reference in ${logFile}: ${ref}`);
         }
       }
@@ -674,6 +738,14 @@ const slugify = (value) => value
   .replace(/^-+|-+$/g, '') || 'event';
 
 const timestampForFile = (value) => value.replace(/[^0-9]/g, '');
+
+const assertArchiveId = (id) => {
+  if (!/^[A-Za-z0-9._-]+$/.test(id)) {
+    throw new Error('Archive id must not include path separators or special characters');
+  }
+};
+
+const markdownId = (id) => id.endsWith('.md') ? id : `${id}.md`;
 
 const featureIndexTemplate = () => [
   '# Feature Index',
@@ -1467,6 +1539,66 @@ const escalateMilestone = async (args) => {
   return { root, scopeId, reportPath, written: created.written, skipped: created.skipped };
 };
 
+const outdateProduct = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for product outdate.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+
+  assertArchiveId(args.productId);
+  const fileId = markdownId(args.productId);
+  const paths = args.productLayer === 'ideal'
+    ? {
+      source: `product/ideal/${fileId}`,
+      destination: `product/ideal/outdated/${fileId}`,
+    }
+    : {
+      source: `product/specs/${args.productId}`,
+      destination: `product/specs/outdated/${args.productId}`,
+    };
+
+  const moved = await movePath(root, paths.source, paths.destination, args);
+  if (!args.dryRun) {
+    await writeLogEvent(root, {
+      eventType: 'product-outdate',
+      summary: `Outdated product ${args.productLayer} ${args.productId}`,
+      relatedEvidence: moved.destination,
+    });
+  }
+  return { root, layer: args.productLayer, id: args.productId, ...moved };
+};
+
+const archiveOps = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for ops archive.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+
+  assertArchiveId(args.archiveId);
+  const fileId = markdownId(args.archiveId);
+  const mappings = {
+    feature: [`ops/scopes/features/${fileId}`, `ops/scopes/features/archived/${fileId}`],
+    roadmap: [`ops/scopes/roadmaps/${fileId}`, `ops/scopes/roadmaps/archived/${fileId}`],
+    milestone: [`ops/scopes/milestones/${fileId}`, `ops/scopes/milestones/archived/${fileId}`],
+    cycle: [`ops/cycles/${args.archiveId}`, `ops/cycles/archived/${args.archiveId}`],
+    log: [`ops/evidence/logs/${fileId}`, `ops/evidence/logs/archived/${fileId}`],
+    review: [`ops/evidence/reviews/${fileId}`, `ops/evidence/reviews/archived/${fileId}`],
+    report: [`ops/evidence/reports/${fileId}`, `ops/evidence/reports/archived/${fileId}`],
+  };
+  const [source, destination] = mappings[args.archiveLayer];
+  const moved = await movePath(root, source, destination, args);
+  if (!args.dryRun) {
+    await writeLogEvent(root, {
+      eventType: 'ops-archive',
+      summary: `Archived ops ${args.archiveLayer} ${args.archiveId}`,
+      relatedEvidence: moved.destination,
+    });
+  }
+  return { root, layer: args.archiveLayer, id: args.archiveId, ...moved };
+};
+
 const init = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const created = { written: [], skipped: [] };
@@ -1722,6 +1854,14 @@ try {
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Spec add does not overwrite spec records.`);
     }
+  } else if (args.command === 'product') {
+    const result = await outdateProduct(args);
+    console.log(`${args.dryRun ? 'Planned product outdate' : 'Outdated product'} ${result.layer} ${result.id} in ${result.root}.`);
+    console.log(`${args.dryRun ? 'Would move' : 'Moved'} ${result.source} -> ${result.destination}.`);
+  } else if (args.command === 'ops') {
+    const result = await archiveOps(args);
+    console.log(`${args.dryRun ? 'Planned ops archive' : 'Archived ops'} ${result.layer} ${result.id} in ${result.root}.`);
+    console.log(`${args.dryRun ? 'Would move' : 'Moved'} ${result.source} -> ${result.destination}.`);
   } else {
     const result = await init(args);
     console.log(`${args.dryRun ? 'Planned' : 'Created'} ${result.written.length} file(s).`);

@@ -48,6 +48,8 @@ npx cc-iasd@latest escalate mvp-001
 npx cc-iasd@latest report mvp-001
 npx cc-iasd@latest index evidence
 npx cc-iasd@latest log event --summary "Updated project context"
+npx cc-iasd@latest product outdate spec spec-a
+npx cc-iasd@latest ops archive roadmap roadmap-a
 ```
 
 このリポジトリからローカルに確認する場合は次です。
@@ -64,6 +66,8 @@ node bin/cc-iasd.js escalate mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js report mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js index evidence --root /tmp/my-project-context
 node bin/cc-iasd.js log event --summary "Updated project context" --root /tmp/my-project-context
+node bin/cc-iasd.js product outdate spec spec-a --root /tmp/my-project-context
+node bin/cc-iasd.js ops archive roadmap roadmap-a --root /tmp/my-project-context
 ```
 
 ## `init` が作る構成
@@ -115,7 +119,7 @@ src/
 
 このリポジトリは `myurait/ledger-flow` からの移行初期段階です。
 
-現在の npm CLI は、新しい product / ops / reference 構造の作成と検査に加え、feature、roadmap、spec、cycle、review、report、escalation、log、evidence view の各コマンドに対応しています。
+現在の npm CLI は、新しい product / ops / reference 構造の作成と検査に加え、feature、roadmap、spec、cycle、review、report、escalation、log、evidence view、product outdate、ops archive の各コマンドに対応しています。
 
 ## ライセンス
 

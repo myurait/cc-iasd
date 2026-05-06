@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -82,6 +82,34 @@ test('doctor rejects legacy ledger paths', async () => {
       () => runCli(['doctor', root]),
       /Forbidden legacy path exists: ops\/logs/,
     );
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('product outdate and ops archive move artifacts to inactive storage', async () => {
+  const root = await createContext();
+  try {
+    await writeFile(path.join(root, 'product/ideal/core.md'), '# Core Ideal\n', 'utf8');
+    runCli(['spec', 'add', 'spec-a', '--summary', 'Spec A', '--root', root]);
+    runCli(['roadmap', 'add', 'roadmap-a', '--summary', 'Roadmap A', '--goal', 'Ship A', '--root', root]);
+
+    runCli(['product', 'outdate', 'ideal', 'core', '--dry-run', '--root', root]);
+    assert.equal(existsSync(path.join(root, 'product/ideal/core.md')), true);
+    assert.equal(existsSync(path.join(root, 'product/ideal/outdated/core.md')), false);
+
+    runCli(['product', 'outdate', 'ideal', 'core', '--root', root]);
+    runCli(['product', 'outdate', 'spec', 'spec-a', '--root', root]);
+    runCli(['ops', 'archive', 'roadmap', 'roadmap-a', '--root', root]);
+
+    assert.equal(existsSync(path.join(root, 'product/ideal/core.md')), false);
+    assert.equal(existsSync(path.join(root, 'product/ideal/outdated/core.md')), true);
+    assert.equal(existsSync(path.join(root, 'product/specs/spec-a')), false);
+    assert.equal(existsSync(path.join(root, 'product/specs/outdated/spec-a/tasks.md')), true);
+    assert.equal(existsSync(path.join(root, 'ops/scopes/roadmaps/roadmap-a.md')), false);
+    assert.equal(existsSync(path.join(root, 'ops/scopes/roadmaps/archived/roadmap-a.md')), true);
+
+    runCli(['doctor', root]);
   } finally {
     await cleanup(root);
   }
