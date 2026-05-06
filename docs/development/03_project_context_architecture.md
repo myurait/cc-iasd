@@ -64,8 +64,6 @@ project-context/
       cc-sdd.yaml
       bmad.yaml
     adapters/
-      src-worktree.yaml
-      git.yaml
       agent-runtime.yaml
     commands/
       init.md
@@ -539,4 +537,4 @@ project-context/
   src/
 ```
 
-この段階では、plugin の完全実装、multi-runtime adapter、Git 分離、複雑な update mechanism は不要である。
+この段階では、plugin の完全実装、multi-runtime adapter、複雑な update mechanism は不要である。

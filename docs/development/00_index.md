@@ -7,7 +7,7 @@
 
 ## 1. このドキュメント群の目的
 
-このドキュメント群は、これまで散逸していた ledger 関連の設計メモ、再設計前提、再定義文書、ChatLobby との境界整理、過去会話上の判断を統合し、ledger の開発正本候補として再構成するためのものである。
+このドキュメント群は、これまで散逸していた ledger 関連の設計メモ、再設計前提、再定義文書、過去会話上の判断を統合し、ledger の開発正本候補として再構成するためのものである。
 
 ledger については、初期に次のような見方が混在していた。
 
@@ -15,7 +15,6 @@ ledger については、初期に次のような見方が混在していた。
 旧整理:
 - project-local agentic SDLC harness
 - AI 開発チームの運営・証跡・エスカレーション規律
-- ChatLobby / Frontdoor 経由開発を支える project 側制約
 ```
 
 その後、次の再定義が正本候補として採用された。
@@ -35,7 +34,6 @@ ledger
 - Planning Lead の権限境界
 - Escalation Packet
 - Evidence / review / decision の証跡思想
-- frontdoor は project 内ロールではないという境界
 
 旧整理から修正するもの:
 - 成果物 project の内部に ledger を埋め込む見方
@@ -83,7 +81,7 @@ ledger
   cc-iasd init / run / escalate / report のワークフロー設計
 
 09_future_vision.md
-  将来構想、plugin 化、多 runtime 対応、ChatLobby 連携強化
+  将来構想、plugin 化、多 runtime 対応
 
 10_todo.md
   未実装項目、未決定事項、観察後に判断する事項
@@ -117,25 +115,7 @@ ledger
 
 ---
 
-## 4. ChatLobby との境界
-
-ChatLobby は、ユーザーの会話、Workspace、Conversation、Message、軽量 Frontdoor、検索・要約を扱う。
-
-ledger は、開発 project の project-context、spec / plan / tasks、自律実装、review / audit、escalation、evidence、completion report を扱う。
-
-```text
-ChatLobby:
-  会話と関心領域の入口
-
-ledger:
-  開発 project-context の自律開発ハーネス
-```
-
-Frontdoor は ledger 内の登場人物ではない。Frontdoor は ChatLobby 側の入口であり、ledger から見ると「ユーザーが常駐しない」「判断依頼は後から読める形で返す必要がある」という制約としてのみ現れる。
-
----
-
-## 5. 開発順序の基本方針
+## 4. 開発順序の基本方針
 
 ledger は最初から完全な multi-agent 開発 OS として作らない。
 

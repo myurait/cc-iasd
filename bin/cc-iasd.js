@@ -1988,7 +1988,23 @@ const init = async (args) => {
   await writeText(root, 'reference/historical-documents/README.md', '# Historical Documents\n', args, created);
   await writeText(root, 'reference/external/README.md', '# External References\n', args, created);
   await writeText(root, 'reference/notes/README.md', '# Reference Notes\n', args, created);
-  await writeText(root, 'src/README.md', '# Source Project\n', args, created);
+  await writeText(root, 'src/README.md', [
+    '# Source Project',
+    '',
+    'Place the source project under this directory.',
+    '',
+    'For a single repository, clone the target repository into `src/`, or alias an existing checkout to `src/`.',
+    '',
+    'For multiple repositories, clone them side by side under `src/`.',
+    '',
+    '```text',
+    'src/',
+    '  app-repository/',
+    '  api-repository/',
+    '  shared-library/',
+    '```',
+    '',
+  ].join('\n'), args, created);
 
   await writeText(root, 'AGENTS.md', [
     '# AGENTS.md',

@@ -223,7 +223,7 @@ Completion Report:
   実装 runtime を Claude Code / Codex / cc-sdd などへ差し替え可能にすること。
 
 低結合:
-  ChatLobby、実行 runtime、Spec Kit、cc-sdd のどれか一つに過度依存しないこと。
+  実行 runtime、Spec Kit、cc-sdd のどれか一つに過度依存しないこと。
 
 成果物隔離:
   成果物 project に ledger の運用痕跡を必要以上に混入させないこと。
@@ -244,8 +244,6 @@ ledger は次を目標にしない。
 - AGENTS.md / CLAUDE.md の代替そのものになること
 - MCP のような接続 protocol になること
 - GitHub Actions の代替 CI になること
-- ChatLobby の Frontdoor になること
-- ChatLobby の Workspace / Conversation 管理を持つこと
 - project のプロダクト方針を自動決定すること
 - 技術スタックや外部サービス費用を自動決裁すること
 - BMAD / Spec Kit / cc-sdd を全部丸ごと導入して混在させること

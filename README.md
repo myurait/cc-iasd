@@ -121,6 +121,21 @@ src/
   README.md
 ```
 
+## `src/` Usage
+
+Place the source project under `src/`.
+
+For a single repository, clone the target repository into `src/`, or alias an existing checkout to `src/`.
+
+For multiple repositories, clone them side by side under `src/`.
+
+```text
+src/
+  app-repository/
+  api-repository/
+  shared-library/
+```
+
 ## Current Status
 
 This repository is in early migration from `myurait/ledger-flow`.

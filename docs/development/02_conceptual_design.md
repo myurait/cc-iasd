@@ -200,8 +200,6 @@ Planning Lead の責務:
 - completion report の整理
 ```
 
-Planning Lead は ChatLobby の Frontdoor ではない。ChatLobby 側の入口機能は、ledger 内ロールではなく外部制約である。
-
 ### 5.2 Worker
 
 Worker は、task を実装する。
@@ -228,30 +226,7 @@ Reviewer の責務:
 
 ---
 
-## 6. ChatLobby との境界
-
-ChatLobby は、ユーザーの会話と workspace-aware chat shell を扱う。
-
-ledger は、開発 project-context の自律開発規律を扱う。
-
-```text
-ChatLobby から ledger へ渡され得るもの:
-- ユーザーの作業依頼
-- 対象 project-context
-- 参照すべき会話要約
-- 人間判断結果
-
-ledger から ChatLobby へ返され得るもの:
-- Escalation Packet
-- Completion Report
-- status summary
-```
-
-ただし、ledger は ChatLobby との密結合を前提にしない。CLI またはローカル project-context 単体でも成立させる。
-
----
-
-## 7. 成果物 project の由来管理について
+## 6. 成果物 project の由来管理について
 
 ledger は、成果物 project が新規開発なのか、既存 repository の解析なのか、別 repository から移植したものなのかを一律に規定しない。
 

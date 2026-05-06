@@ -121,6 +121,21 @@ src/
   README.md
 ```
 
+## `src/` の扱い
+
+`src/` には成果物 project を配置します。
+
+単一のリポジトリを扱う場合は、対象リポジトリを `src/` に clone するか、既存 checkout を `src/` にエイリアスしてください。
+
+複数リポジトリを扱う場合は、`src/` 配下に横並びで clone してください。
+
+```text
+src/
+  app-repository/
+  api-repository/
+  shared-library/
+```
+
 ## 現在の状態
 
 このリポジトリは `myurait/ledger-flow` からの移行初期段階です。

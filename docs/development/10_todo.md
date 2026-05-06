@@ -22,6 +22,7 @@ TODO:
 - plugin / adapter 設定を runtime/ に接続する
 - profile update / migration の方式を実装する
 - source provenance adapter の扱いを定義する
+- src/ 配下に複数リポジトリを並立させる場合の project 定義を project-policies に記述する
 ```
 
 ---
@@ -46,7 +47,6 @@ TODO:
 - escalation report の scope ref 形式を固定する
 - completion report の scope ref 形式を固定する
 - user decisions と cycle-local 軽微判断の分離形式を固定する
-- src/ の Git 管理方式を決める
 - reviewer findings の lifecycle を固定する
 ```
 
@@ -56,9 +56,7 @@ TODO:
 
 ```text
 TODO:
-- role 数を Planning Lead / Worker / Reviewer / Auditor から分割するか判断する
 - evidence の粒度が粗すぎるか細かすぎるか確認する
 - completion report が人間の後続判断に足りるか確認する
 - implementation plugin として cc-sdd 的な実装ループが適するか確認する
-- ChatLobby 連携をどの深度で扱うか判断する
 ```

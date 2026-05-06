@@ -57,10 +57,6 @@ Planning Lead の責務:
 - completion report の整理
 ```
 
-Planning Lead は ChatLobby の Frontdoor ではない。Frontdoor は ChatLobby 側の入口であり、ledger には非常駐ユーザー制約として現れる。
-
----
-
 ## 4. Planning Lead ができること
 
 ```text
@@ -137,7 +133,7 @@ Planning Lead cannot:
 - 既存要求や user decision と矛盾した
 - 大きな手戻りの可能性が高い
 - review / audit で重大な未解決リスクが残った
-- 成果物 project の root / repository 方針が不明で継続不能になった
+- 成果物 project の root が不明で継続不能になった
 ```
 
 停止時は、単に質問を返さず、Escalation Packet を生成する。

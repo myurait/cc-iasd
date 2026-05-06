@@ -154,7 +154,7 @@ ops/scopes/features/
 
 feature は、ideal と roadmap の間に置く planning layer である。
 
-ChatLobby の旧 ledger 運用では backlog が早期に肥大化した。そのため、feature は単一 backlog に閉じず、必要に応じて epic / supporting の区分を metadata で持たせる。
+旧 ledger 運用では backlog が早期に肥大化した。そのため、feature は単一 backlog に閉じず、必要に応じて epic / supporting の区分を metadata で持たせる。
 
 ### 6.2 roadmaps/
 
@@ -348,7 +348,7 @@ reference/
   notes/
 ```
 
-ChatLobby 運用下で発生した historical documents、外部資料、調査メモ、移行資料は `reference/` に置く。
+historical documents、外部資料、調査メモ、移行資料は `reference/` に置く。
 
 `reference/` にある資料は直接の実装判断正本ではない。必要な内容は `product/`、`ops/`、`rules/` に昇格する。
 
