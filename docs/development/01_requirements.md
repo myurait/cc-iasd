@@ -1,7 +1,7 @@
 # 01. ledger 要件定義
 
 作成日: 2026-05-04  
-状態: 統合整理版 v0.1
+状態: 統合整理版 v0.2
 
 ---
 
@@ -60,7 +60,7 @@ AI 開発チームは、roadmap 全体を自由に変更しない。
 
 ```text
 AI 開発チームが行えること:
-- 承認済み milestone 内の task 分解
+- 承認済み cycle scope 内の task 分解
 - task の順序変更
 - task-local な実装判断
 - review / audit に基づく bounded remediation
@@ -83,6 +83,7 @@ project-context/
   runtime/
   rules/
   user/
+  product/
   ops/
   src/  ← 成果物 project
 ```
@@ -100,13 +101,13 @@ ledger は以下を初期化できること:
 - runtime/
 - rules/
 - user/
+- product/
+- product/ideal/
+- product/specs/
 - ops/
-- ops/ideal/
-- ops/features/
-- ops/roadmaps/
-- ops/specs/
-- ops/milestones/
-- ops/logs/
+- ops/scopes/
+- ops/cycles/
+- ops/evidence/
 - src/
 - profile / lock / framework version
 - 最小テンプレート
@@ -135,20 +136,21 @@ ledger は、成果物 project を `src/` に隔離する。
 必要な制御:
 - 実装対象 root は src/
 - build / test / lint は src/ 内で実行
-- spec / evidence / escalation は ops/ 側に保持
+- spec は product/ 側に保持
+- cycle / evidence / report は ops/ 側に保持
 - coding agent に渡す root を明示
 ```
 
-### 3.4 milestone 自走
+### 3.4 cycle 自走
 
-ledger は、milestone 単位または bounded scope 単位で自走を開始できる。
+ledger は、spec / task / milestone などの bounded scope に対して cycle 単位で自走を開始できる。
 
 ```text
 必要な定義:
 - 自走開始条件
 - 自走継続条件
 - 停止条件
-- milestone 内変更可能範囲
+- cycle 内変更可能範囲
 - roadmap 変更禁止条件
 ```
 
@@ -175,17 +177,19 @@ Escalation Packet に含めるもの:
 
 ### 3.6 Evidence Bridge
 
-ledger は、全情報を独自ログとして複製しない。正本成果物への参照を集め、後から判断を追跡できる索引を作る。
+ledger は、全情報を独自ログや横断 index として複製しない。product / scope / cycle / evidence の artifact を参照で結び、後から判断を追跡できる構造を作る。
 
 ```text
 Evidence Bridge:
 - spec / plan / tasks への参照
-- task 実行結果への参照
+- cycle state への参照
+- log への参照
 - review 結果への参照
-- ADR への参照
 - escalation packet への参照
 - completion report への参照
 ```
+
+`evidence-index.md` は作らない。横断 view が必要な場合は CLI が生成し、正本化しない。
 
 ### 3.7 Completion Report
 
@@ -193,11 +197,11 @@ milestone 完了時には Completion Report を生成する。
 
 ```text
 Completion Report:
-- 対象 milestone
+- 対象 scope
 - 実装した内容
 - 変更した構成
 - 実施した test / lint / build
-- ops/milestones/<id>/reviews/ に置かれた review / audit 結果
+- ops/evidence/reviews/ に置かれた review / audit 結果
 - AI が軽微判断した事項
 - 残リスク
 - 未完了事項
@@ -258,12 +262,13 @@ ledger MVP が成立している状態は次である。
 成立条件:
 - 新規 project-context を作成できる
 - src/ に成果物 project を隔離できる
-- ideal / features / roadmap を開発運営上の正本として扱える
+- ideal / spec を product 正本として扱える
+- features / roadmap / milestone を scope artifact として扱える
 - spec / plan / tasks を正本として扱える
-- logs は global に、reviews は milestone 配下に記録できる
-- milestone 自走範囲を明示できる
+- logs / reviews / reports を evidence layer に記録できる
+- cycle 自走範囲を明示できる
 - 実装 runtime に渡す作業単位を定義できる
 - 停止時に Escalation Packet を生成できる
 - 完了時に Completion Report を生成できる
-- Evidence Index から作業・判断・レビューを追跡できる
+- artifact 間参照から作業・判断・レビューを追跡できる
 ```

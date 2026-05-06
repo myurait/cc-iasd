@@ -1,7 +1,7 @@
 # 07. 既存フレームワーク統合方針
 
 作成日: 2026-05-04  
-状態: 統合整理版 v0.1
+状態: 統合整理版 v0.2
 
 ---
 
@@ -155,17 +155,18 @@ ledger が担当する:
 
 | 領域 | 正本 | ledger の役割 |
 |---|---|---|
-| requirements | Spec Kit | 初期化・参照 |
-| plan | Spec Kit | 初期化・参照 |
-| tasks | Spec Kit | milestone / plugin へ接続 |
-| ideal | ops/ideal/ | user/ 入力を正規化した開発判断の正本 |
-| features | ops/features/ | ideal と roadmap の間の planning layer |
-| roadmap | ops/roadmaps/ | ideal から milestone への計画正本 |
+| requirements | Spec Kit | product/specs/ に配置・参照 |
+| plan | Spec Kit | product/specs/ に配置・参照 |
+| tasks | Spec Kit | cycle / plugin へ接続 |
+| ideal | product/ideal/ | user/ 入力を正規化した product 正本 |
+| features | ops/scopes/features/ | ideal と roadmap の間の scope layer |
+| roadmap | ops/scopes/roadmaps/ | ideal から milestone への計画 artifact |
 | implementation loop | cc-sdd または同等 plugin | 委譲・結果集約 |
 | role / SOP | rules/ + BMAD / MetaGPT 参照 | 最小定義 |
-| milestone autonomy | ledger | 固有定義 |
-| escalation | ledger | 固有定義 |
-| evidence index | ops/evidence-index.md | 各正本への索引 |
+| milestone | ops/scopes/milestones/ | roadmap 上の到達点または計画境界 |
+| cycle autonomy | ops/cycles/ | 自走実行単位 |
+| escalation | ops/evidence/reports/ | 固有定義 |
+| logs / reviews / reports | ops/evidence/ | evidence layer |
 | user decisions | user/decisions.md | 参照、勝手に変更しない |
 | source project | src/ | 外側から操作 |
 
@@ -196,7 +197,7 @@ ledger が担当する:
 - cc-sdd を task implementation loop plugin とする
 - BMAD / MetaGPT は role / SOP の参照元に留める
 - AI Governance は evidence / accountability の参照元にする
-- ledger は project-context ownership、src isolation、milestone autonomy、escalation、evidence bridge に集中する
+- ledger は project-context ownership、src isolation、cycle autonomy、escalation、evidence bridge に集中する
 ```
 
 ---
@@ -207,11 +208,11 @@ MVP では、統合を浅くする。
 
 ```text
 MVP 統合:
-- Spec Kit 互換の ops/specs/ 構造
-- ops/features/ による feature / backlog 分離
+- Spec Kit 互換の product/specs/ 構造
+- ops/scopes/features/ による feature scope 管理
 - cc-sdd 互換の tasks 実行想定
 - role / SOP は rules/ 内の最小文書
-- governance は rules/ の制約と ops/ の evidence index / report に限定
+- governance は rules/ の制約と ops/evidence/ の logs / reviews / reports に限定
 ```
 
 実際の plugin 実行、複数 framework の自動起動、複雑な adapter は後段でよい。

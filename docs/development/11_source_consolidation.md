@@ -56,7 +56,7 @@ project-context full-stack agentic development framework である。
 - ledger は AI 実行 runtime ではない
 - ChatLobby Frontdoor は project 内ロールではない
 - 非常駐ユーザー前提
-- Planning Lead は milestone 内で裁量を持つ
+- Planning Lead は承認済み cycle scope 内で裁量を持つ
 - Planning Lead は roadmap を勝手に変更できない
 - 自走開始 / 継続 / 停止条件が必要
 - Escalation Packet が必要

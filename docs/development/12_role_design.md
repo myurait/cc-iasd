@@ -545,7 +545,7 @@ role の出力は自由文だけにしない。
 
 ```text
 Planning Lead:
-  milestone 内の進行責任を持つ
+  cycle scope 内の進行責任を持つ
 
 Worker:
   task を実装する
@@ -560,7 +560,7 @@ Specialist:
   特定観点の判断材料を提供する
 ```
 
-最終的に milestone 内で次に進めるか、停止するか、Escalation Packet を作るかは Planning Lead が判断する。
+最終的に cycle scope 内で次に進めるか、停止するか、Escalation Packet を作るかは Planning Lead が判断する。
 
 ---
 
@@ -769,7 +769,7 @@ Architect は、技術構成や境界設計を扱う。
 
 ```text
 起動条件:
-- milestone 内で設計判断が必要
+- cycle scope 内で設計判断が必要
 - 既存 architecture との整合確認が必要
 - src/ isolation や adapter 設計に影響する
 ```

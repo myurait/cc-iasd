@@ -1,15 +1,15 @@
 # 06. Artifact / Evidence Model
 
 作成日: 2026-05-04  
-状態: 統合整理版 v0.1
+状態: 統合整理版 v0.2
 
 ---
 
 ## 1. この文書の目的
 
-この文書は、ledger が扱う成果物と証跡のモデルを定義する。
+この文書は、ledger が扱う成果物、scope / transaction、証跡のモデルを定義する。
 
-ledger は、単なるログ収集機構ではない。開発作業、判断、review、escalation、completion を後から追跡できるようにする evidence bridge を持つ。
+ledger は、単なるログ収集機構ではない。一方で、すべての情報を横断索引へ集約する仕組みでもない。正本、scope、cycle、evidence の境界を分け、必要な参照だけを相互に持たせる。
 
 ---
 
@@ -19,13 +19,22 @@ ledger は、単なるログ収集機構ではない。開発作業、判断、r
 成果物分類:
 - Rule artifacts
 - User-authored artifacts
-- Ideal artifacts
-- Feature artifacts
-- Roadmap artifacts
-- Spec artifacts
-- Milestone artifacts
-- Ops evidence artifacts
+- Product canon artifacts
+- Scope artifacts
+- Cycle artifacts
+- Evidence artifacts
+- Reference artifacts
 - Source project artifacts
+```
+
+この分類では、`product/` と `ops/` を分ける。
+
+```text
+product:
+  ideal / spec などプロダクト正本
+
+ops:
+  scopes / cycles / evidence など運用上の transaction artifact
 ```
 
 ---
@@ -42,17 +51,9 @@ rules/
   checklists/
 ```
 
-### 3.1 policies/
+自走条件、停止条件、証跡要件、言語、テスト、role 責務、出力形式、review / audit 観点を定義する。
 
-自走条件、停止条件、証跡要件、言語、テストなどの制約を定義する。
-
-### 3.2 roles/
-
-Planning Lead / Worker / Reviewer / Auditor などの責務、権限、入力文脈、出力成果物を定義する。
-
-### 3.3 templates/ and checklists/
-
-Escalation Packet、Completion Report、Review Report、Role Handoff などの出力形式と検査観点を定義する。
+cycle 内で得た知見は、恒常化できる場合のみ `rules/` に昇格する。
 
 ---
 
@@ -69,254 +70,339 @@ user/
   scratch.md
 ```
 
-ledger はこの領域を勝手に上書きしない。
-
-```text
-product-intent.md:
-  プロダクト意図
-
-constraints.md:
-  技術・費用・運用・環境制約
-
-decisions.md:
-  人間が明示的に決めたこと
-
-preferences.md:
-  強制ではないが尊重すべき傾向
-
-scratch.md:
-  未整理メモ。正本ではない
-```
+`user/decisions.md` は人間判断の正本である。AI の軽微判断や運用上の観察を横断的な `ops/decisions.md` に集めない。
 
 ---
 
-## 5. Ideal artifacts
+## 5. Product canon artifacts
 
-Ideal artifacts は、ユーザー入力を開発判断に使える形へ正規化した正本である。
+Product canon artifacts は、実装判断の基準になる正本である。
 
 ```text
-ops/ideal/
-  ideal-experience.md
-  product-charter.md
+product/
+  ideal/
+  specs/
 ```
 
-`user/` が raw input と人間判断の領域であるのに対し、`ops/ideal/` は Planning Lead、Worker、Reviewer が参照する正規化済みの開発運営上の正本である。
+`product/` 以下で古くなった artifact は `outdated/` へ退避する。
+
+### 5.1 product/ideal/
+
+```text
+product/ideal/
+  <ideal-id>.md
+  outdated/
+    <ideal-id>.md
+```
+
+ideal は、ユーザー入力を開発判断に使える形へ正規化した正本である。
+
+`current.md` は置かない。`outdated/` に入っていない ideal が現行参照対象である。ideal はプロジェクト状況や外部環境によって変わるため、旧化できる必要がある。
+
+### 5.2 product/specs/
+
+```text
+product/specs/
+  <spec-id>/
+    requirements.md
+    plan.md
+    tasks.md
+  outdated/
+    <spec-id>/
+      requirements.md
+      plan.md
+      tasks.md
+```
+
+spec は、`requirements / plan / tasks` の束として正本性を持つ。旧化は原則として spec 単位で行う。
+
+spec ごと outdated にする代表例は次である。
+
+```text
+- requirements が大きく変わり、旧 plan / tasks が意味を失った
+- plan が採用技術や実装方針変更で無効になった
+- tasks の分解単位が全面的に再作成された
+- roadmap 変更により spec 自体が実施対象から外れた
+- 実装済み spec を historical artifact として残す
+```
+
+軽微な修正は同じ spec 内で更新してよい。requirements、plan、tasks の対応関係が壊れる場合は、spec ごと `product/specs/outdated/<spec-id>/` に移す。
 
 ---
 
-## 6. Feature artifacts
+## 6. Scope artifacts
 
-Feature artifacts は、ideal と roadmap の間に置く planning layer である。
+Scope artifacts は、何を、どの範囲で、どの順序または到達点として扱うかを定義する。
 
 ```text
-ops/features/
-  index.md
-  backlog.md
-  epics/
-  supporting/
+ops/scopes/
+  features/
+  roadmaps/
+  milestones/
 ```
 
-### 6.1 index.md
+`ops/scopes/` 以下で古くなった artifact は `archived/` へ退避する。`active/` は置かない。`archived/` に入っていないものが通常参照対象である。
 
-ideal pillar と epics / supporting features の対応を示す。
-
-### 6.2 backlog.md
-
-active roadmap 外の request、debt、将来構想を deferred request ledger として保持する。単体 backlog は早期に肥大化するため、MVP から `epics/` と `supporting/` への分離を前提にする。
-
-### 6.3 epics/
-
-ideal pillar に紐づく大きな機能領域を置く。
-
-### 6.4 supporting/
-
-roadmap 候補や blocker 解消に使う具体寄りの feature を置く。
-
----
-
-## 7. Roadmap artifacts
-
-Roadmap artifacts は、ideal をどの順序で実現へ近づけるかを定義する計画正本である。
+### 6.1 features/
 
 ```text
-ops/roadmaps/
+ops/scopes/features/
+  <feature-id>.md
+  archived/
+    <feature-id>.md
+```
+
+feature は、ideal と roadmap の間に置く planning layer である。
+
+ChatLobby の旧 ledger 運用では backlog が早期に肥大化した。そのため、feature は単一 backlog に閉じず、必要に応じて epic / supporting の区分を metadata で持たせる。
+
+### 6.2 roadmaps/
+
+```text
+ops/scopes/roadmaps/
   <roadmap-id>.md
+  archived/
+    <roadmap-id>.md
 ```
 
-roadmap は feature layer を入力にして作る。milestone は roadmap の一部を実行可能な自走単位として切り出したものであり、AI 開発チームが roadmap の目的を勝手に変更してはならない。
+roadmap は、ideal / feature を入力にして実現順序を定義する scope artifact である。roadmap 自体を AI が勝手に目的変更してはならない。
+
+### 6.3 milestones/
+
+```text
+ops/scopes/milestones/
+  <milestone-id>.md
+  archived/
+    <milestone-id>.md
+```
+
+milestone は、roadmap 上の到達点または計画境界である。
+
+milestone は実行証跡の入れ物ではない。実行状態、handoff、実行中の知見は `ops/cycles/` に置く。review 本体も milestone には内包せず、`ops/evidence/reviews/` の review ID または path を参照する。
 
 ---
 
-## 8. Spec artifacts
+## 7. Cycle artifacts
 
-Spec artifacts は、Spec Kit を正本とする。
+Cycle artifacts は、AI 自走の実行単位である。
 
 ```text
-ops/specs/<spec-id>/
-  requirements.md
-  plan.md
-  tasks.md
+ops/cycles/
+  cycle_<timestamp>_<scope>/
+    state.md
+    handoff.md
+    knowledge.md
+  archived/
+    cycle_<timestamp>_<scope>/
+      state.md
+      handoff.md
+      knowledge.md
 ```
 
-### 8.1 requirements.md
+Kiro / cc-sdd 的には、実装進行の中心は spec / task である。cycle は、それらを cc-iasd の project-context から安全に実行 runtime へ渡し、状態を追跡する transaction artifact である。
 
-ユーザー価値、要件、制約を定義する。
+### 7.1 state.md
 
-### 8.2 plan.md
+```text
+state.md:
+- Cycle ID
+- Status: running / completed / aborted / escalated / blocked
+- Started At
+- Ended At
+- Related Ideal
+- Related Feature
+- Related Roadmap
+- Related Milestone
+- Related Spec
+- Related Tasks
+- Related Logs
+- Related Reviews
+- Related Reports
+- Open Items
+```
 
-設計方針、実装計画、依存関係を定義する。
+`aborted/` directory は作らない。中断や失敗は `state.md` の status で表現する。
 
-### 8.3 tasks.md
+### 7.2 handoff.md
 
-実装 runtime に渡せる作業単位を定義する。
+```text
+handoff.md:
+- Scope
+- Source Root
+- Linked Product Artifacts
+- Linked Scope Artifacts
+- Constraints
+- Expected Output
+- Evidence To Record
+```
 
-ledger はこれらを複製しない。milestone / evidence / escalation から参照する。
+handoff は、Worker / runtime に渡す実行入力 packet である。milestone の恒久文書ではなく、cycle-local runtime context として扱う。
+
+### 7.3 knowledge.md
+
+```text
+knowledge.md:
+- cycle 中に判明した注意点
+- 次の worker / reviewer に渡す観察
+- spec / tasks にまだ反映していない局所知識
+- 後続 cycle に渡すべき前提
+```
+
+`knowledge.md` は global knowledge ではない。cycle-local な一時知識である。
+
+永続化先は次のように分ける。
+
+```text
+恒常ルール:
+  rules/
+
+product 正本に影響するもの:
+  product/ideal/ または product/specs/
+
+実行事実:
+  ops/evidence/logs/
+
+検査結果:
+  ops/evidence/reviews/
+
+参照資料:
+  reference/
+```
 
 ---
 
-## 9. Milestone artifacts
+## 8. Evidence artifacts
 
-milestone ごとに状態と証跡を管理する。
-
-```text
-ops/milestones/<milestone-id>/
-  status.md
-  evidence.md
-  planning-package.md
-  reviews/
-    review_<timestamp>_<scope>.md
-  escalation.md
-  completion-report.md
-```
-
-### 9.1 status.md
+Evidence artifacts は、発生した事実、検査、報告を記録する。
 
 ```text
-status.md:
-- milestone id
-- linked spec
-- linked tasks
-- current status
-- active blocker
-- last update
-```
-
-### 9.2 evidence.md
-
-```text
-evidence.md:
-- 実行 task
-- 実装結果
-- test / lint / build 結果
-- review 結果
-- audit finding
-- ADR / decision references
-- escalation references
-```
-
-### 9.3 planning-package.md
-
-milestone 固有の補助文書である。正本 plan は原則として `ops/specs/<spec-id>/plan.md` に置く。`planning-package.md` は、milestone の scope、pilot 方針、validation scenario、未解決判断、spec plan への参照をまとめる。
-
-### 9.4 reviews/
-
-milestone 完了判定に必要な review evidence を置く。review は原則として `ops/milestones/<milestone-id>/reviews/` に置き、global `ops/reviews/` は作らない。
-
-milestone に紐づかない review は `ops/milestones/project-context/reviews/` に置く。
-
-### 9.5 escalation.md
-
-milestone 内で発生した Escalation Packet を記録する。
-
-### 9.6 completion-report.md
-
-milestone 完了時の報告である。
-
----
-
-## 10. Ops evidence artifacts
-
-ops 直下には、milestone をまたいで参照する証跡索引と判断履歴を置く。
-
-```text
-ops/
+ops/evidence/
   logs/
-  decisions.md
-  evidence-index.md
-  knowledge.md
+  reviews/
+  reports/
 ```
 
-`ops/logs/` は project-context 全体の時系列作業台帳である。milestone をまたぐ作業や project-context 初期化も記録するため global に置く。
+`ops/evidence/` 以下で古くなった artifact は `archived/` へ退避する。`active/` は置かない。
 
-`ops/decisions.md` は AI 開発チームと project-context 運営上の判断履歴であり、`user/decisions.md` の人間判断とは分ける。
+### 8.1 logs/
 
-`ops/evidence-index.md` は、spec、task、review、escalation、completion report への索引である。
+```text
+ops/evidence/logs/
+  log_<timestamp>_<type>.md
+  archived/
+    log_<timestamp>_<type>.md
+```
 
-`ops/knowledge.md` は、再利用可能な教訓を一時的に蓄積する領域である。
+logs は global chronological ledger である。
+
+`current.md` は置かない。最新状態は log の写しではなく、cycle の `state.md` と scope / product artifact の参照で判断する。
+
+### 8.2 reviews/
+
+```text
+ops/evidence/reviews/
+  review_<timestamp>_<scope>.md
+  archived/
+    review_<timestamp>_<scope>.md
+```
+
+review は scope 横断の evidence である。
+
+review scope は次を取り得る。
+
+```text
+- spec
+- task
+- cycle
+- milestone
+- roadmap
+- rules
+- project-context
+```
+
+review は `milestones/` 以下に固定しない。scope 側の artifact は review ID または path を参照する。
+
+### 8.3 reports/
+
+```text
+ops/evidence/reports/
+  report_<timestamp>_<scope>.md
+  archived/
+    report_<timestamp>_<scope>.md
+```
+
+reports は、人間に返す構造化報告である。completion report、escalation packet、progress report などを含む。
+
+report は正本の複製ではなく、product / scope / cycle / evidence への参照と、人間判断に必要な要約を持つ。
 
 ---
 
-## 11. Source project artifacts
+## 9. Reference artifacts
 
-`src/` 以下は成果物 project の領域である。
+Reference artifacts は、正本ではない補助資料である。
 
 ```text
-src/:
-- source code
-- tests
-- dependency files
-- build config
-- runtime config
+reference/
+  INDEX.md
+  historical-documents/
+  external/
+  notes/
 ```
 
-ledger は `src/` の中身を project 固有の事情に任せる。ただし、実装 runtime に `src/` が成果物 root であることを明示する。
+ChatLobby 運用下で発生した historical documents、外部資料、調査メモ、移行資料は `reference/` に置く。
+
+`reference/` にある資料は直接の実装判断正本ではない。必要な内容は `product/`、`ops/`、`rules/` に昇格する。
 
 ---
 
-## 12. Evidence Bridge
+## 10. Evidence Bridge
 
-Evidence Bridge は、各成果物への索引である。
+Evidence Bridge は、単一の `evidence-index.md` ではない。
 
-```text
-Evidence Bridge の目的:
-- 作業内容を後から追跡する
-- 軽微判断の根拠を残す
-- review / audit の結果を参照する
-- escalation 判断の背景を示す
-- completion report の裏付けを提供する
-```
-
-Evidence Bridge は、すべてのログを保存する巨大ログではない。
+cc-iasd における Evidence Bridge は、以下の相互参照で成立する。
 
 ```text
-Evidence Bridge が持つもの:
-- 参照
-- 要約
-- 判断理由
-- 状態
-- 未解決 / 解決済みの区別
+product/specs/<spec-id>/
+  requirements / plan / tasks
 
-Evidence Bridge が持たないもの:
-- 全 chat transcript
-- 全 agent token log
-- 全 diff の複製
-- すべての runtime event
+ops/scopes/<scope-kind>/<scope-id>.md
+  related product / cycles / reviews / reports
+
+ops/cycles/<cycle-id>/state.md
+  related product / scopes / logs / reviews / reports
+
+ops/evidence/logs/
+  event facts
+
+ops/evidence/reviews/
+  review facts and findings
+
+ops/evidence/reports/
+  human-facing summaries
 ```
+
+`evidence-index.md` は作らない。横断索引を正本化すると、証跡全体を要約する巨大文書になりやすく、AI に渡す context を肥大化させるためである。
+
+必要な横断 view は CLI が生成する。生成 view は正本ではない。
 
 ---
 
-## 13. Escalation Packet テンプレート
+## 11. Escalation Packet テンプレート
 
 ```markdown
-# Escalation Packet: <id>
+# Escalation Packet: <scope-id>
 
 ## 1. 停止理由
 
 ## 2. 対象
 
-- spec:
+- ideal:
+- feature:
+- roadmap:
 - milestone:
+- spec:
 - tasks:
+- cycle:
 
 ## 3. ここまでに実施したこと
 
@@ -349,12 +435,12 @@ Evidence Bridge が持たないもの:
 
 ---
 
-## 14. Completion Report テンプレート
+## 12. Completion Report テンプレート
 
 ```markdown
-# Completion Report: <milestone-id>
+# Completion Report: <scope-id>
 
-## 1. 対象 milestone
+## 1. 対象 scope
 
 ## 2. 実装した内容
 
@@ -381,17 +467,18 @@ Evidence Bridge が持たないもの:
 
 ---
 
-## 15. no silent overwrite
+## 13. no silent overwrite
 
 ledger は、過去の判断や証跡を黙って上書きしない。
 
 ```text
 原則:
-- 判断は追記する
-- 変更理由を残す
-- 古い判断を消す場合は無効化理由を残す
+- product 正本が旧化したら product/*/outdated/ に退避する
+- ops artifact が古くなったら ops/**/archived/ に退避する
+- scope / cycle / evidence の各 artifact は関連 artifact を参照で結ぶ
 - review finding は resolved / unresolved / deferred を区別する
-- milestone 内の方針変更は evidence に残す
+- cycle の中断や失敗は directory ではなく state で表現する
+- decisions / knowledge を ops 直下の横断ファイルに集約しない
 ```
 
-MVP では、完全な immutable log ではなく、Markdown 上の追記規律として定義すればよい。
+MVP では、完全な immutable log ではなく、Markdown 上の追記・退避規律として定義すればよい。

@@ -1,7 +1,7 @@
 # 00. ledger 開発ドキュメント索引
 
 作成日: 2026-05-04  
-状態: 統合整理版 v0.1
+状態: 統合整理版 v0.2
 
 ---
 
@@ -144,13 +144,14 @@ ledger は最初から完全な multi-agent 開発 OS として作らない。
 ```text
 MVP:
 - project-context を初期化できる
-- ideal / features / roadmap を開発運営上の正本として扱える
-- Spec Kit 由来の spec / plan / tasks を正本として扱える
+- product/ideal/ を product 正本として扱える
+- product/specs/ で Spec Kit 由来の spec / plan / tasks を正本として扱える
+- ops/scopes/ で features / roadmaps / milestones を扱える
+- ops/cycles/ で自走実行単位を扱える
 - 成果物 project を src/ に隔離できる
-- milestone の自走境界を文書で定義できる
 - Escalation Packet を生成できる
 - Completion Report を生成できる
-- Evidence Index で成果物と判断を追跡できる
+- ops/evidence/ の logs / reviews / reports から成果物と判断を追跡できる
 ```
 
 初期から自動化しすぎない。最初は、コマンド・テンプレート・運用規律を中心に構成し、実行 runtime や plugin は差し替え可能な前提に留める。

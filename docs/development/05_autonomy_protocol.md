@@ -1,7 +1,7 @@
 # 05. Autonomy Protocol
 
 作成日: 2026-05-04  
-状態: 統合整理版 v0.1
+状態: 統合整理版 v0.2
 
 ---
 
@@ -22,20 +22,23 @@ scope を越える判断では停止し、
 
 ## 2. 自走単位
 
-標準的な自走単位は milestone である。
+標準的な自走実行単位は cycle である。
 
 ```text
 標準:
-- milestone
+- cycle
 
-例外:
+cycle が参照できる scope:
+- milestone
+- roadmap slice
+- feature
 - task set
 - single task
 - bugfix scope
 - Planning Lead が安全と判断した bounded scope
 ```
 
-自走単位を task に固定すると自走性が弱い。roadmap に広げると権限が大きすぎる。ledger では milestone を標準としつつ、bounded scope を許容する。
+自走単位を task に固定すると自走性が弱い。roadmap 全体に広げると権限が大きすぎる。ledger では cycle を標準の実行単位とし、cycle が milestone や task set などの bounded scope を参照する。
 
 ---
 
@@ -45,7 +48,7 @@ Planning Lead は project-context 内の開発チームリーダーである。
 
 ```text
 Planning Lead の責務:
-- milestone 内の進行管理
+- cycle 内の進行管理
 - task breakdown の調整
 - Worker / Reviewer への割当
 - 実装結果を踏まえた局所計画変更
@@ -62,14 +65,14 @@ Planning Lead は ChatLobby の Frontdoor ではない。Frontdoor は ChatLobby
 
 ```text
 Planning Lead can:
-- milestone 内の task を分割する
-- milestone 内の task を統合する
-- milestone 内の作業順序を変更する
-- milestone-local な implementation plan を更新する
+- cycle 内の task を分割する
+- cycle 内の task を統合する
+- cycle 内の作業順序を変更する
+- cycle-local な handoff / knowledge を更新する
 - アプリケーション開発チーム視点で決定可能な軽微判断を行う
 - Worker / Reviewer の再実行を指示する
 - review 結果に基づく bounded remediation を行う
-- milestone 内で安全と判断できる範囲を自走させる
+- cycle 内で安全と判断できる範囲を自走させる
 ```
 
 ---
@@ -83,7 +86,7 @@ Planning Lead cannot:
 - milestone の目的を変更する
 - 技術 stack を大きく変更する
 - infrastructure / cost / security decision を勝手に行う
-- milestone scope を黙って拡大する
+- cycle scope を黙って拡大する
 - ユーザー価値判断が必要な仕様判断を代行する
 - 既存 user decision を黙って上書きする
 ```
@@ -94,7 +97,7 @@ Planning Lead cannot:
 
 ```text
 自走開始条件:
-- 対象 milestone または bounded scope が明示されている
+- 対象 cycle と bounded scope が明示されている
 - 対象 spec / tasks が存在する
 - 成果物 root が src/ として解決できる
 - 実行 runtime に渡す作業内容が明確である
@@ -108,7 +111,7 @@ Planning Lead cannot:
 
 ```text
 自走継続条件:
-- 現在の作業が承認済み milestone 内にある
+- 現在の作業が承認済み cycle scope 内にある
 - roadmap 変更を伴わない
 - milestone 目的変更を伴わない
 - 技術スタック変更を伴わない
@@ -116,7 +119,7 @@ Planning Lead cannot:
 - ユーザー価値判断に依存しない
 - 手戻りが局所的である
 - review / audit により検出可能な形で進んでいる
-- 判断内容が evidence として追跡できる
+- 判断内容が cycle state / logs / reviews / reports から追跡できる
 ```
 
 ---
@@ -143,7 +146,7 @@ Planning Lead cannot:
 
 ## 9. 軽微判断の扱い
 
-軽微判断は、Planning Lead が milestone 内で行ってよい。ただし、証跡に残す。
+軽微判断は、Planning Lead が cycle 内で行ってよい。ただし、cycle state、cycle-local knowledge、logs、reviews、reports のいずれか適切な artifact に残す。
 
 ```text
 軽微判断の例:
