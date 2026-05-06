@@ -7,9 +7,9 @@
 
 ## 1. この文書の目的
 
-この文書は、ledger が扱う成果物、scope / transaction、証跡のモデルを定義する。
+この文書は、cc-iasd が扱う成果物、scope / transaction、証跡のモデルを定義する。
 
-ledger は、単なるログ収集機構ではない。一方で、すべての情報を横断索引へ集約する仕組みでもない。正本、scope、cycle、evidence の境界を分け、必要な参照だけを相互に持たせる。
+cc-iasd は、単なるログ収集機構ではない。一方で、すべての情報を横断索引へ集約する仕組みでもない。正本、scope、cycle、evidence の境界を分け、必要な参照だけを相互に持たせる。
 
 ---
 
@@ -170,7 +170,7 @@ feature backlog:
 - priority、blocker、design constraints、target destination を持つ
 ```
 
-旧 ledger 運用では backlog が早期に肥大化した。そのため、backlog は feature scope に閉じ、必要に応じて epic / supporting の区分を metadata で持たせる。
+backlog は早期に肥大化しやすい。そのため、backlog は feature scope に閉じ、必要に応じて epic / supporting の区分を metadata で持たせる。
 
 ### 6.2 roadmaps/
 
@@ -336,7 +336,7 @@ ops/evidence/logs/
     log_<timestamp>_<type>.md
 ```
 
-logs は global chronological ledger である。
+logs は global chronological cc-iasd である。
 
 最新状態は log の写しではなく、cycle の `state.md` と scope / product artifact の参照で判断する。
 
@@ -392,7 +392,7 @@ reference/
   notes/
 ```
 
-historical documents、外部資料、調査メモ、移行資料は `reference/` に置く。
+historical documents、外部資料、調査メモは `reference/` に置く。
 
 `reference/` にある資料は直接の実装判断正本ではない。必要な内容は `product/`、`ops/`、`rules/` に昇格する。
 
@@ -512,7 +512,7 @@ ops/evidence/reports/
 
 ## 13. no silent overwrite
 
-ledger は、過去の判断や証跡を黙って上書きしない。
+cc-iasd は、過去の判断や証跡を黙って上書きしない。
 
 ```text
 原則:

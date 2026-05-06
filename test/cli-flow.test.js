@@ -95,13 +95,13 @@ test('artifact commands write to the new structure and keep doctor green', async
   }
 });
 
-test('doctor rejects legacy ledger paths', async () => {
+test('doctor rejects forbidden paths', async () => {
   const root = await createContext();
   try {
     await mkdir(path.join(root, 'ops/logs'), { recursive: true });
     assert.throws(
       () => runCli(['doctor', root]),
-      /Forbidden legacy path exists: ops\/logs/,
+      /Forbidden path exists: ops\/logs/,
     );
   } finally {
     await cleanup(root);

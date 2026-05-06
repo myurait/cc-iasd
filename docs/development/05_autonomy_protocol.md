@@ -7,12 +7,12 @@
 
 ## 1. この文書の目的
 
-この文書は、ledger における自走範囲、停止条件、Planning Lead の権限境界を定義する。
+この文書は、cc-iasd における自走範囲、停止条件、Planning Lead の権限境界を定義する。
 
-ledger の中核価値は、AI に無制限の自律性を与えることではない。
+cc-iasd の中核価値は、AI に無制限の自律性を与えることではない。
 
 ```text
-ledger の自走思想:
+cc-iasd の自走思想:
 承認済み scope の内側では自走させ、
 scope を越える判断では停止し、
 後から読める packet として人間判断へ戻す。
@@ -38,7 +38,7 @@ cycle が参照できる scope:
 - Planning Lead が安全と判断した bounded scope
 ```
 
-自走単位を task に固定すると自走性が弱い。roadmap 全体に広げると権限が大きすぎる。ledger では cycle を標準の実行単位とし、cycle が milestone や task set などの bounded scope を参照する。
+自走単位を task に固定すると自走性が弱い。roadmap 全体に広げると権限が大きすぎる。cc-iasd では cycle を標準の実行単位とし、cycle が milestone や task set などの bounded scope を参照する。
 
 ---
 

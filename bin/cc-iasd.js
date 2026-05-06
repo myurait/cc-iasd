@@ -402,7 +402,6 @@ const requiredPaths = [
 ];
 
 const forbiddenPaths = [
-  '.ledger',
   'development-docs',
   'ops/ideal',
   'ops/specs',
@@ -417,10 +416,7 @@ const forbiddenPaths = [
 ];
 
 const forbiddenContent = [
-  '.ledger',
   'development-docs',
-  'ledger.py',
-  'ledger.yaml',
   'ops/ideal/',
   'ops/specs/',
   'ops/features/',
@@ -501,7 +497,7 @@ const doctor = async (args) => {
 
   for (const relPath of forbiddenPaths) {
     if (await exists(path.join(root, relPath))) {
-      issues.push(`Forbidden legacy path exists: ${relPath}`);
+      issues.push(`Forbidden path exists: ${relPath}`);
     }
   }
 
@@ -511,7 +507,7 @@ const doctor = async (args) => {
       const content = await readFile(path.join(root, file), 'utf8');
       for (const marker of forbiddenContent) {
         if (content.includes(marker)) {
-          issues.push(`Forbidden legacy reference "${marker}" in ${file}`);
+          issues.push(`Forbidden reference "${marker}" in ${file}`);
         }
       }
     }
@@ -1983,7 +1979,7 @@ const init = async (args) => {
   await writeText(root, 'ops/evidence/logs/README.md', [
     '# Logs',
     '',
-    'Global chronological work ledger. Archived logs move to `archived/`.',
+    'Global chronological work log. Archived logs move to `archived/`.',
     '',
   ].join('\n'), args, created);
   await writeText(root, 'ops/evidence/logs/archived/README.md', '# Archived Logs\n', args, created);

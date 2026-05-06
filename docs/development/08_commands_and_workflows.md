@@ -7,7 +7,7 @@
 
 ## 1. この文書の目的
 
-この文書は、ledger の主要 command と workflow を定義する。
+この文書は、cc-iasd の主要 command と workflow を定義する。
 
 command は完全な実行基盤ではない。Markdown scaffold、外部 framework 呼び出し、テンプレート生成、状態更新を行う薄い CLI として定義する。
 
@@ -521,7 +521,7 @@ project-context の整合性を検査する。
 - evidence references が壊れていないか
 ```
 
-doctor は、project-context scaffold の必須パス、旧 ledger 由来パスの混入、product / ops の archive 規則、artifact 間参照を検査する。
+doctor は、project-context scaffold の必須パス、禁止パスの混入、product / ops の archive 規則、artifact 間参照を検査する。
 
 ---
 

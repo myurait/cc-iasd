@@ -1,4 +1,4 @@
-# 00. ledger 開発ドキュメント索引
+# 00. cc-iasd 開発ドキュメント索引
 
 作成日: 2026-05-04  
 状態: 統合整理版 v0.2
@@ -7,46 +7,16 @@
 
 ## 1. このドキュメント群の目的
 
-このドキュメント群は、これまで散逸していた ledger 関連の設計メモ、再設計前提、再定義文書、過去会話上の判断を統合し、ledger の開発正本候補として再構成するためのものである。
+このドキュメント群は、cc-iasd の設計、責務境界、artifact model、command workflow、将来構想を整理する開発正本である。
 
-ledger については、初期に次のような見方が混在していた。
-
-```text
-旧整理:
-- project-local agentic SDLC harness
-- AI 開発チームの運営・証跡・エスカレーション規律
-```
-
-その後、次の再定義が正本候補として採用された。
+cc-iasd の定義は次である。
 
 ```text
-新整理:
-ledger
+cc-iasd
   = project-context full-stack agentic development framework
 ```
 
-この文書群では、新整理を正本に置く。旧整理は破棄するのではなく、次のように扱う。
-
-```text
-旧整理から採用するもの:
-- 非常駐ユーザー前提
-- milestone 単位の自走境界
-- Planning Lead の権限境界
-- Escalation Packet
-- Evidence / review / decision の証跡思想
-
-旧整理から修正するもの:
-- 成果物 project の内部に ledger を埋め込む見方
-- ledger が project-local 規約集であるという限定
-
-新整理で採用するもの:
-- ledger が project-context 全体を所有する
-- 成果物 project は src/ に隔離する
-- Spec Kit は spec-driven artifact vocabulary の参照元として扱う
-- 実行 runtime は task implementation loop の委譲先として扱う
-- BMAD / MetaGPT は role / SOP 参照元または optional plugin とする
-- ledger 固有価値は milestone 自走、escalation、evidence bridge、src isolation に集中する
-```
+cc-iasd は project-context 全体を所有し、成果物 project を `src/` に隔離し、Spec Kit を spec-driven artifact vocabulary の参照元として扱う。実行 runtime は task implementation loop の委譲先であり、cc-iasd の固有価値は milestone 自走、escalation、evidence bridge、src isolation に集中する。
 
 ---
 
@@ -54,13 +24,13 @@ ledger
 
 ```text
 00_index.md
-  全体索引、統合方針、旧設計と新設計の扱い
+  全体索引、統合方針、正本定義
 
 01_requirements.md
-  ledger の要件、理想体験、非目標、成立条件
+  cc-iasd の要件、理想体験、非目標、成立条件
 
 02_conceptual_design.md
-  ledger の概念設計、責務、境界、主要概念
+  cc-iasd の概念設計、責務、境界、主要概念
 
 03_project_context_architecture.md
   project-context 構造、src/ isolation、正本配置、ディレクトリ設計
@@ -85,19 +55,16 @@ ledger
 
 10_todo.md
   未実装項目、未決定事項、観察後に判断する事項
-
-11_source_consolidation.md
-  既存情報源・旧設計・過去判断の採用 / 修正 / 退避 / 除外整理
 ```
 
 ---
 
-## 3. ledger の最終的な正本定義
+## 3. cc-iasd の最終的な正本定義
 
-ledger は、次のように定義する。
+cc-iasd は、次のように定義する。
 
 ```text
-ledger は、
+cc-iasd は、
 Spec Kit の spec-driven artifact vocabulary を参照し、
 product/specs/ に cc-iasd-owned spec 正本を持ち、
 BMAD / MetaGPT 的な role / SOP 思想を参照し、
@@ -109,7 +76,7 @@ project-context full-stack agentic development framework である。
 短く表すと次である。
 
 ```text
-ledger
+cc-iasd
   = project-context full-stack agentic development framework
 ```
 
@@ -117,7 +84,7 @@ ledger
 
 ## 4. 開発順序の基本方針
 
-ledger は最初から完全な multi-agent 開発 OS として作らない。
+cc-iasd は最初から完全な multi-agent 開発 OS として作らない。
 
 初期実装では、次に絞る。
 

@@ -1,4 +1,4 @@
-# 09. ledger 将来構想
+# 09. cc-iasd 将来構想
 
 作成日: 2026-05-04  
 状態: 統合整理版 v0.1
@@ -7,7 +7,7 @@
 
 ## 1. この文書の位置づけ
 
-この文書は、初期実装には含めないが、ledger の将来構想として保持する内容を整理する。
+この文書は、初期実装には含めないが、cc-iasd の将来構想として保持する内容を整理する。
 
 ここに含まれるものは、初期実装の必須要件ではない。
 
@@ -15,7 +15,7 @@
 
 ## 2. 将来像
 
-ledger の将来像は、project-context を中心に複数の既存 framework と実行 runtime を統合する agentic development framework である。
+cc-iasd の将来像は、project-context を中心に複数の既存 framework と実行 runtime を統合する agentic development framework である。
 
 ```text
 将来像:
@@ -89,7 +89,7 @@ override は標準 rules を暗黙に上書きしない。project-context 内に
 
 ## 6. multi-runtime orchestration
 
-将来的には、複数 runtime の使い分けを ledger が制御する可能性がある。
+将来的には、複数 runtime の使い分けを cc-iasd が制御する可能性がある。
 
 ```text
 例:
@@ -101,7 +101,7 @@ override は標準 rules を暗黙に上書きしない。project-context 内に
 - reviewer model: independent review
 ```
 
-ただし、ledger は runtime そのものを実装しない。何を渡し、何を受け取り、何を evidence として残すかを定義する。
+ただし、cc-iasd は runtime そのものを実装しない。何を渡し、何を受け取り、何を evidence として残すかを定義する。
 
 ---
 
@@ -126,7 +126,7 @@ override は標準 rules を暗黙に上書きしない。project-context 内に
 
 ## 8. UI
 
-ledger 自体に UI を持つかは将来構想に留める。
+cc-iasd 自体に UI を持つかは将来構想に留める。
 
 可能性は次である。
 
@@ -142,7 +142,7 @@ C. IDE / editor extension
 
 ## 9. Profile update / migration
 
-project-context は作成時点の ledger profile を lock する。
+project-context は作成時点の cc-iasd profile を lock する。
 
 将来的には、標準 profile の更新を project-context へ適用する仕組みが必要になる。
 
@@ -178,7 +178,7 @@ knowledge promotion:
 
 ## 11. Source provenance support
 
-成果物 project の由来管理は project 固有であり、ledger が一律に定義しない。
+成果物 project の由来管理は project 固有であり、cc-iasd が一律に定義しない。
 
 将来的には、必要に応じて source provenance adapter を追加できる。
 
@@ -191,7 +191,7 @@ knowledge promotion:
 - generated prototype
 ```
 
-ただし、これは ledger core ではなく adapter / profile の領域で扱う。
+ただし、これは cc-iasd core ではなく adapter / profile の領域で扱う。
 
 ---
 

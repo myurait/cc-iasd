@@ -140,9 +140,7 @@ src/
 
 ## Current Status
 
-This repository is in early migration from `myurait/ledger-flow`.
-
-The current npm CLI creates and validates the new product / ops / reference structure, including feature, roadmap, spec, cycle, review, report, escalation, log, view, product outdate, and ops archive commands.
+The current npm CLI creates and validates the product / ops / reference structure, including feature, roadmap, spec, cycle, review, report, escalation, log, view, product outdate, and ops archive commands.
 
 ## License
 

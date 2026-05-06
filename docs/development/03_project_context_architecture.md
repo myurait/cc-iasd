@@ -7,7 +7,7 @@
 
 ## 1. 基本構造
 
-ledger の基本構造は次である。
+cc-iasd の基本構造は次である。
 
 ```text
 project-context/
@@ -20,7 +20,7 @@ project-context/
   src/
 ```
 
-`project-context` は ledger が所有する開発文脈である。`src/` は成果物 project の root である。
+`project-context` は cc-iasd が所有する開発文脈である。`src/` は成果物 project の root である。
 
 この構造では、次の境界を固定する。
 
@@ -173,7 +173,7 @@ project-context/
     tests/
 ```
 
-実際の `product/specs/` 構造は Spec Kit の生成物に合わせる。ledger は Spec Kit の構造を壊さない。
+実際の `product/specs/` 構造は Spec Kit の生成物に合わせる。cc-iasd は Spec Kit の構造を壊さない。
 
 ---
 
@@ -183,7 +183,7 @@ project-context/
 
 ```text
 runtime/ の責務:
-- ledger profile version
+- cc-iasd profile version
 - framework lock
 - plugin 定義
 - adapter 設定
@@ -237,7 +237,7 @@ user/
   scratch.md
 ```
 
-ledger はこの領域を勝手に上書きしない。AI が整理する場合も提案として扱い、人間判断を経て反映する。
+cc-iasd はこの領域を勝手に上書きしない。AI が整理する場合も提案として扱い、人間判断を経て反映する。
 
 `user/decisions.md` は人間判断の正本である。AI や開発運用上の軽微判断は、発生した cycle、review、report の文脈に閉じる。
 
@@ -392,7 +392,7 @@ evidence layer は、発生した事実、検査、報告を記録する。
 
 ```text
 logs:
-  global chronological ledger
+  global chronological cc-iasd
 
 reviews:
   scope 横断の review record
@@ -421,7 +421,7 @@ reference/
   notes/
 ```
 
-旧文書、外部資料、調査メモ、移行資料は `reference/` に置く。`reference/` の内容は、直接実装判断の正本にしない。必要な内容は `product/`、`ops/`、`rules/` の適切な場所へ昇格する。
+historical documents、外部資料、調査メモは `reference/` に置く。`reference/` の内容は、直接実装判断の正本にしない。必要な内容は `product/`、`ops/`、`rules/` の適切な場所へ昇格する。
 
 ---
 
@@ -439,7 +439,7 @@ src/ に置くもの:
 - runtime config
 ```
 
-ledger は `src/` 内の技術スタックを一律に規定しない。
+cc-iasd は `src/` 内の技術スタックを一律に規定しない。
 
 ---
 
