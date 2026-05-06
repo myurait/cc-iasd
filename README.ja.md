@@ -39,15 +39,15 @@ project-context root で npx から実行します。
 ```bash
 npx cc-iasd@latest init --doc-lang Japanese --dev-lang TypeScript
 npx cc-iasd@latest doctor
+npx cc-iasd@latest feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience"
+npx cc-iasd@latest roadmap add roadmap-a --summary "MVP roadmap" --goal "Ship the first usable flow"
+npx cc-iasd@latest spec add spec-a --summary "Define the first implementation slice"
 npx cc-iasd@latest run milestone mvp-001 --feature feature-a --roadmap roadmap-a --spec spec-a --tasks spec-a
+npx cc-iasd@latest review add mvp-001 --type light --summary "Review implementation result" --result "No blocking findings"
 npx cc-iasd@latest escalate mvp-001
 npx cc-iasd@latest report mvp-001
 npx cc-iasd@latest index evidence
 npx cc-iasd@latest log event --summary "Updated project context"
-npx cc-iasd@latest review add mvp-001 --type light --summary "Review implementation result" --result "No blocking findings"
-npx cc-iasd@latest feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience"
-npx cc-iasd@latest roadmap add roadmap-a --summary "MVP roadmap" --goal "Ship the first usable flow"
-npx cc-iasd@latest spec add spec-a --summary "Define the first implementation slice"
 ```
 
 このリポジトリからローカルに確認する場合は次です。
@@ -55,15 +55,15 @@ npx cc-iasd@latest spec add spec-a --summary "Define the first implementation sl
 ```bash
 node bin/cc-iasd.js init /tmp/my-project-context --doc-lang Japanese --dev-lang TypeScript
 node bin/cc-iasd.js doctor /tmp/my-project-context
+node bin/cc-iasd.js feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience" --root /tmp/my-project-context
+node bin/cc-iasd.js roadmap add roadmap-a --summary "MVP roadmap" --goal "Ship the first usable flow" --root /tmp/my-project-context
+node bin/cc-iasd.js spec add spec-a --summary "Define the first implementation slice" --root /tmp/my-project-context
 node bin/cc-iasd.js run milestone mvp-001 --feature feature-a --roadmap roadmap-a --spec spec-a --tasks spec-a --root /tmp/my-project-context
+node bin/cc-iasd.js review add mvp-001 --type light --summary "Review implementation result" --result "No blocking findings" --root /tmp/my-project-context
 node bin/cc-iasd.js escalate mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js report mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js index evidence --root /tmp/my-project-context
 node bin/cc-iasd.js log event --summary "Updated project context" --root /tmp/my-project-context
-node bin/cc-iasd.js review add mvp-001 --type light --summary "Review implementation result" --result "No blocking findings" --root /tmp/my-project-context
-node bin/cc-iasd.js feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience" --root /tmp/my-project-context
-node bin/cc-iasd.js roadmap add roadmap-a --summary "MVP roadmap" --goal "Ship the first usable flow" --root /tmp/my-project-context
-node bin/cc-iasd.js spec add spec-a --summary "Define the first implementation slice" --root /tmp/my-project-context
 ```
 
 ## `init` が作る構成
@@ -115,7 +115,7 @@ src/
 
 このリポジトリは `myurait/ledger-flow` からの移行初期段階です。
 
-現在の npm CLI は新しい product / ops 構造へ移行中です。まず project-context 初期化と構造検査を新構造に合わせ、その他の artifact command は次段で移行します。
+現在の npm CLI は、新しい product / ops / reference 構造の作成と検査に加え、feature、roadmap、spec、cycle、review、report、escalation、log、evidence view の各コマンドに対応しています。
 
 ## ライセンス
 

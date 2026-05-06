@@ -1,7 +1,8 @@
-# Implementation Handoff: {{milestoneId}}
+# Cycle Handoff: {{cycleId}}
 
 ## Scope
 
+Cycle: {{cycleId}}
 Milestone: {{milestoneId}}
 
 ## Source Root
@@ -24,7 +25,7 @@ src/
 
 - Code or project artifact changes
 - Test / lint / build results
-- Evidence summary for `evidence.md`
+- Evidence summary for `state.md`
 
 ## Evidence To Record
 

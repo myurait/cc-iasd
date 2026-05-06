@@ -1,8 +1,14 @@
-# Milestone Evidence: {{milestoneId}}
+# Cycle State: {{cycleId}}
 
-## Run Start
-
+- Cycle ID: {{cycleId}}
+- Milestone ID: {{milestoneId}}
+- Result: in-progress
+- Active Blocker: none recorded
 - Started At: {{startedAt}}
+- Last Update: {{startedAt}}
+
+## Scope Links
+
 - Linked Feature: TBD
 - Linked Roadmap: TBD
 - Linked Spec: TBD
@@ -17,7 +23,7 @@
 
 ## Review Evidence
 
-- Review Directory: `reviews/`
+- Review References: TBD
 - Review Result: TBD
 
 ## Remaining Risk

@@ -1,12 +1,11 @@
-# Milestone Status: {{milestoneId}}
+# Milestone: {{milestoneId}}
 
 - Milestone ID: {{milestoneId}}
-- Current Status: ready-for-handoff
+- Status: ready-for-cycle
 - Linked Feature: TBD
 - Linked Roadmap: TBD
 - Linked Spec: TBD
 - Linked Tasks: TBD
-- Active Blocker: none recorded
 - Last Update: {{updatedAt}}
 
 ## Scope

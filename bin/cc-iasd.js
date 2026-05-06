@@ -13,11 +13,11 @@ Usage:
   cc-iasd init [project-context-path] [options]
   cc-iasd doctor [project-context-path]
   cc-iasd run milestone <id> [--feature <ref>] [--roadmap <ref>] [--spec <ref>] [--tasks <ref>] [--root <project-context-path>]
-  cc-iasd escalate <id> [--root <project-context-path>]
-  cc-iasd report <id> [--root <project-context-path>]
+  cc-iasd escalate <scope-id> [--root <project-context-path>]
+  cc-iasd report <scope-id> [--root <project-context-path>]
   cc-iasd index evidence [--root <project-context-path>]
   cc-iasd log event --summary <text> [--type <type>] [--milestone <id>] [--evidence <path>] [--root <project-context-path>]
-  cc-iasd review add <milestone-id> --summary <text> --result <text> [--type light|full] [--root <project-context-path>]
+  cc-iasd review add <scope-id> --summary <text> --result <text> [--type light|full] [--root <project-context-path>]
   cc-iasd feature add <id> --summary <text> --pillar <name> [--kind epic|supporting] [--root <project-context-path>]
   cc-iasd roadmap add <id> --summary <text> --goal <text> [--root <project-context-path>]
   cc-iasd spec add <id> --summary <text> [--root <project-context-path>]
@@ -109,11 +109,11 @@ const parseArgs = (argv) => {
     parsed.eventType = 'light';
     parsed.runTarget = tokens.shift() ?? '';
     if (parsed.runTarget !== 'add') {
-      throw new Error('Usage: cc-iasd review add <milestone-id> --summary <text> --result <text>');
+      throw new Error('Usage: cc-iasd review add <scope-id> --summary <text> --result <text>');
     }
     parsed.milestoneId = tokens.shift() ?? '';
     if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
-      throw new Error('Usage: cc-iasd review add <milestone-id> --summary <text> --result <text>');
+      throw new Error('Usage: cc-iasd review add <scope-id> --summary <text> --result <text>');
     }
   } else if (parsed.command === 'feature') {
     parsed.runTarget = tokens.shift() ?? '';
@@ -697,8 +697,8 @@ const featureIndexTemplate = () => [
   '',
   '## Maintenance Notes',
   '',
-  '- Keep detailed backlog items in `ops/features/backlog.md`.',
-  '- Keep roadmap sequencing in `ops/roadmaps/`.',
+  '- Keep feature scopes in `ops/scopes/features/`.',
+  '- Keep roadmap scopes in `ops/scopes/roadmaps/`.',
   '',
 ].join('\n');
 
@@ -816,16 +816,15 @@ const specTasksTemplate = ({ specId, summary, now }) => [
   '',
 ].join('\n');
 
-const milestoneStatusTemplate = ({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
-  `# Milestone Status: ${milestoneId}`,
+const milestoneScopeTemplate = ({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
+  `# Milestone: ${milestoneId}`,
   '',
   `- Milestone ID: ${milestoneId}`,
-  '- Current Status: ready-for-handoff',
+  '- Status: ready-for-cycle',
   `- Linked Feature: ${linkedFeature || 'TBD'}`,
   `- Linked Roadmap: ${linkedRoadmap || 'TBD'}`,
   `- Linked Spec: ${linkedSpec || 'TBD'}`,
   `- Linked Tasks: ${linkedTasks || 'TBD'}`,
-  '- Active Blocker: none recorded',
   `- Last Update: ${now}`,
   '',
   '## Scope',
@@ -840,12 +839,18 @@ const milestoneStatusTemplate = ({ milestoneId, now, linkedFeature, linkedRoadma
   '',
 ].join('\n');
 
-const milestoneEvidenceTemplate = ({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
-  `# Milestone Evidence: ${milestoneId}`,
+const cycleStateTemplate = ({ cycleId, milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
+  `# Cycle State: ${cycleId}`,
   '',
-  '## Run Start',
-  '',
+  `- Cycle ID: ${cycleId}`,
+  `- Milestone ID: ${milestoneId}`,
+  '- Result: in-progress',
+  '- Active Blocker: none recorded',
   `- Started At: ${now}`,
+  `- Last Update: ${now}`,
+  '',
+  '## Scope Links',
+  '',
   `- Linked Feature: ${linkStatus('Linked Feature', linkedFeature)}`,
   `- Linked Roadmap: ${linkStatus('Linked Roadmap', linkedRoadmap)}`,
   `- Linked Spec: ${linkStatus('Linked Spec', linkedSpec)}`,
@@ -860,7 +865,7 @@ const milestoneEvidenceTemplate = ({ milestoneId, now, linkedFeature, linkedRoad
   '',
   '## Review Evidence',
   '',
-  '- Review Directory: `reviews/`',
+  '- Review References: TBD',
   '- Review Result: TBD',
   '',
   '## Remaining Risk',
@@ -869,11 +874,12 @@ const milestoneEvidenceTemplate = ({ milestoneId, now, linkedFeature, linkedRoad
   '',
 ].join('\n');
 
-const milestoneHandoffTemplate = ({ milestoneId, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
-  `# Implementation Handoff: ${milestoneId}`,
+const cycleHandoffTemplate = ({ cycleId, milestoneId, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
+  `# Cycle Handoff: ${cycleId}`,
   '',
   '## Scope',
   '',
+  `Cycle: ${cycleId}`,
   `Milestone: ${milestoneId}`,
   '',
   '## Source Root',
@@ -896,7 +902,7 @@ const milestoneHandoffTemplate = ({ milestoneId, linkedFeature, linkedRoadmap, l
   '',
   '- Code or project artifact changes',
   '- Test / lint / build results',
-  '- Evidence summary for `evidence.md`',
+  '- Evidence summary for `state.md`',
   '',
   '## Evidence To Record',
   '',
@@ -907,19 +913,41 @@ const milestoneHandoffTemplate = ({ milestoneId, linkedFeature, linkedRoadmap, l
   '',
 ].join('\n');
 
-const completionReportTemplate = ({ milestoneId, now, status, evidence, reviewFiles }) => [
-  `# Completion Report: ${milestoneId}`,
+const cycleKnowledgeTemplate = ({ cycleId, milestoneId, now }) => [
+  `# Cycle Knowledge: ${cycleId}`,
   '',
+  `- Cycle ID: ${cycleId}`,
   `- Milestone ID: ${milestoneId}`,
+  `- Created At: ${now}`,
+  '',
+  '## Local Lessons',
+  '',
+  '- None recorded.',
+  '',
+  '## Promotion Candidates',
+  '',
+  '- None recorded.',
+  '',
+].join('\n');
+
+const completionReportTemplate = ({ scopeId, now, milestoneScope, cycleStates, reviewFiles }) => [
+  `# Completion Report: ${scopeId}`,
+  '',
+  `- Scope ID: ${scopeId}`,
   `- Generated At: ${now}`,
   '',
-  '## Status Summary',
+  '## Milestone Scope Summary',
   '',
-  status.trim() || 'No status.md content found.',
+  milestoneScope.trim() || 'No milestone scope content found.',
   '',
-  '## Evidence Summary',
+  '## Cycle State Summary',
   '',
-  evidence.trim() || 'No evidence.md content found.',
+  ...(cycleStates.length ? cycleStates.flatMap((entry) => [
+    `### ${entry.path}`,
+    '',
+    entry.content.trim() || 'No state.md content found.',
+    '',
+  ]) : ['No cycle state files found.', '']),
   '',
   '## Review Evidence',
   '',
@@ -935,14 +963,14 @@ const completionReportTemplate = ({ milestoneId, now, status, evidence, reviewFi
   '',
 ].join('\n');
 
-const reviewRecordTemplate = ({ milestoneId, now, reviewType, summary, result }) => [
-  `# Review: ${milestoneId}`,
+const reviewRecordTemplate = ({ scopeId, now, reviewType, summary, result }) => [
+  `# Review: ${scopeId}`,
   '',
   `- Date: ${now}`,
   '- Reviewer: TBD',
   '- Base Commit: TBD',
   `- Scope: ${summary}`,
-  `- Milestone ID: ${milestoneId}`,
+  `- Scope ID: ${scopeId}`,
   `- Review Type: ${reviewType}`,
   `- Result: ${result}`,
   '- Trigger: manual',
@@ -976,10 +1004,10 @@ const reviewRecordTemplate = ({ milestoneId, now, reviewType, summary, result })
   '',
 ].join('\n');
 
-const escalationTemplate = ({ milestoneId, now, status, evidence, activeBlocker, linkedSpec, linkedTasks }) => [
-  `# Escalation Packet: ${milestoneId}`,
+const escalationTemplate = ({ scopeId, now, milestoneScope, cycleStates, activeBlocker, linkedSpec, linkedTasks }) => [
+  `# Escalation Packet: ${scopeId}`,
   '',
-  `- Milestone ID: ${milestoneId}`,
+  `- Scope ID: ${scopeId}`,
   `- Generated At: ${now}`,
   `- Active Blocker: ${activeBlocker || 'TBD'}`,
   `- Linked Spec: ${linkedSpec || 'TBD'}`,
@@ -991,11 +1019,16 @@ const escalationTemplate = ({ milestoneId, now, status, evidence, activeBlocker,
   '',
   '## Current State',
   '',
-  status.trim() || 'No status.md content found.',
+  milestoneScope.trim() || 'No milestone scope content found.',
   '',
   '## Evidence So Far',
   '',
-  evidence.trim() || 'No evidence.md content found.',
+  ...(cycleStates.length ? cycleStates.flatMap((entry) => [
+    `### ${entry.path}`,
+    '',
+    entry.content.trim() || 'No state.md content found.',
+    '',
+  ]) : ['No cycle state files found.', '']),
   '',
   '## Human Decision Required',
   '',
@@ -1026,24 +1059,25 @@ const escalationTemplate = ({ milestoneId, now, status, evidence, activeBlocker,
   '',
 ].join('\n');
 
-const evidenceIndexTemplate = ({ now, entries }) => [
-  '# Evidence Index',
+const evidenceViewTemplate = ({ now, entries }) => [
+  '# Evidence View',
   '',
   `- Generated At: ${now}`,
   '',
-  '## Milestone Evidence',
+  '## Evidence Artifacts',
   '',
   ...(entries.length ? entries.flatMap((entry) => [
-    `### ${entry.milestoneId}`,
+    `### ${entry.scopeId}`,
     '',
-    `- Status: ${entry.status || 'missing'}`,
-    `- Evidence: ${entry.evidence || 'missing'}`,
-    `- Escalation: ${entry.escalation || 'missing'}`,
-    `- Completion Report: ${entry.completionReport || 'missing'}`,
+    `- Milestone: ${entry.milestone || 'missing'}`,
+    '- Cycles:',
+    ...(entry.cycles.length ? entry.cycles.map((cycle) => `  - ${cycle}`) : ['  - none']),
+    '- Reports:',
+    ...(entry.reports.length ? entry.reports.map((report) => `  - ${report}`) : ['  - none']),
     '- Reviews:',
     ...(entry.reviews.length ? entry.reviews.map((review) => `  - ${review}`) : ['  - none']),
     '',
-  ]) : ['- No milestone evidence found.', '']),
+  ]) : ['- No evidence artifacts found.', '']),
 ].join('\n');
 
 const logEventTemplate = ({ now, eventType, summary, relatedMilestone, relatedEvidence }) => [
@@ -1061,10 +1095,49 @@ const logEventTemplate = ({ now, eventType, summary, relatedMilestone, relatedEv
   '',
 ].join('\n');
 
+const listCycleStateEntries = async (root, scopeId) => {
+  const cycleDirs = await listDirectories(root, 'ops/cycles');
+  const entries = [];
+  for (const cycleDir of cycleDirs) {
+    const statePath = `${cycleDir}/state.md`;
+    const content = await readOptionalText(root, statePath);
+    if (!content) continue;
+    if (extractField(content, 'Milestone ID') !== scopeId && !path.basename(cycleDir).endsWith(`_${scopeId}`)) {
+      continue;
+    }
+    entries.push({ path: statePath, content });
+  }
+  return entries;
+};
+
+const listReviewFilesForScope = async (root, scopeId) => {
+  const reviewFiles = await listMarkdownFiles(root, 'ops/evidence/reviews');
+  const matches = [];
+  for (const reviewFile of reviewFiles) {
+    const content = await readOptionalText(root, reviewFile);
+    if (extractField(content, 'Scope ID') === scopeId) {
+      matches.push(reviewFile);
+    }
+  }
+  return matches;
+};
+
+const listReportFilesForScope = async (root, scopeId) => {
+  const reportFiles = await listMarkdownFiles(root, 'ops/evidence/reports');
+  const matches = [];
+  for (const reportFile of reportFiles) {
+    const content = await readOptionalText(root, reportFile);
+    if (extractField(content, 'Scope ID') === scopeId || path.basename(reportFile).includes(`_${scopeId}.md`)) {
+      matches.push(reportFile);
+    }
+  }
+  return matches;
+};
+
 const writeLogEvent = async (root, { eventType, summary, relatedMilestone = '', relatedEvidence = '' }) => {
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
-  const relPath = `ops/logs/log_${timestampForFile(now)}_${slugify(eventType)}.md`;
+  const relPath = `ops/evidence/logs/log_${timestampForFile(now)}_${slugify(eventType)}.md`;
   await writeText(root, relPath, logEventTemplate({
     now,
     eventType,
@@ -1113,7 +1186,7 @@ const addFeature = async (args) => {
 
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
-  const relPath = `ops/features/${args.featureKind === 'epic' ? 'epics' : 'supporting'}/${args.featureId}.md`;
+  const relPath = `ops/scopes/features/${args.featureId}.md`;
   await writeText(root, relPath, featureFileTemplate({
     featureId: args.featureId,
     featureKind: args.featureKind,
@@ -1149,7 +1222,7 @@ const addRoadmap = async (args) => {
 
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
-  const relPath = `ops/roadmaps/${args.roadmapId}.md`;
+  const relPath = `ops/scopes/roadmaps/${args.roadmapId}.md`;
   await writeText(root, relPath, roadmapFileTemplate({
     roadmapId: args.roadmapId,
     summary: args.eventSummary,
@@ -1181,7 +1254,7 @@ const addSpec = async (args) => {
 
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
-  const specRoot = `ops/specs/${args.specId}`;
+  const specRoot = `product/specs/${args.specId}`;
   await writeText(root, `${specRoot}/requirements.md`, specRequirementsTemplate({
     specId: args.specId,
     summary: args.eventSummary,
@@ -1217,20 +1290,19 @@ const addReview = async (args) => {
     throw new Error('Review type must be light or full');
   }
   if (!args.eventSummary || !args.reviewResult) {
-    throw new Error('Usage: cc-iasd review add <milestone-id> --summary <text> --result <text>');
+    throw new Error('Usage: cc-iasd review add <scope-id> --summary <text> --result <text>');
   }
 
-  const milestoneId = args.milestoneId;
-  const milestoneRoot = `ops/milestones/${milestoneId}`;
-  if (!await exists(path.join(root, milestoneRoot))) {
-    throw new Error(`Milestone does not exist: ${milestoneRoot}`);
+  const scopeId = args.milestoneId;
+  if (slugify(scopeId) !== scopeId) {
+    throw new Error('Scope id must be lowercase kebab-case ASCII');
   }
 
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
-  const reviewPath = `${milestoneRoot}/reviews/review_${timestampForFile(now)}_${slugify(args.eventSummary)}.md`;
+  const reviewPath = `ops/evidence/reviews/review_${timestampForFile(now)}_${slugify(args.eventSummary)}.md`;
   await writeText(root, reviewPath, reviewRecordTemplate({
-    milestoneId,
+    scopeId,
     now,
     reviewType: args.eventType,
     summary: args.eventSummary,
@@ -1239,56 +1311,39 @@ const addReview = async (args) => {
 
   await writeLogEvent(root, {
     eventType: 'review-add',
-    summary: `Added ${args.eventType} review for ${milestoneId}`,
-    relatedMilestone: milestoneId,
+    summary: `Added ${args.eventType} review for ${scopeId}`,
+    relatedMilestone: scopeId,
     relatedEvidence: reviewPath,
   });
 
-  return { root, milestoneId, reviewPath, written: created.written, skipped: created.skipped };
+  return { root, scopeId, reviewPath, written: created.written, skipped: created.skipped };
 };
 
 const indexEvidence = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
   if (doctorResult.issues.length) {
-    throw new Error(`Project-context is not ready for evidence indexing.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+    throw new Error(`Project-context is not ready for evidence view generation.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
 
-  const milestoneDirs = await listDirectories(root, 'ops/milestones');
+  const milestoneFiles = await listMarkdownFiles(root, 'ops/scopes/milestones');
   const entries = [];
-  for (const milestoneDir of milestoneDirs) {
-    const milestoneId = path.basename(milestoneDir);
-    const status = `${milestoneDir}/status.md`;
-    const evidence = `${milestoneDir}/evidence.md`;
-    const escalation = `${milestoneDir}/escalation.md`;
-    const completionReport = `${milestoneDir}/completion-report.md`;
-    const reviews = await listMarkdownFiles(root, `${milestoneDir}/reviews`);
-    const hasStatus = await exists(path.join(root, status));
-    const hasEvidence = await exists(path.join(root, evidence));
-    const hasEscalation = await exists(path.join(root, escalation));
-    const hasCompletionReport = await exists(path.join(root, completionReport));
-    if (!hasStatus && !hasEvidence && !hasEscalation && !hasCompletionReport && !reviews.length) {
-      continue;
-    }
+  for (const milestone of milestoneFiles) {
+    const scopeId = path.basename(milestone, '.md');
+    const cycles = (await listCycleStateEntries(root, scopeId)).map((entry) => entry.path);
+    const reviews = await listReviewFilesForScope(root, scopeId);
+    const reports = await listReportFilesForScope(root, scopeId);
     entries.push({
-      milestoneId,
-      status: hasStatus ? status : '',
-      evidence: hasEvidence ? evidence : '',
-      escalation: hasEscalation ? escalation : '',
-      completionReport: hasCompletionReport ? completionReport : '',
+      scopeId,
+      milestone,
+      cycles,
+      reports,
       reviews,
     });
   }
 
   const now = new Date().toISOString();
-  const created = { written: [], skipped: [] };
-  await writeText(root, 'ops/evidence-index.md', evidenceIndexTemplate({ now, entries }), { ...args, force: true }, created);
-  await writeLogEvent(root, {
-    eventType: 'index-evidence',
-    summary: `Rebuilt evidence index with ${entries.length} milestone(s)`,
-    relatedEvidence: 'ops/evidence-index.md',
-  });
-  return { root, written: created.written, entries };
+  return { root, entries, view: evidenceViewTemplate({ now, entries }) };
 };
 
 const runMilestone = async (args) => {
@@ -1299,36 +1354,36 @@ const runMilestone = async (args) => {
   }
 
   const milestoneId = args.milestoneId;
-  const milestoneRoot = `ops/milestones/${milestoneId}`;
+  if (slugify(milestoneId) !== milestoneId) {
+    throw new Error('Milestone id must be lowercase kebab-case ASCII');
+  }
+  const milestonePath = `ops/scopes/milestones/${milestoneId}.md`;
   const now = new Date().toISOString();
+  const cycleId = `cycle_${timestampForFile(now)}_${milestoneId}`;
+  const cycleRoot = `ops/cycles/${cycleId}`;
   const created = { written: [], skipped: [] };
-  const existingStatus = await readOptionalText(root, `${milestoneRoot}/status.md`);
-  const linkedFeature = args.linkedFeature || extractField(existingStatus, 'Linked Feature');
-  const linkedRoadmap = args.linkedRoadmap || extractField(existingStatus, 'Linked Roadmap');
-  const linkedSpec = args.linkedSpec || extractField(existingStatus, 'Linked Spec');
-  const linkedTasks = args.linkedTasks || extractField(existingStatus, 'Linked Tasks');
+  const existingMilestone = await readOptionalText(root, milestonePath);
+  const linkedFeature = args.linkedFeature || extractField(existingMilestone, 'Linked Feature');
+  const linkedRoadmap = args.linkedRoadmap || extractField(existingMilestone, 'Linked Roadmap');
+  const linkedSpec = args.linkedSpec || extractField(existingMilestone, 'Linked Spec');
+  const linkedTasks = args.linkedTasks || extractField(existingMilestone, 'Linked Tasks');
 
-  await writeText(root, `${milestoneRoot}/status.md`, milestoneStatusTemplate({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
+  await writeText(root, milestonePath, milestoneScopeTemplate({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
 
-  await writeText(root, `${milestoneRoot}/evidence.md`, milestoneEvidenceTemplate({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
+  await writeText(root, `${cycleRoot}/state.md`, cycleStateTemplate({ cycleId, milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
 
-  await writeText(root, `${milestoneRoot}/handoff.md`, milestoneHandoffTemplate({ milestoneId, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
+  await writeText(root, `${cycleRoot}/handoff.md`, cycleHandoffTemplate({ cycleId, milestoneId, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
 
-  await writeText(root, `${milestoneRoot}/reviews/README.md`, [
-    `# Reviews: ${milestoneId}`,
-    '',
-    'Review evidence for this milestone.',
-    '',
-  ].join('\n'), { ...args, force: false }, created);
+  await writeText(root, `${cycleRoot}/knowledge.md`, cycleKnowledgeTemplate({ cycleId, milestoneId, now }), { ...args, force: false }, created);
 
   await writeLogEvent(root, {
     eventType: 'run',
-    summary: `Prepared milestone handoff for ${milestoneId}`,
+    summary: `Prepared cycle ${cycleId} for milestone ${milestoneId}`,
     relatedMilestone: milestoneId,
-    relatedEvidence: `${milestoneRoot}/evidence.md`,
+    relatedEvidence: `${cycleRoot}/state.md`,
   });
 
-  return { root, milestoneId, written: created.written, skipped: created.skipped };
+  return { root, milestoneId, cycleId, written: created.written, skipped: created.skipped };
 };
 
 const reportMilestone = async (args) => {
@@ -1338,34 +1393,35 @@ const reportMilestone = async (args) => {
     throw new Error(`Project-context is not ready for milestone report.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
 
-  const milestoneId = args.milestoneId;
-  const milestoneRoot = `ops/milestones/${milestoneId}`;
-  if (!await exists(path.join(root, milestoneRoot))) {
-    throw new Error(`Milestone does not exist: ${milestoneRoot}`);
+  const scopeId = args.milestoneId;
+  const milestonePath = `ops/scopes/milestones/${scopeId}.md`;
+  if (!await exists(path.join(root, milestonePath))) {
+    throw new Error(`Milestone does not exist: ${milestonePath}`);
   }
 
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
-  const status = await readOptionalText(root, `${milestoneRoot}/status.md`);
-  const evidence = await readOptionalText(root, `${milestoneRoot}/evidence.md`);
-  const reviewFiles = await listMarkdownFiles(root, `${milestoneRoot}/reviews`);
+  const milestoneScope = await readOptionalText(root, milestonePath);
+  const cycleStates = await listCycleStateEntries(root, scopeId);
+  const reviewFiles = await listReviewFilesForScope(root, scopeId);
+  const reportPath = `ops/evidence/reports/report_${timestampForFile(now)}_${scopeId}.md`;
 
-  await writeText(root, `${milestoneRoot}/completion-report.md`, completionReportTemplate({
-    milestoneId,
+  await writeText(root, reportPath, completionReportTemplate({
+    scopeId,
     now,
-    status,
-    evidence,
+    milestoneScope,
+    cycleStates,
     reviewFiles,
   }), { ...args, force: false }, created);
 
   await writeLogEvent(root, {
     eventType: 'report',
-    summary: `Prepared completion report for ${milestoneId}`,
-    relatedMilestone: milestoneId,
-    relatedEvidence: `${milestoneRoot}/completion-report.md`,
+    summary: `Prepared completion report for ${scopeId}`,
+    relatedMilestone: scopeId,
+    relatedEvidence: reportPath,
   });
 
-  return { root, milestoneId, written: created.written, skipped: created.skipped };
+  return { root, scopeId, reportPath, written: created.written, skipped: created.skipped };
 };
 
 const escalateMilestone = async (args) => {
@@ -1375,25 +1431,27 @@ const escalateMilestone = async (args) => {
     throw new Error(`Project-context is not ready for escalation.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
 
-  const milestoneId = args.milestoneId;
-  const milestoneRoot = `ops/milestones/${milestoneId}`;
-  if (!await exists(path.join(root, milestoneRoot))) {
-    throw new Error(`Milestone does not exist: ${milestoneRoot}`);
+  const scopeId = args.milestoneId;
+  const milestonePath = `ops/scopes/milestones/${scopeId}.md`;
+  if (!await exists(path.join(root, milestonePath))) {
+    throw new Error(`Milestone does not exist: ${milestonePath}`);
   }
 
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
-  const status = await readOptionalText(root, `${milestoneRoot}/status.md`);
-  const evidence = await readOptionalText(root, `${milestoneRoot}/evidence.md`);
-  const activeBlocker = extractField(status, 'Active Blocker');
-  const linkedSpec = extractField(status, 'Linked Spec');
-  const linkedTasks = extractField(status, 'Linked Tasks');
+  const milestoneScope = await readOptionalText(root, milestonePath);
+  const cycleStates = await listCycleStateEntries(root, scopeId);
+  const latestCycleState = cycleStates.at(-1)?.content || '';
+  const activeBlocker = extractField(latestCycleState, 'Active Blocker');
+  const linkedSpec = extractField(milestoneScope, 'Linked Spec') || extractField(latestCycleState, 'Linked Spec');
+  const linkedTasks = extractField(milestoneScope, 'Linked Tasks') || extractField(latestCycleState, 'Linked Tasks');
+  const reportPath = `ops/evidence/reports/escalation_${timestampForFile(now)}_${scopeId}.md`;
 
-  await writeText(root, `${milestoneRoot}/escalation.md`, escalationTemplate({
-    milestoneId,
+  await writeText(root, reportPath, escalationTemplate({
+    scopeId,
     now,
-    status,
-    evidence,
+    milestoneScope,
+    cycleStates,
     activeBlocker,
     linkedSpec,
     linkedTasks,
@@ -1401,12 +1459,12 @@ const escalateMilestone = async (args) => {
 
   await writeLogEvent(root, {
     eventType: 'escalate',
-    summary: `Prepared escalation packet for ${milestoneId}`,
-    relatedMilestone: milestoneId,
-    relatedEvidence: `${milestoneRoot}/escalation.md`,
+    summary: `Prepared escalation packet for ${scopeId}`,
+    relatedMilestone: scopeId,
+    relatedEvidence: reportPath,
   });
 
-  return { root, milestoneId, written: created.written, skipped: created.skipped };
+  return { root, scopeId, reportPath, written: created.written, skipped: created.skipped };
 };
 
 const init = async (args) => {
@@ -1611,35 +1669,34 @@ try {
     console.log(`cc-iasd doctor passed for ${result.root}`);
   } else if (args.command === 'run') {
     const result = await runMilestone(args);
-    console.log(`Prepared milestone ${result.milestoneId} in ${result.root}.`);
+    console.log(`Prepared milestone ${result.milestoneId} and cycle ${result.cycleId} in ${result.root}.`);
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
-      console.log(`Skipped ${result.skipped.length} existing file(s). Use --force only with init; run does not overwrite milestone records.`);
+      console.log(`Skipped ${result.skipped.length} existing file(s). Run does not overwrite existing scope or cycle records.`);
     }
   } else if (args.command === 'escalate') {
     const result = await escalateMilestone(args);
-    console.log(`Prepared escalation packet for milestone ${result.milestoneId} in ${result.root}.`);
+    console.log(`Prepared escalation packet for scope ${result.scopeId} in ${result.root}.`);
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
-      console.log(`Skipped ${result.skipped.length} existing file(s). Escalate does not overwrite milestone records.`);
+      console.log(`Skipped ${result.skipped.length} existing file(s). Escalate does not overwrite report records.`);
     }
   } else if (args.command === 'report') {
     const result = await reportMilestone(args);
-    console.log(`Prepared completion report for milestone ${result.milestoneId} in ${result.root}.`);
+    console.log(`Prepared completion report for scope ${result.scopeId} in ${result.root}.`);
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
-      console.log(`Skipped ${result.skipped.length} existing file(s). Report does not overwrite milestone records.`);
+      console.log(`Skipped ${result.skipped.length} existing file(s). Report does not overwrite report records.`);
     }
   } else if (args.command === 'index') {
     const result = await indexEvidence(args);
-    console.log(`Rebuilt evidence index in ${result.root}.`);
-    console.log(`Indexed ${result.entries.length} milestone(s).`);
+    console.log(result.view);
   } else if (args.command === 'log') {
     const result = await logEvent(args);
     console.log(`Created ${result.written.length} log file(s) in ${result.root}.`);
   } else if (args.command === 'review') {
     const result = await addReview(args);
-    console.log(`Prepared ${args.eventType} review for milestone ${result.milestoneId} in ${result.root}.`);
+    console.log(`Prepared ${args.eventType} review for scope ${result.scopeId} in ${result.root}.`);
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Review add does not overwrite review records.`);
