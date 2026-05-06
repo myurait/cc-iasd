@@ -26,6 +26,17 @@
 - Review References: TBD
 - Review Result: TBD
 
+## Open Items
+
+- None
+
+## Open Item Resolution
+
+- Resolved: none
+- Escalated: none
+- Promoted To Feature Backlog: none
+- Deferred: none
+
 ## Remaining Risk
 
 - TBD

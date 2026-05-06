@@ -1,6 +1,6 @@
 # Feature Backlog
 
-Deferred requests, debt, and future feature candidates outside the active roadmap.
+Planning backlog for feature-scoped work candidates that have not yet been cut into roadmap, spec, milestone, or task artifacts.
 
 ## Item Format
 
@@ -13,6 +13,7 @@ Deferred requests, debt, and future feature candidates outside the active roadma
 - Blockers: none / TBD
 - Design Constraints: TBD
 - Target Destination: epic / supporting / roadmap / deferred
+- Source: user / planning / promoted-open-item / review
 
 ## Backlog Items
 

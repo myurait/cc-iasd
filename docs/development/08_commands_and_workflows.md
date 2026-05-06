@@ -186,8 +186,9 @@ scope または cycle の完了報告を生成する。
 5. test / lint / build 結果を整理する
 6. 軽微判断を整理する
 7. 残リスクを整理する
-8. ops/evidence/reports/ に completion report を作成する
-9. ops/evidence/logs/ に report event を記録する
+8. cycle-local open item を resolved / escalated / promoted / deferred に分類する
+9. ops/evidence/reports/ に completion report を作成する
+10. ops/evidence/logs/ に report event を記録する
 ```
 
 ### 6.3 出力
@@ -276,6 +277,8 @@ ops/scopes/features/<id>.md
 ```
 
 初期実装では、既存 feature file は上書きしない。
+
+feature file は構造化 backlog を持つ。cycle-local open item が後続 planning 対象に昇格した場合は、feature backlog に `promoted` として記録する。
 
 ---
 

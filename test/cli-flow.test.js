@@ -77,6 +77,13 @@ test('artifact commands write to the new structure and keep doctor green', async
     assert.match(cycleView, new RegExp(`# Cycle View: ${cycleDir}`));
     assert.match(cycleView, /## State/);
 
+    const feature = await readFile(path.join(root, 'ops/scopes/features/feature-a.md'), 'utf8');
+    assert.match(feature, /## Backlog/);
+
+    const cycleState = await readFile(path.join(root, 'ops/cycles', cycleDir, 'state.md'), 'utf8');
+    assert.match(cycleState, /## Open Items/);
+    assert.match(cycleState, /## Open Item Resolution/);
+
     const milestone = await readFile(path.join(root, 'ops/scopes/milestones/mvp-001.md'), 'utf8');
     assert.match(milestone, /- Linked Feature: feature-a/);
     assert.match(milestone, /- Linked Roadmap: roadmap-a/);

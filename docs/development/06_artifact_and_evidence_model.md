@@ -154,7 +154,17 @@ ops/scopes/features/
 
 feature は、ideal と roadmap の間に置く planning layer である。
 
-旧 ledger 運用では backlog が早期に肥大化した。そのため、feature は単一 backlog に閉じず、必要に応じて epic / supporting の区分を metadata で持たせる。
+feature scope は、構造化 backlog を持つ。backlog は、まだ実行されていないが feature の実現範囲に属する作業候補である。
+
+```text
+feature backlog:
+- feature の実現に必要な候補作業
+- roadmap / spec / milestone / task へ切り出される前段
+- 複数 cycle をまたいで残り得る planning context
+- priority、blocker、design constraints、target destination を持つ
+```
+
+旧 ledger 運用では backlog が早期に肥大化した。そのため、backlog は feature scope に閉じ、必要に応じて epic / supporting の区分を metadata で持たせる。
 
 ### 6.2 roadmaps/
 
@@ -218,9 +228,36 @@ state.md:
 - Related Logs
 - Related Reviews
 - Related Reports
+- Active Blocker
+- Open Items
 ```
 
 中断や失敗は `state.md` の status で表現する。
+
+open item は、cycle 実行中に発生した未解決事項である。backlog とは異なり、feature の計画候補ではなく、その cycle の継続、停止、review、report に影響する runtime context として扱う。
+
+```text
+open item:
+- cycle 実行中に発生した不明点、保留、軽微な未完了
+- cycle の継続判断または停止判断に影響する事項
+- completion report で処理結果を確認する事項
+```
+
+cycle 終了時、open item は次のいずれかへ分類する。
+
+```text
+resolved:
+  cycle 内で解決済み。
+
+escalated:
+  人間判断が必要。Escalation Packet に接続する。
+
+promoted:
+  後続 planning 対象として feature backlog に昇格する。
+
+deferred:
+  今回は扱わない。Completion Report に根拠を残す。
+```
 
 ### 7.2 handoff.md
 
@@ -245,6 +282,7 @@ knowledge.md:
 - 次の worker / reviewer に渡す観察
 - spec / tasks にまだ反映していない局所知識
 - 後続 cycle に渡すべき前提
+- feature backlog へ昇格し得る観察
 ```
 
 `knowledge.md` は global knowledge ではない。cycle-local な一時知識である。

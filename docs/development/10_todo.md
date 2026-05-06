@@ -31,7 +31,6 @@ TODO:
 
 ```text
 TODO:
-- open item / backlog を feature scope と cycle-local context のどちらへ置くかを決める
 - product/ideal/ の artifact schema を固定する
 - product/specs/ の Spec Kit 委譲範囲を固定する
 - ops/scopes/features/ の item schema を固定する
