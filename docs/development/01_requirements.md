@@ -113,20 +113,22 @@ ledger は以下を初期化できること:
 - 最小テンプレート
 ```
 
-Spec Kit を採用する場合、`specify init .` に相当する初期化を project-context に対して実行できること。
+Spec Kit 互換の artifact vocabulary を採用する場合でも、`src/` 配下へ `.specify/` や `specs/` などの cc-iasd 管理 artifact を生成しないこと。
 
 ### 3.2 spec / plan / tasks の正本化
 
-ledger は、spec / plan / tasks を独自再発明しない。
+ledger は、Spec Kit の成果物正本性を採用しない。
+
+ただし、Spec Kit が標準化した spec-driven development の artifact vocabulary には可能な限り寄せる。
 
 ```text
 正本:
-- requirements
+- spec
 - plan
 - tasks
 ```
 
-これらは Spec Kit 系の成果物を正本として扱う。ledger はその外側に milestone 自走、escalation、evidence bridge を重ねる。
+これらは `product/specs/` に置く cc-iasd-owned artifact である。ledger は Spec Kit tooling を再実装するのではなく、src isolation を満たす範囲で artifact structure と workflow semantics を互換 dialect として取り込む。
 
 ### 3.3 src/ isolation
 
@@ -139,6 +141,8 @@ ledger は、成果物 project を `src/` に隔離する。
 - spec は product/ 側に保持
 - cycle / evidence / report は ops/ 側に保持
 - coding agent に渡す root を明示
+- cc-iasd 管理 artifact を src/ 配下に作成しない
+- src/ 配下の成果物 project は cc-iasd なしでも分離可能である
 ```
 
 ### 3.4 cycle 自走
@@ -220,13 +224,13 @@ Completion Report:
   判断、review、残リスク、escalation の根拠を後から追えること。
 
 委譲性:
-  実装 runtime を Claude Code / Codex / cc-sdd などへ差し替え可能にすること。
+  実装 runtime を Claude Code / Codex / shell runner などへ差し替え可能にすること。
 
 低結合:
-  実行 runtime、Spec Kit、cc-sdd のどれか一つに過度依存しないこと。
+  実行 runtime、Spec Kit、特定の spec-driven framework のどれか一つに過度依存しないこと。
 
 成果物隔離:
-  成果物 project に ledger の運用痕跡を必要以上に混入させないこと。
+  成果物 project に ledger の運用痕跡を混入させないこと。
 
 過剰統合回避:
   既存 framework を丸ごと重ねて二重管理しないこと。
@@ -246,7 +250,7 @@ ledger は次を目標にしない。
 - GitHub Actions の代替 CI になること
 - project のプロダクト方針を自動決定すること
 - 技術スタックや外部サービス費用を自動決裁すること
-- BMAD / Spec Kit / cc-sdd を全部丸ごと導入して混在させること
+- BMAD / Spec Kit / implementation runtime を全部丸ごと導入して混在させること
 - enterprise compliance platform になること
 ```
 

@@ -33,8 +33,8 @@ ledger
 
 ```text
 ledger は、
-Spec Kit を spec-driven development kernel とし、
-cc-sdd を autonomous implementation plugin とし、
+Spec Kit の spec-driven artifact vocabulary を参照し、
+product/specs/ に cc-iasd-owned spec 正本を持ち、
 BMAD / MetaGPT 的な role / SOP 思想を参照し、
 成果物 project を src/ に隔離し、
 milestone 自走・エスカレーション・証跡索引を独自に提供する、
@@ -100,8 +100,8 @@ ledger は project に埋め込まれる規約集ではなく、成果物 projec
 採用:
 - project-context ownership
 - src/ isolation
-- Spec Kit as spec-driven development kernel
-- cc-sdd as autonomous implementation plugin
+- Spec Kit as spec-driven artifact vocabulary reference
+- implementation runtime as task implementation loop delegate
 - BMAD / MetaGPT as role / SOP reference
 - AI Governance as evidence / accountability reference
 - Evidence Bridge
@@ -154,8 +154,8 @@ ledger は project に埋め込まれる規約集ではなく、成果物 projec
 | project-local harness | 部分採用 | 非常駐ユーザー、自走、証跡思想を採用 |
 | project-context framework | 採用 | 正本定義 |
 | 成果物 project 内への ledger 埋め込み | 修正 | project-context が src/ を内包する形へ変更 |
-| Spec Kit | 採用 | spec / plan / tasks の kernel |
-| cc-sdd | 採用候補 | implementation plugin 候補 |
+| Spec Kit | 参照 | spec-driven artifact vocabulary の標準化参照元 |
+| implementation runtime | 採用候補 | task implementation loop の委譲先 |
 | BMAD | 参照 | role / planning 参照元。初期実装では全面統合しない |
 | MetaGPT / ChatDev | 参照 | multi-agent role 思想の参照元 |
 | AI Governance | 参照 | evidence / accountability の参照元 |

@@ -613,7 +613,7 @@ const linkedPathCandidates = (kind, value, linkedSpec = '') => {
     case 'spec':
       return [
         `product/specs/${value}`,
-        `product/specs/${value}/requirements.md`,
+        `product/specs/${value}/spec.md`,
       ];
     case 'tasks':
       return [
@@ -707,7 +707,7 @@ const validateSpecFiles = async (root, issues) => {
     }
 
     const requiredSpecFiles = [
-      'requirements.md',
+      'spec.md',
       'plan.md',
       'tasks.md',
     ];
@@ -866,18 +866,23 @@ const roadmapFileTemplate = ({ roadmapId, summary, goal, now }) => [
   '',
 ].join('\n');
 
-const specRequirementsTemplate = ({ specId, summary, now }) => [
-  `# Requirements: ${specId}`,
+const specTemplate = ({ specId, summary, now }) => [
+  `# Feature Specification: ${specId}`,
   '',
   `- ID: ${specId}`,
   `- Summary: ${summary}`,
   `- Created At: ${now}`,
+  '- Status: draft',
   '',
-  '## User Value',
+  '## User Scenarios & Testing',
   '',
   '- TBD',
   '',
   '## Requirements',
+  '',
+  '- TBD',
+  '',
+  '## Success Criteria',
   '',
   '- TBD',
   '',
@@ -1465,7 +1470,7 @@ const addSpec = async (args) => {
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
   const specRoot = `product/specs/${args.specId}`;
-  await writeText(root, `${specRoot}/requirements.md`, specRequirementsTemplate({
+  await writeText(root, `${specRoot}/spec.md`, specTemplate({
     specId: args.specId,
     summary: args.eventSummary,
     now,
@@ -1627,7 +1632,7 @@ const viewScope = async (args) => {
     ['Feature Scope', `ops/scopes/features/${scopeId}.md`],
     ['Roadmap Scope', `ops/scopes/roadmaps/${scopeId}.md`],
     ['Milestone Scope', `ops/scopes/milestones/${scopeId}.md`],
-    ['Spec Requirements', `product/specs/${scopeId}/requirements.md`],
+    ['Spec', `product/specs/${scopeId}/spec.md`],
     ['Spec Plan', `product/specs/${scopeId}/plan.md`],
     ['Spec Tasks', `product/specs/${scopeId}/tasks.md`],
   ]);
@@ -1884,7 +1889,7 @@ const init = async (args) => {
     cc_iasd_version: VERSION,
     created_at: now,
     spec_kernel: 'spec-kit-compatible',
-    implementation_plugin: 'cc-sdd-or-compatible',
+    implementation_runtime: 'runtime-compatible',
     src_root: 'src',
     product_root: 'product',
     specs_root: 'product/specs',
@@ -1933,7 +1938,9 @@ const init = async (args) => {
   await writeText(root, 'product/specs/README.md', [
     '# Specs',
     '',
-    'Spec Kit compatible requirements, plan, and tasks live here.',
+    'cc-iasd-owned specs live here using a Spec Kit compatible artifact vocabulary.',
+    '',
+    'Do not place cc-iasd-managed specs under `src/`.',
     '',
   ].join('\n'), args, created);
   await writeText(root, 'product/specs/outdated/README.md', [
@@ -2012,6 +2019,8 @@ const init = async (args) => {
     'For a single repository, clone the target repository into `src/`, or alias an existing checkout to `src/`.',
     '',
     'For multiple repositories, clone them side by side under `src/`.',
+    '',
+    'Do not place cc-iasd-managed specs, runtime files, cycle state, evidence, reports, or policies under `src/`.',
     '',
     '```text',
     'src/',

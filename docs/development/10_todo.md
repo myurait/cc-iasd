@@ -17,7 +17,7 @@
 
 ```text
 TODO:
-- Spec Kit 実体との連携方式を実装する
+- Spec Kit 互換 artifact profile を実装する
 - role runtime の自動生成方式を実装する
 - plugin / adapter 設定を runtime/ に接続する
 - profile update / migration の方式を実装する
@@ -32,7 +32,8 @@ TODO:
 ```text
 TODO:
 - product/ideal/ の artifact schema を固定する
-- product/specs/ の Spec Kit 委譲範囲を固定する
+- product/specs/ の Spec Kit 互換範囲を固定する
+- product/specs/ で plan.md 名を維持するか別名にするかを決める
 - ops/scopes/features/ の item schema を固定する
 - ops/scopes/roadmaps/ の保存形式を固定する
 - ops/scopes/milestones/ の保存形式を固定する
@@ -57,5 +58,5 @@ TODO:
 TODO:
 - evidence の粒度が粗すぎるか細かすぎるか確認する
 - completion report が人間の後続判断に足りるか確認する
-- implementation plugin として cc-sdd 的な実装ループが適するか確認する
+- tasks 起点の implementation loop が cycle / evidence と過不足なく接続できるか確認する
 ```

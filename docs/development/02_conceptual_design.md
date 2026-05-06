@@ -48,6 +48,8 @@ project-context/
 
 `src/` は成果物 project の root である。ledger は `src/` の外側から開発文脈を管理する。
 
+`src/` 配下を cc-iasd 管理 artifact で汚染しないことは絶対制約である。spec、runtime、cycle state、evidence、report、policy は `src/` の外側に置く。ledger は `src/` 配下の成果物 project に対して command を実行してよいが、成果物 project の中に ledger 管理の仕様領域や runtime 領域を持ち込んではならない。
+
 この構造により、次を分ける。
 
 ```text
@@ -67,8 +69,8 @@ ledger は、すべてを独自形式で再実装しない。
 ```text
 正本割当:
 - ideal: product/ideal/
-- spec / plan / tasks: Spec Kit（product/specs/）
-- task implementation loop: cc-sdd または同等 plugin
+- spec / plan / tasks: product/specs/（Spec Kit 互換 dialect）
+- task implementation loop: Claude Code / Codex などの実行 runtime
 - role / SOP: ledger が最小定義し、BMAD / MetaGPT を参照
 - features / roadmap / milestone: ops/scopes/
 - cycle autonomy: ledger 固有
@@ -89,12 +91,12 @@ Spec は、開発対象の仕様単位である。
 
 ```text
 Spec:
-- requirements
+- spec
 - plan
 - tasks
 ```
 
-ledger は Spec Kit の spec 構造を正本として扱う。
+ledger は Spec Kit の成果物正本性を採用しない。Spec Kit が標準化した artifact vocabulary と workflow は参照するが、ledger の spec 正本は `product/specs/` に置く。
 
 ### 4.2 Milestone
 
@@ -121,7 +123,7 @@ Cycle:
 - logs / reviews / reports を参照する
 ```
 
-Kiro / cc-sdd 的な実装進行の中心は spec / task である。Cycle は、それを cc-iasd の project-context と evidence layer に接続する transaction artifact である。
+Spec-driven development 的な実装進行の中心は spec / task である。Cycle は、それを cc-iasd の project-context と evidence layer に接続する transaction artifact である。
 
 ### 4.4 Task
 
