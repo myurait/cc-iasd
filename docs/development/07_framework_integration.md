@@ -90,7 +90,7 @@ BMAD を参照しやすい領域:
 
 ```text
 採用方針:
-- MVP では全面統合しない
+- 初期実装では全面統合しない
 - role / planning の参考に留める
 - 導入する場合も Spec Kit の正本を上書きしない
 ```
@@ -202,12 +202,12 @@ ledger が担当する:
 
 ---
 
-## 12. MVP での統合レベル
+## 12. 初期統合レベル
 
-MVP では、統合を浅くする。
+初期実装では、統合を浅くする。
 
 ```text
-MVP 統合:
+初期統合:
 - Spec Kit 互換の product/specs/ 構造
 - ops/scopes/features/ による feature scope 管理
 - cc-sdd 互換の tasks 実行想定

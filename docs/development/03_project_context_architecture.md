@@ -235,7 +235,7 @@ user/
 
 ledger はこの領域を勝手に上書きしない。AI が整理する場合も提案として扱い、人間判断を経て反映する。
 
-`user/decisions.md` は人間判断の正本である。AI や開発運用上の軽微判断を横断的に集約するための `ops/decisions.md` は作らない。
+`user/decisions.md` は人間判断の正本である。AI や開発運用上の軽微判断は、発生した cycle、review、report の文脈に閉じる。
 
 ---
 
@@ -262,7 +262,7 @@ product/ideal/
 
 ideal は、ユーザー入力を開発判断に使える形へ正規化したプロダクト正本である。
 
-`current.md` は置かない。`outdated/` に入っていない `ideal/<ideal-id>.md` が事実上の現行 ideal である。
+`outdated/` に入っていない `ideal/<ideal-id>.md` が事実上の現行 ideal である。
 
 複数 ideal は同時に存在できる。
 
@@ -307,9 +307,7 @@ ops/
   evidence/
 ```
 
-`ops/` 直下に `decisions.md`、`knowledge.md`、`current-work.md`、`open-items.md`、`milestone-index.md`、`evidence-index.md` は置かない。
-
-これらは境界をまたぐ曖昧な正本になりやすい。必要な情報は、発生した scope / cycle / evidence artifact 内に閉じるか、恒常化できる場合は `rules/` に昇格し、正本でない資料は `reference/` に退避する。
+必要な情報は、発生した scope / cycle / evidence artifact 内に閉じるか、恒常化できる場合は `rules/` に昇格し、正本でない資料は `reference/` に退避する。
 
 ### 7.1 ops/scopes/
 
@@ -335,7 +333,7 @@ milestones:
 
 `milestone` は自走実行ログの入れ物ではない。実行状態、handoff、実行中の知見は `ops/cycles/` に置く。
 
-`active/` は置かない。`archived/` に入っていないものが通常参照対象である。
+`archived/` に入っていないものが通常参照対象である。
 
 ### 7.2 ops/cycles/
 
@@ -365,11 +363,9 @@ knowledge.md:
   cycle 内で判明した次 cycle / reviewer / worker に渡す局所知識
 ```
 
-`aborted/` は置かない。中断、失敗、blocked、escalated は `state.md` の `Status` として表現する。
+中断、失敗、blocked、escalated は `state.md` の `Status` として表現する。
 
-`current-work.md` は置かない。現在作業は `ops/cycles/` の未 archive cycle と `state.md` から判断する。AI に渡す入口が必要な場合は CLI が一時 view を生成する。
-
-`open-items.md` を `ops/` 直下には置かない。open item は cycle-local runtime context として `state.md` または `knowledge.md` に閉じる。
+現在作業は `ops/cycles/` の未 archive cycle と `state.md` から判断する。AI に渡す入口が必要な場合は CLI が一時 view を生成する。
 
 ### 7.3 ops/evidence/
 
@@ -397,7 +393,7 @@ reviews は milestones 以下に置かない。review scope は spec、task、cy
 
 milestone、cycle、spec などは review 本体を内包せず、review ID または path を参照する。
 
-`active/` は置かない。logs / reviews / reports は証跡であり、active / inactive という状態を持たない。古くなった証跡は `archived/` に退避する。
+logs / reviews / reports は証跡であり、active / inactive という状態を持たない。古くなった証跡は `archived/` に退避する。
 
 ---
 
@@ -470,7 +466,7 @@ Rule 3:
   ops/ 以下の退避は archived/ に統一する。
 
 Rule 4:
-  active/ は原則作らない。archived/ に入っていない artifact を通常参照対象とする。
+  archived/ に入っていない artifact を通常参照対象とする。
 
 Rule 5:
   ideal は current.md にしない。product/ideal/<ideal-id>.md を正本とする。
@@ -491,18 +487,12 @@ Rule 10:
   logs / reviews / reports は evidence layer に置く。
 
 Rule 11:
-  current-work、open-items、milestone-index、evidence-index は正本ファイルとして作らない。
-
-Rule 12:
   decisions / knowledge を ops 直下の横断ファイルに集約しない。
 
-Rule 13:
-  open item は cycle-local runtime context として state.md または knowledge.md に閉じる。
-
-Rule 14:
+Rule 12:
   aborted は directory ではなく cycle state として表現する。
 
-Rule 15:
+Rule 13:
   横断一覧が必要な場合は CLI 生成 view とし、正本化しない。
 ```
 
@@ -510,7 +500,7 @@ Rule 15:
 
 ## 12. 最小構成
 
-MVP の最小構成は次である。
+初期構成は次である。
 
 ```text
 project-context/

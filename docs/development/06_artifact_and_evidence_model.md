@@ -97,7 +97,7 @@ product/ideal/
 
 ideal は、ユーザー入力を開発判断に使える形へ正規化した正本である。
 
-`current.md` は置かない。`outdated/` に入っていない ideal が現行参照対象である。ideal はプロジェクト状況や外部環境によって変わるため、旧化できる必要がある。
+`outdated/` に入っていない ideal が現行参照対象である。ideal はプロジェクト状況や外部環境によって変わるため、旧化できる必要がある。
 
 ### 5.2 product/specs/
 
@@ -141,7 +141,7 @@ ops/scopes/
   milestones/
 ```
 
-`ops/scopes/` 以下で古くなった artifact は `archived/` へ退避する。`active/` は置かない。`archived/` に入っていないものが通常参照対象である。
+`ops/scopes/` 以下で古くなった artifact は `archived/` へ退避する。`archived/` に入っていないものが通常参照対象である。
 
 ### 6.1 features/
 
@@ -218,10 +218,9 @@ state.md:
 - Related Logs
 - Related Reviews
 - Related Reports
-- Open Items
 ```
 
-`aborted/` directory は作らない。中断や失敗は `state.md` の status で表現する。
+中断や失敗は `state.md` の status で表現する。
 
 ### 7.2 handoff.md
 
@@ -282,7 +281,7 @@ ops/evidence/
   reports/
 ```
 
-`ops/evidence/` 以下で古くなった artifact は `archived/` へ退避する。`active/` は置かない。
+`ops/evidence/` 以下で古くなった artifact は `archived/` へ退避する。
 
 ### 8.1 logs/
 
@@ -295,7 +294,7 @@ ops/evidence/logs/
 
 logs は global chronological ledger である。
 
-`current.md` は置かない。最新状態は log の写しではなく、cycle の `state.md` と scope / product artifact の参照で判断する。
+最新状態は log の写しではなく、cycle の `state.md` と scope / product artifact の参照で判断する。
 
 ### 8.2 reviews/
 
@@ -381,7 +380,7 @@ ops/evidence/reports/
   human-facing summaries
 ```
 
-`evidence-index.md` は作らない。横断索引を正本化すると、証跡全体を要約する巨大文書になりやすく、AI に渡す context を肥大化させるためである。
+横断索引を正本化すると、証跡全体を要約する巨大文書になりやすく、AI に渡す context を肥大化させるため、Evidence Bridge は artifact 間参照と CLI 生成 view で成立させる。
 
 必要な横断 view は CLI が生成する。生成 view は正本ではない。
 
@@ -481,4 +480,4 @@ ledger は、過去の判断や証跡を黙って上書きしない。
 - decisions / knowledge を ops 直下の横断ファイルに集約しない
 ```
 
-MVP では、完全な immutable log ではなく、Markdown 上の追記・退避規律として定義すればよい。
+初期実装では、完全な immutable log ではなく、Markdown 上の追記・退避規律として定義する。

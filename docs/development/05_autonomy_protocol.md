@@ -186,12 +186,12 @@ completion report に含めるもの:
 
 ---
 
-## 11. Autonomy Protocol の最小版
+## 11. Autonomy Protocol の初期固定項目
 
-MVP では、次だけを固定すればよい。
+初期実装では、次だけを固定する。
 
 ```text
-MVP 固定項目:
+初期固定項目:
 - Planning Lead can / cannot
 - 自走開始条件
 - 自走継続条件

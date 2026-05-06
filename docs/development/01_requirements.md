@@ -189,7 +189,7 @@ Evidence Bridge:
 - completion report への参照
 ```
 
-`evidence-index.md` は作らない。横断 view が必要な場合は CLI が生成し、正本化しない。
+横断 view が必要な場合は CLI が生成し、正本化しない。
 
 ### 3.7 Completion Report
 
@@ -256,7 +256,7 @@ ledger は次を目標にしない。
 
 ## 6. 成立条件
 
-ledger MVP が成立している状態は次である。
+初期実装が成立している状態は次である。
 
 ```text
 成立条件:

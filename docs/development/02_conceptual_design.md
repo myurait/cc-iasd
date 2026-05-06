@@ -247,7 +247,7 @@ ledger から ChatLobby へ返され得るもの:
 - status summary
 ```
 
-ただし、ledger MVP は ChatLobby との密結合を前提にしない。CLI またはローカル project-context 単体でも成立させる。
+ただし、ledger は ChatLobby との密結合を前提にしない。CLI またはローカル project-context 単体でも成立させる。
 
 ---
 

@@ -67,8 +67,8 @@ ledger
 03_project_context_architecture.md
   project-context 構造、src/ isolation、正本配置、ディレクトリ設計
 
-04_mvp.md
-  MVP スコープ、初期実装対象、初期から除外するもの
+04_core_workflow.md
+  基本ワークフロー、成立条件、人間判断境界
 
 05_autonomy_protocol.md
   milestone 自走、Planning Lead、停止条件、エスカレーション条件
@@ -85,8 +85,8 @@ ledger
 09_future_vision.md
   将来構想、plugin 化、多 runtime 対応、ChatLobby 連携強化
 
-10_open_issues.md
-  検討中の課題、MVP 前に決めること、後段に回すこと
+10_todo.md
+  未実装項目、未決定事項、観察後に判断する事項
 
 11_source_consolidation.md
   既存情報源・旧設計・過去判断の採用 / 修正 / 退避 / 除外整理
@@ -142,7 +142,7 @@ ledger は最初から完全な multi-agent 開発 OS として作らない。
 初期実装では、次に絞る。
 
 ```text
-MVP:
+初期実装:
 - project-context を初期化できる
 - product/ideal/ を product 正本として扱える
 - product/specs/ で Spec Kit 由来の spec / plan / tasks を正本として扱える
