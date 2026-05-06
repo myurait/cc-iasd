@@ -47,7 +47,9 @@ npx cc-iasd@latest run cycle mvp-001
 npx cc-iasd@latest review add mvp-001 --type light --summary "Review implementation result" --result "No blocking findings"
 npx cc-iasd@latest escalate mvp-001
 npx cc-iasd@latest report mvp-001
-npx cc-iasd@latest index evidence
+npx cc-iasd@latest view evidence
+npx cc-iasd@latest view current
+npx cc-iasd@latest view scope mvp-001
 npx cc-iasd@latest log event --summary "Updated project context"
 npx cc-iasd@latest product outdate spec spec-a
 npx cc-iasd@latest ops archive roadmap roadmap-a
@@ -66,7 +68,9 @@ node bin/cc-iasd.js run cycle mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js review add mvp-001 --type light --summary "Review implementation result" --result "No blocking findings" --root /tmp/my-project-context
 node bin/cc-iasd.js escalate mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js report mvp-001 --root /tmp/my-project-context
-node bin/cc-iasd.js index evidence --root /tmp/my-project-context
+node bin/cc-iasd.js view evidence --root /tmp/my-project-context
+node bin/cc-iasd.js view current --root /tmp/my-project-context
+node bin/cc-iasd.js view scope mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js log event --summary "Updated project context" --root /tmp/my-project-context
 node bin/cc-iasd.js product outdate spec spec-a --root /tmp/my-project-context
 node bin/cc-iasd.js ops archive roadmap roadmap-a --root /tmp/my-project-context
@@ -121,7 +125,7 @@ src/
 
 This repository is in early migration from `myurait/ledger-flow`.
 
-The current npm CLI creates and validates the new product / ops / reference structure, including feature, roadmap, spec, cycle, review, report, escalation, log, evidence view, product outdate, and ops archive commands.
+The current npm CLI creates and validates the new product / ops / reference structure, including feature, roadmap, spec, cycle, review, report, escalation, log, view, product outdate, and ops archive commands.
 
 ## License
 

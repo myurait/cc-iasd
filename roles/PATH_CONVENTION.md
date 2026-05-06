@@ -31,3 +31,7 @@ After transcription, the mapping is:
 ### Changing paths
 
 After `cc-iasd init`, the project owns all transcribed files. To change directory names or structure, edit the files directly. There is no framework command to regenerate or update them.
+
+### Runtime views
+
+Commands such as `cc-iasd view current`, `cc-iasd view scope <id>`, `cc-iasd view cycle <id>`, and `cc-iasd view evidence` produce temporary stdout views. They are not canonical project files.

@@ -26,7 +26,7 @@ Before performing any planning task, read the following files. Do not rely on me
 
 ## Responsibilities
 
-- **Roadmap creation and maintenance** — Draft and update roadmap scopes in `ops/scopes/roadmaps/`. Archive older roadmaps under `ops/scopes/roadmaps/archived/`.
+- **Roadmap creation and maintenance** — Draft and update roadmap scopes in `ops/scopes/roadmaps/`. Archive older roadmaps with `cc-iasd ops archive roadmap <id>`.
 - **Ideal experience alignment** — Verify that the roadmap and milestone goals align with `product/ideal/`.
 - **Backlog priority review** — Reassess backlog item priorities based on progress and changing context.
 - **Milestone evaluation** — Assess achievement levels for the current milestone.
@@ -35,6 +35,7 @@ Before performing any planning task, read the following files. Do not rely on me
 - **Consultation template application** — Apply the roadmap consultation template (lightweight or full version) when planning discussions are needed.
 - **Share template application** — Apply the roadmap share template when presenting progress or plans to the user.
 - **User progress reports** — Generate structured progress reports for the user.
+- **Temporary context views** — Use `cc-iasd view current` or `cc-iasd view scope <id>` when a concise planning view is needed. Do not treat view output as canonical documentation.
 
 ## Trigger Conditions
 

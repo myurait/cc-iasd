@@ -198,8 +198,10 @@ Post-fix re-review is mandatory after every review round that produced findings.
 - Extract reusable lessons into cycle-local `ops/cycles/<cycle-id>/knowledge.md` before promoting stable lessons to `rules/policies/`.
 - Keep current roadmap scopes outside `archived/` under `ops/scopes/roadmaps/`.
 - Name roadmap files `roadmap_{YYYYMMDDhhmmss}_{scope}.md`.
-- Move replaced, completed, cancelled, or superseded roadmap files to `ops/scopes/roadmaps/archived/`.
+- Move replaced, completed, cancelled, or superseded ops artifacts with `cc-iasd ops archive`.
 - Canonical ideal artifacts live in `product/ideal/`.
+- Move product artifacts that are no longer canonical with `cc-iasd product outdate`.
+- Use `cc-iasd view ...` for temporary context views. Do not commit generated view output as a canonical artifact.
 - Raw interviews, imported user specifications, superseded drafts, and other historical planning inputs must be archived under `reference/historical-documents/`.
 - Historical documents are preserved for traceability only. They are not authoritative for active planning once normalized.
 - Every historical document archive must have an entry in `reference/INDEX.md` with archive date, summary, and canonical successor documents when applicable.

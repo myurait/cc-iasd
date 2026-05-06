@@ -76,7 +76,7 @@ cc-sdd、Claude Code、Codex、独自 shell runner などを差し替える。
 
 ## 5. Advanced Evidence / Audit
 
-MVP では evidence index で足りる。将来的には、より強い監査性を追加できる。
+MVP では `cc-iasd view evidence` による一時 view で足りる。将来的には、より強い監査性を追加できる。
 
 ```text
 将来候補:

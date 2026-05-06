@@ -138,11 +138,15 @@ cc-iasd init
 cc-iasd run cycle <id>
 cc-iasd escalate <scope-ref>
 cc-iasd report <scope-ref>
+cc-iasd view evidence|current|scope|cycle
 cc-iasd log event
 cc-iasd review add
 cc-iasd feature add
 cc-iasd roadmap add
+cc-iasd milestone add
 cc-iasd spec add
+cc-iasd product outdate
+cc-iasd ops archive
 cc-iasd doctor
 ```
 
@@ -167,7 +171,19 @@ project-context を初期化する。
 - 最小テンプレート配置
 ```
 
-### 5.2 cc-iasd run cycle <id>
+### 5.2 cc-iasd milestone add <id>
+
+Milestone scope を作成する。
+
+```text
+実行内容:
+- milestone id と summary を受け取る
+- 関連 feature / roadmap / spec / tasks の参照を検査する
+- ops/scopes/milestones/<id>.md を作成する
+- milestone event を ops/evidence/logs/ に記録する
+```
+
+### 5.3 cc-iasd run cycle <id>
 
 MVP では、完全自動実行でなくてよい。
 
@@ -183,7 +199,7 @@ MVP では、完全自動実行でなくてよい。
 - run event を ops/evidence/logs/ に記録する
 ```
 
-### 5.3 cc-iasd escalate <scope-ref>
+### 5.4 cc-iasd escalate <scope-ref>
 
 Escalation Packet を生成する。
 
@@ -196,7 +212,7 @@ Escalation Packet を生成する。
 - report として ops/evidence/reports/ に保存する
 ```
 
-### 5.4 cc-iasd report <scope-ref>
+### 5.5 cc-iasd report <scope-ref>
 
 Completion Report を生成する。
 
@@ -220,14 +236,16 @@ Completion Report を生成する。
 4. ops/scopes/features/ で feature scope を整理する
 5. ops/scopes/roadmaps/ で roadmap を定義する
 6. product/specs/ で requirements / plan / tasks を作る
-7. ops/scopes/milestones/ で milestone を定義する
+7. cc-iasd milestone add <id> で milestone を定義する
 8. cc-iasd run cycle <id>
 9. Worker runtime が src/ を編集する
 10. Reviewer runtime または人間が ops/evidence/reviews/ に review を記録する
 11. 必要に応じて cc-iasd escalate <scope-ref>
 12. 人間判断後に再開
 13. cc-iasd report <scope-ref>
-14. 完了した cycle / evidence / scope artifact を必要に応じて archived/ へ退避する
+14. 必要な一時 context は cc-iasd view ... で生成する
+15. 完了した cycle / evidence / scope artifact を cc-iasd ops archive で archived/ へ退避する
+16. 正本でなくなった product artifact を cc-iasd product outdate で outdated/ へ退避する
 ```
 
 ---

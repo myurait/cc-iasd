@@ -15,7 +15,10 @@ Usage:
   cc-iasd run cycle <id> [--root <project-context-path>]
   cc-iasd escalate <scope-id> [--root <project-context-path>]
   cc-iasd report <scope-id> [--root <project-context-path>]
-  cc-iasd index evidence [--root <project-context-path>]
+  cc-iasd view evidence [--root <project-context-path>]
+  cc-iasd view current [--root <project-context-path>]
+  cc-iasd view scope <id> [--root <project-context-path>]
+  cc-iasd view cycle <id> [--root <project-context-path>]
   cc-iasd log event --summary <text> [--type <type>] [--milestone <id>] [--evidence <path>] [--root <project-context-path>]
   cc-iasd review add <scope-id> --summary <text> --result <text> [--type light|full] [--root <project-context-path>]
   cc-iasd feature add <id> --summary <text> --pillar <name> [--kind epic|supporting] [--root <project-context-path>]
@@ -78,6 +81,7 @@ const parseArgs = (argv) => {
     productId: '',
     archiveLayer: '',
     archiveId: '',
+    viewId: '',
   };
 
   const tokens = [...argv];
@@ -85,7 +89,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'review', 'feature', 'roadmap', 'milestone', 'spec', 'product', 'ops'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'view', 'log', 'review', 'feature', 'roadmap', 'milestone', 'spec', 'product', 'ops'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -103,10 +107,16 @@ const parseArgs = (argv) => {
     if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
       throw new Error(`Usage: cc-iasd ${parsed.command} <id>`);
     }
-  } else if (parsed.command === 'index') {
+  } else if (parsed.command === 'view') {
     parsed.runTarget = tokens.shift() ?? '';
-    if (parsed.runTarget !== 'evidence') {
-      throw new Error('Usage: cc-iasd index evidence');
+    if (!['evidence', 'current', 'scope', 'cycle'].includes(parsed.runTarget)) {
+      throw new Error('Usage: cc-iasd view evidence|current|scope|cycle');
+    }
+    if (parsed.runTarget === 'scope' || parsed.runTarget === 'cycle') {
+      parsed.viewId = tokens.shift() ?? '';
+      if (!parsed.viewId || parsed.viewId.startsWith('-')) {
+        throw new Error(`Usage: cc-iasd view ${parsed.runTarget} <id>`);
+      }
     }
   } else if (parsed.command === 'log') {
     parsed.runTarget = tokens.shift() ?? '';
@@ -1163,6 +1173,76 @@ const evidenceViewTemplate = ({ now, entries }) => [
   ]) : ['- No evidence artifacts found.', '']),
 ].join('\n');
 
+const currentViewTemplate = ({ now, ideals, specs, features, roadmaps, milestones, cycles, logs, reviews, reports }) => [
+  '# Current View',
+  '',
+  `- Generated At: ${now}`,
+  '',
+  '## Product Canon',
+  '',
+  '- Ideal:',
+  ...(ideals.length ? ideals.map((item) => `  - ${item}`) : ['  - none']),
+  '- Specs:',
+  ...(specs.length ? specs.map((item) => `  - ${item}`) : ['  - none']),
+  '',
+  '## Scope Artifacts',
+  '',
+  '- Features:',
+  ...(features.length ? features.map((item) => `  - ${item}`) : ['  - none']),
+  '- Roadmaps:',
+  ...(roadmaps.length ? roadmaps.map((item) => `  - ${item}`) : ['  - none']),
+  '- Milestones:',
+  ...(milestones.length ? milestones.map((item) => `  - ${item}`) : ['  - none']),
+  '',
+  '## Runtime And Evidence',
+  '',
+  '- Cycles:',
+  ...(cycles.length ? cycles.map((item) => `  - ${item}`) : ['  - none']),
+  '- Recent Logs:',
+  ...(logs.length ? logs.map((item) => `  - ${item}`) : ['  - none']),
+  '- Recent Reviews:',
+  ...(reviews.length ? reviews.map((item) => `  - ${item}`) : ['  - none']),
+  '- Recent Reports:',
+  ...(reports.length ? reports.map((item) => `  - ${item}`) : ['  - none']),
+  '',
+].join('\n');
+
+const contentSection = (title, relPath, content) => [
+  `## ${title}`,
+  '',
+  `Path: ${relPath}`,
+  '',
+  '```markdown',
+  content.trim(),
+  '```',
+  '',
+];
+
+const scopeViewTemplate = ({ now, scopeId, sections, relatedCycles, relatedReviews, relatedReports }) => [
+  `# Scope View: ${scopeId}`,
+  '',
+  `- Generated At: ${now}`,
+  '',
+  ...(sections.length ? sections.flatMap((section) => contentSection(section.title, section.path, section.content)) : ['## Scope Artifacts', '', '- No matching scope artifacts found.', '']),
+  '## Related Evidence',
+  '',
+  '- Cycles:',
+  ...(relatedCycles.length ? relatedCycles.map((item) => `  - ${item}`) : ['  - none']),
+  '- Reviews:',
+  ...(relatedReviews.length ? relatedReviews.map((item) => `  - ${item}`) : ['  - none']),
+  '- Reports:',
+  ...(relatedReports.length ? relatedReports.map((item) => `  - ${item}`) : ['  - none']),
+  '',
+].join('\n');
+
+const cycleViewTemplate = ({ now, cycleId, sections }) => [
+  `# Cycle View: ${cycleId}`,
+  '',
+  `- Generated At: ${now}`,
+  '',
+  ...(sections.length ? sections.flatMap((section) => contentSection(section.title, section.path, section.content)) : ['- No matching cycle artifact found.', '']),
+].join('\n');
+
 const logEventTemplate = ({ now, eventType, summary, relatedMilestone, relatedEvidence }) => [
   '# Log Event',
   '',
@@ -1216,6 +1296,21 @@ const listReportFilesForScope = async (root, scopeId) => {
   }
   return matches;
 };
+
+const readExistingSections = async (root, entries) => {
+  const sections = [];
+  for (const [title, relPath] of entries) {
+    if (!await exists(path.join(root, relPath))) continue;
+    sections.push({
+      title,
+      path: relPath,
+      content: await readFile(path.join(root, relPath), 'utf8'),
+    });
+  }
+  return sections;
+};
+
+const latest = (items, count) => [...items].sort().slice(-count);
 
 const validateLinkedArgs = async (root, { linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => {
   const checks = [
@@ -1456,7 +1551,7 @@ const addReview = async (args) => {
   return { root, scopeId, reviewPath, written: created.written, skipped: created.skipped };
 };
 
-const indexEvidence = async (args) => {
+const viewEvidence = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
   if (doctorResult.issues.length) {
@@ -1481,6 +1576,77 @@ const indexEvidence = async (args) => {
 
   const now = new Date().toISOString();
   return { root, entries, view: evidenceViewTemplate({ now, entries }) };
+};
+
+const viewCurrent = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for current view generation.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+
+  const ideals = await listMarkdownFiles(root, 'product/ideal');
+  const specs = (await listDirectories(root, 'product/specs')).filter((item) => path.basename(item) !== 'outdated');
+  const features = await listMarkdownFiles(root, 'ops/scopes/features');
+  const roadmaps = await listMarkdownFiles(root, 'ops/scopes/roadmaps');
+  const milestones = await listMarkdownFiles(root, 'ops/scopes/milestones');
+  const cycles = (await listDirectories(root, 'ops/cycles')).filter((item) => path.basename(item) !== 'archived');
+  const logs = latest(await listMarkdownFiles(root, 'ops/evidence/logs'), 5);
+  const reviews = latest(await listMarkdownFiles(root, 'ops/evidence/reviews'), 5);
+  const reports = latest(await listMarkdownFiles(root, 'ops/evidence/reports'), 5);
+  const now = new Date().toISOString();
+  return { root, view: currentViewTemplate({ now, ideals, specs, features, roadmaps, milestones, cycles, logs, reviews, reports }) };
+};
+
+const viewScope = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for scope view generation.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+
+  assertArchiveId(args.viewId);
+  const scopeId = args.viewId;
+  const sections = await readExistingSections(root, [
+    ['Feature Scope', `ops/scopes/features/${scopeId}.md`],
+    ['Roadmap Scope', `ops/scopes/roadmaps/${scopeId}.md`],
+    ['Milestone Scope', `ops/scopes/milestones/${scopeId}.md`],
+    ['Spec Requirements', `product/specs/${scopeId}/requirements.md`],
+    ['Spec Plan', `product/specs/${scopeId}/plan.md`],
+    ['Spec Tasks', `product/specs/${scopeId}/tasks.md`],
+  ]);
+  const relatedCycles = (await listCycleStateEntries(root, scopeId)).map((entry) => entry.path);
+  const relatedReviews = await listReviewFilesForScope(root, scopeId);
+  const relatedReports = await listReportFilesForScope(root, scopeId);
+  const now = new Date().toISOString();
+  return { root, view: scopeViewTemplate({ now, scopeId, sections, relatedCycles, relatedReviews, relatedReports }) };
+};
+
+const viewCycle = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for cycle view generation.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+
+  assertArchiveId(args.viewId);
+  const cycleId = args.viewId;
+  const cycleRoot = `ops/cycles/${cycleId}`;
+  const sections = await readExistingSections(root, [
+    ['State', `${cycleRoot}/state.md`],
+    ['Handoff', `${cycleRoot}/handoff.md`],
+    ['Knowledge', `${cycleRoot}/knowledge.md`],
+  ]);
+  const now = new Date().toISOString();
+  return { root, view: cycleViewTemplate({ now, cycleId, sections }) };
+};
+
+const viewContext = async (args) => {
+  if (args.runTarget === 'evidence') return viewEvidence(args);
+  if (args.runTarget === 'current') return viewCurrent(args);
+  if (args.runTarget === 'scope') return viewScope(args);
+  if (args.runTarget === 'cycle') return viewCycle(args);
+  throw new Error('Usage: cc-iasd view evidence|current|scope|cycle');
 };
 
 const runCycle = async (args) => {
@@ -1886,8 +2052,8 @@ try {
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Report does not overwrite report records.`);
     }
-  } else if (args.command === 'index') {
-    const result = await indexEvidence(args);
+  } else if (args.command === 'view') {
+    const result = await viewContext(args);
     console.log(result.view);
   } else if (args.command === 'log') {
     const result = await logEvent(args);

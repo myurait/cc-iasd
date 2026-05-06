@@ -39,9 +39,10 @@ Determine the file category and verify the correct language is used:
 - **Backlog format**: Items with `type: feature` must include an Experience Tie (link to ideal experience). Items with `type: debt` must include an Impact Scope.
 - **Backlog required fields**: Each item must have common required fields (type, summary, priority, blockers, design constraints) with valid values.
 - **Review evidence**: Review files in `ops/evidence/reviews/` must follow `rules/templates/review_template.md`.
-- **Review evidence limit**: No more than 5 review files outside `ops/evidence/reviews/archived/`. Excess files must be moved to `ops/evidence/reviews/archived/`.
+- **Review evidence limit**: No more than 5 review files outside `ops/evidence/reviews/archived/`. Excess files must be moved with `cc-iasd ops archive review <id>`.
 - **AGENTS.md line count**: Must be 100 lines or fewer.
 - **Broken links**: Local links in changed Markdown files must resolve to existing files.
+- **View output**: Output from `cc-iasd view ...` is temporary context, not a canonical project file.
 
 ### Cycle Knowledge Management
 
