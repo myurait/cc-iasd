@@ -42,7 +42,8 @@ npx cc-iasd@latest doctor
 npx cc-iasd@latest feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience"
 npx cc-iasd@latest roadmap add roadmap-a --summary "MVP roadmap" --goal "Ship the first usable flow"
 npx cc-iasd@latest spec add spec-a --summary "Define the first implementation slice"
-npx cc-iasd@latest run milestone mvp-001 --feature feature-a --roadmap roadmap-a --spec spec-a --tasks spec-a
+npx cc-iasd@latest milestone add mvp-001 --summary "First milestone" --feature feature-a --roadmap roadmap-a --spec spec-a --tasks spec-a
+npx cc-iasd@latest run cycle mvp-001
 npx cc-iasd@latest review add mvp-001 --type light --summary "Review implementation result" --result "No blocking findings"
 npx cc-iasd@latest escalate mvp-001
 npx cc-iasd@latest report mvp-001
@@ -60,7 +61,8 @@ node bin/cc-iasd.js doctor /tmp/my-project-context
 node bin/cc-iasd.js feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience" --root /tmp/my-project-context
 node bin/cc-iasd.js roadmap add roadmap-a --summary "MVP roadmap" --goal "Ship the first usable flow" --root /tmp/my-project-context
 node bin/cc-iasd.js spec add spec-a --summary "Define the first implementation slice" --root /tmp/my-project-context
-node bin/cc-iasd.js run milestone mvp-001 --feature feature-a --roadmap roadmap-a --spec spec-a --tasks spec-a --root /tmp/my-project-context
+node bin/cc-iasd.js milestone add mvp-001 --summary "First milestone" --feature feature-a --roadmap roadmap-a --spec spec-a --tasks spec-a --root /tmp/my-project-context
+node bin/cc-iasd.js run cycle mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js review add mvp-001 --type light --summary "Review implementation result" --result "No blocking findings" --root /tmp/my-project-context
 node bin/cc-iasd.js escalate mvp-001 --root /tmp/my-project-context
 node bin/cc-iasd.js report mvp-001 --root /tmp/my-project-context

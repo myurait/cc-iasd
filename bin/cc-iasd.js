@@ -12,7 +12,7 @@ const usage = `cc-iasd ${VERSION}
 Usage:
   cc-iasd init [project-context-path] [options]
   cc-iasd doctor [project-context-path]
-  cc-iasd run milestone <id> [--feature <ref>] [--roadmap <ref>] [--spec <ref>] [--tasks <ref>] [--root <project-context-path>]
+  cc-iasd run cycle <id> [--root <project-context-path>]
   cc-iasd escalate <scope-id> [--root <project-context-path>]
   cc-iasd report <scope-id> [--root <project-context-path>]
   cc-iasd index evidence [--root <project-context-path>]
@@ -20,6 +20,7 @@ Usage:
   cc-iasd review add <scope-id> --summary <text> --result <text> [--type light|full] [--root <project-context-path>]
   cc-iasd feature add <id> --summary <text> --pillar <name> [--kind epic|supporting] [--root <project-context-path>]
   cc-iasd roadmap add <id> --summary <text> --goal <text> [--root <project-context-path>]
+  cc-iasd milestone add <id> --summary <text> [--feature <ref>] [--roadmap <ref>] [--spec <ref>] [--tasks <ref>] [--root <project-context-path>]
   cc-iasd spec add <id> --summary <text> [--root <project-context-path>]
   cc-iasd product outdate ideal <id> [--root <project-context-path>]
   cc-iasd product outdate spec <id> [--root <project-context-path>]
@@ -36,10 +37,10 @@ Options:
   --result <text>         Review result summary
   --milestone <id>        Related milestone id for log events
   --evidence <path>       Related evidence path for log events
-  --feature <ref>         Linked feature for run milestone
-  --roadmap <ref>         Linked roadmap for run milestone
-  --spec <ref>            Linked spec for run milestone
-  --tasks <ref>           Linked tasks for run milestone
+  --feature <ref>         Linked feature for milestone add
+  --roadmap <ref>         Linked roadmap for milestone add
+  --spec <ref>            Linked spec for milestone add
+  --tasks <ref>           Linked tasks for milestone add
   --kind <kind>           Feature kind. Default: epic
   --pillar <name>         Ideal pillar for feature add
   --goal <text>           Goal for roadmap add
@@ -84,18 +85,18 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'review', 'feature', 'roadmap', 'spec', 'product', 'ops'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'index', 'log', 'review', 'feature', 'roadmap', 'milestone', 'spec', 'product', 'ops'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
   if (parsed.command === 'run') {
     parsed.runTarget = tokens.shift() ?? '';
-    if (parsed.runTarget !== 'milestone') {
-      throw new Error('Usage: cc-iasd run milestone <id>');
+    if (parsed.runTarget !== 'cycle') {
+      throw new Error('Usage: cc-iasd run cycle <id>');
     }
     parsed.milestoneId = tokens.shift() ?? '';
     if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
-      throw new Error('Usage: cc-iasd run milestone <id>');
+      throw new Error('Usage: cc-iasd run cycle <id>');
     }
   } else if (parsed.command === 'escalate' || parsed.command === 'report') {
     parsed.milestoneId = tokens.shift() ?? '';
@@ -139,6 +140,15 @@ const parseArgs = (argv) => {
     parsed.roadmapId = tokens.shift() ?? '';
     if (!parsed.roadmapId || parsed.roadmapId.startsWith('-')) {
       throw new Error('Usage: cc-iasd roadmap add <id> --summary <text> --goal <text>');
+    }
+  } else if (parsed.command === 'milestone') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'add') {
+      throw new Error('Usage: cc-iasd milestone add <id> --summary <text>');
+    }
+    parsed.milestoneId = tokens.shift() ?? '';
+    if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd milestone add <id> --summary <text>');
     }
   } else if (parsed.command === 'spec') {
     parsed.runTarget = tokens.shift() ?? '';
@@ -888,10 +898,11 @@ const specTasksTemplate = ({ specId, summary, now }) => [
   '',
 ].join('\n');
 
-const milestoneScopeTemplate = ({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
+const milestoneScopeTemplate = ({ milestoneId, summary = 'TBD', now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
   `# Milestone: ${milestoneId}`,
   '',
   `- Milestone ID: ${milestoneId}`,
+  `- Summary: ${summary}`,
   '- Status: ready-for-cycle',
   `- Linked Feature: ${linkedFeature || 'TBD'}`,
   `- Linked Roadmap: ${linkedRoadmap || 'TBD'}`,
@@ -1206,6 +1217,22 @@ const listReportFilesForScope = async (root, scopeId) => {
   return matches;
 };
 
+const validateLinkedArgs = async (root, { linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => {
+  const checks = [
+    ['feature', 'Linked Feature', linkedFeature, ''],
+    ['roadmap', 'Linked Roadmap', linkedRoadmap, ''],
+    ['spec', 'Linked Spec', linkedSpec, ''],
+    ['tasks', 'Linked Tasks', linkedTasks, linkedSpec],
+  ];
+  for (const [kind, label, value, context] of checks) {
+    if (isUnset(value)) continue;
+    const resolved = await resolveExistingPath(root, linkedPathCandidates(kind, value, context));
+    if (!resolved) {
+      throw new Error(`Cannot resolve ${label}: ${value}`);
+    }
+  }
+};
+
 const writeLogEvent = async (root, { eventType, summary, relatedMilestone = '', relatedEvidence = '' }) => {
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
@@ -1352,6 +1379,44 @@ const addSpec = async (args) => {
   return { root, specId: args.specId, specRoot, written: created.written, skipped: created.skipped };
 };
 
+const addMilestone = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for milestone add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  const milestoneId = args.milestoneId;
+  if (slugify(milestoneId) !== milestoneId) {
+    throw new Error('Milestone id must be lowercase kebab-case ASCII');
+  }
+  if (!args.eventSummary) {
+    throw new Error('Usage: cc-iasd milestone add <id> --summary <text>');
+  }
+  await validateLinkedArgs(root, args);
+
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const milestonePath = `ops/scopes/milestones/${milestoneId}.md`;
+  await writeText(root, milestonePath, milestoneScopeTemplate({
+    milestoneId,
+    summary: args.eventSummary,
+    now,
+    linkedFeature: args.linkedFeature,
+    linkedRoadmap: args.linkedRoadmap,
+    linkedSpec: args.linkedSpec,
+    linkedTasks: args.linkedTasks,
+  }), { ...args, force: false }, created);
+
+  await writeLogEvent(root, {
+    eventType: 'milestone-add',
+    summary: `Added milestone ${milestoneId}`,
+    relatedMilestone: milestoneId,
+    relatedEvidence: milestonePath,
+  });
+
+  return { root, milestoneId, milestonePath, written: created.written, skipped: created.skipped };
+};
+
 const addReview = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
@@ -1418,11 +1483,11 @@ const indexEvidence = async (args) => {
   return { root, entries, view: evidenceViewTemplate({ now, entries }) };
 };
 
-const runMilestone = async (args) => {
+const runCycle = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
   if (doctorResult.issues.length) {
-    throw new Error(`Project-context is not ready for milestone run.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+    throw new Error(`Project-context is not ready for cycle run.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
 
   const milestoneId = args.milestoneId;
@@ -1430,6 +1495,9 @@ const runMilestone = async (args) => {
     throw new Error('Milestone id must be lowercase kebab-case ASCII');
   }
   const milestonePath = `ops/scopes/milestones/${milestoneId}.md`;
+  if (!await exists(path.join(root, milestonePath))) {
+    throw new Error(`Milestone does not exist: ${milestonePath}`);
+  }
   const now = new Date().toISOString();
   const cycleId = `cycle_${timestampForFile(now)}_${milestoneId}`;
   const cycleRoot = `ops/cycles/${cycleId}`;
@@ -1439,8 +1507,6 @@ const runMilestone = async (args) => {
   const linkedRoadmap = args.linkedRoadmap || extractField(existingMilestone, 'Linked Roadmap');
   const linkedSpec = args.linkedSpec || extractField(existingMilestone, 'Linked Spec');
   const linkedTasks = args.linkedTasks || extractField(existingMilestone, 'Linked Tasks');
-
-  await writeText(root, milestonePath, milestoneScopeTemplate({ milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
 
   await writeText(root, `${cycleRoot}/state.md`, cycleStateTemplate({ cycleId, milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
 
@@ -1800,11 +1866,11 @@ try {
     }
     console.log(`cc-iasd doctor passed for ${result.root}`);
   } else if (args.command === 'run') {
-    const result = await runMilestone(args);
-    console.log(`Prepared milestone ${result.milestoneId} and cycle ${result.cycleId} in ${result.root}.`);
+    const result = await runCycle(args);
+    console.log(`Prepared cycle ${result.cycleId} for milestone ${result.milestoneId} in ${result.root}.`);
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
-      console.log(`Skipped ${result.skipped.length} existing file(s). Run does not overwrite existing scope or cycle records.`);
+      console.log(`Skipped ${result.skipped.length} existing file(s). Run does not overwrite existing cycle records.`);
     }
   } else if (args.command === 'escalate') {
     const result = await escalateMilestone(args);
@@ -1846,6 +1912,13 @@ try {
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Roadmap add does not overwrite roadmap records.`);
+    }
+  } else if (args.command === 'milestone') {
+    const result = await addMilestone(args);
+    console.log(`Prepared milestone ${result.milestoneId} in ${result.root}.`);
+    console.log(`Created ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Milestone add does not overwrite milestone records.`);
     }
   } else if (args.command === 'spec') {
     const result = await addSpec(args);

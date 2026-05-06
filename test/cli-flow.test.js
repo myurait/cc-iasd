@@ -52,7 +52,8 @@ test('artifact commands write to the new structure and keep doctor green', async
     runCli(['feature', 'add', 'feature-a', '--kind', 'epic', '--summary', 'Add feature A', '--pillar', 'Core', '--root', root]);
     runCli(['roadmap', 'add', 'roadmap-a', '--summary', 'Roadmap A', '--goal', 'Ship A', '--root', root]);
     runCli(['spec', 'add', 'spec-a', '--summary', 'Spec A', '--root', root]);
-    runCli(['run', 'milestone', 'mvp-001', '--feature', 'feature-a', '--roadmap', 'roadmap-a', '--spec', 'spec-a', '--tasks', 'spec-a', '--root', root]);
+    runCli(['milestone', 'add', 'mvp-001', '--summary', 'Milestone 1', '--feature', 'feature-a', '--roadmap', 'roadmap-a', '--spec', 'spec-a', '--tasks', 'spec-a', '--root', root]);
+    runCli(['run', 'cycle', 'mvp-001', '--root', root]);
     runCli(['review', 'add', 'mvp-001', '--type', 'light', '--summary', 'Review A', '--result', 'passed', '--root', root]);
     runCli(['escalate', 'mvp-001', '--root', root]);
     runCli(['report', 'mvp-001', '--root', root]);
@@ -81,6 +82,30 @@ test('doctor rejects legacy ledger paths', async () => {
     assert.throws(
       () => runCli(['doctor', root]),
       /Forbidden legacy path exists: ops\/logs/,
+    );
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('run milestone is not accepted', async () => {
+  const root = await createContext();
+  try {
+    assert.throws(
+      () => runCli(['run', 'milestone', 'mvp-001', '--root', root]),
+      /Usage: cc-iasd run cycle <id>/,
+    );
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('milestone add rejects unresolved links', async () => {
+  const root = await createContext();
+  try {
+    assert.throws(
+      () => runCli(['milestone', 'add', 'mvp-001', '--summary', 'Milestone 1', '--feature', 'missing-feature', '--root', root]),
+      /Cannot resolve Linked Feature: missing-feature/,
     );
   } finally {
     await cleanup(root);
