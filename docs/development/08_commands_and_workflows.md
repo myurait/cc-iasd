@@ -358,6 +358,8 @@ product/ideal/<id>.md
 
 初期実装では、既存 ideal file は上書きしない。古くなった ideal は直接移動せず、`cc-iasd product outdate ideal <id>` で `outdated/` に退避する。
 
+ideal artifact が存在する場合、doctor は Product Ideal、Experience Principles、Boundaries の authored section が空でないことを検査する。ideal の本文が薄いまま feature / roadmap / spec へ進むことは許可しない。
+
 ---
 
 ## 11. cc-iasd feature add <id>
@@ -370,7 +372,7 @@ ideal と roadmap の間に置く feature scope を追加する。
 
 ```text
 処理:
-1. feature id を受け取る
+1. feature id を fNNN-kebab-case として受け取る
 2. kind を epic / supporting などの metadata として受け取る
 3. summary と ideal refs を受け取る
 4. ops/scopes/features/ に feature file を作成する
@@ -453,7 +455,8 @@ campaign queue に登録済みの run を `completed / blocked / escalated / def
 2. status を completed / blocked / escalated / deferred から受け取る
 3. ops/execution/campaigns/<id>/queue.md の該当 run status を更新する
 4. ops/execution/runs/<run-id>/state.md の Result と Last Update を更新する
-5. ops/evidence/logs/ に campaign-mark-run event を記録する
+5. ops/execution/campaigns/<id>/state.md の Result と Last Update を queue から更新する
+6. ops/evidence/logs/ に campaign-mark-run event を記録する
 ```
 
 AI agent は queue.md を直接編集して進行状態を変更しない。
@@ -719,6 +722,8 @@ project-context の整合性を検査する。
 ```
 
 doctor は、project-context scaffold の必須パス、禁止パスの混入、product / ops の archive 規則、artifact 間参照を検査する。
+
+doctor は framework 開発用資料の存在や参照を検査しない。開発資料の release 前整理は、project-context doctor とは別の管理方針で扱う。
 
 ---
 

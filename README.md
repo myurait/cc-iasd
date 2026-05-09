@@ -40,7 +40,8 @@ Use npx from a project-context root:
 npx cc-iasd@latest init --doc-lang Japanese --dev-lang TypeScript
 npx cc-iasd@latest doctor
 npx cc-iasd@latest ideal add i001-core --summary "Core product ideal"
-npx cc-iasd@latest feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience"
+# Edit product/ideal/i001-core.md authored sections before continuing.
+npx cc-iasd@latest feature add f001-feature-a --kind epic --summary "Add a core feature" --pillar "Core experience"
 npx cc-iasd@latest roadmap add r001-first-roadmap --summary "First roadmap" --goal "Ship the first usable flow"
 npx cc-iasd@latest spec add s001-first-slice --summary "Define the first implementation slice"
 npx cc-iasd@latest campaign add c001-first-campaign --summary "First campaign" --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice
@@ -66,7 +67,8 @@ For local development from this repository:
 node bin/cc-iasd.js init /tmp/my-project-context --doc-lang Japanese --dev-lang TypeScript
 node bin/cc-iasd.js doctor /tmp/my-project-context
 node bin/cc-iasd.js ideal add i001-core --summary "Core product ideal" --root /tmp/my-project-context
-node bin/cc-iasd.js feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience" --root /tmp/my-project-context
+# Edit product/ideal/i001-core.md authored sections before continuing.
+node bin/cc-iasd.js feature add f001-feature-a --kind epic --summary "Add a core feature" --pillar "Core experience" --root /tmp/my-project-context
 node bin/cc-iasd.js roadmap add r001-first-roadmap --summary "First roadmap" --goal "Ship the first usable flow" --root /tmp/my-project-context
 node bin/cc-iasd.js spec add s001-first-slice --summary "Define the first implementation slice" --root /tmp/my-project-context
 node bin/cc-iasd.js campaign add c001-first-campaign --summary "First campaign" --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice --root /tmp/my-project-context

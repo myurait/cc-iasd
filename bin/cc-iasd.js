@@ -487,10 +487,7 @@ const requiredPaths = [
   'src',
 ];
 
-const developmentDocsPath = ['docs', 'development'].join('/');
-
 const forbiddenPaths = [
-  developmentDocsPath,
   'development-docs',
   'ops/ideal',
   'ops/specs',
@@ -507,8 +504,6 @@ const forbiddenPaths = [
 ];
 
 const forbiddenContent = [
-  `${developmentDocsPath}/`,
-  developmentDocsPath,
   'development-docs',
   'ops/ideal/',
   'ops/specs/',
@@ -681,6 +676,21 @@ const extractField = (content, label) => {
 
 const isUnset = (value) => !value || value === 'none' || value.startsWith('UNRESOLVED');
 
+const extractMarkdownSection = (content, heading) => {
+  const marker = `## ${heading}`;
+  const start = content.indexOf(marker);
+  if (start === -1) return '';
+  const bodyStart = content.indexOf('\n', start);
+  if (bodyStart === -1) return '';
+  const nextHeading = content.indexOf('\n## ', bodyStart + 1);
+  return content.slice(bodyStart + 1, nextHeading === -1 ? undefined : nextHeading).trim();
+};
+
+const hasAuthoredContent = (content) => content
+  .split('\n')
+  .map((line) => line.trim())
+  .some((line) => line && line !== '- TBD' && line !== 'TBD' && !line.startsWith('- UNRESOLVED') && !line.startsWith('UNRESOLVED'));
+
 const resolveExistingPath = async (root, candidates) => {
   for (const candidate of candidates.filter(Boolean)) {
     if (await exists(path.join(root, candidate))) {
@@ -784,6 +794,11 @@ const validateRunFiles = async (root, issues) => {
         issues.push(`Unexpected run file: ${file}`);
       }
     }
+
+    const plan = await readOptionalText(root, `${runDir}/plan.md`);
+    if (!hasAuthoredContent(extractMarkdownSection(plan, 'Selected Tasks'))) {
+      issues.push(`Missing selected tasks in ${runDir}/plan.md`);
+    }
   }
 };
 
@@ -794,6 +809,20 @@ const validateIdealFiles = async (root, issues) => {
     if (!/^i[0-9]{3}-[a-z0-9][a-z0-9-]*\.md$/.test(basename)) {
       issues.push(`Invalid ideal file name: ${file}`);
     }
+    const content = await readFile(path.join(root, file), 'utf8');
+    const summary = extractField(content, 'Summary');
+    const status = extractField(content, 'Status');
+    if (isUnset(summary)) {
+      issues.push(`Missing ideal summary in ${file}`);
+    }
+    if (isUnset(status)) {
+      issues.push(`Missing ideal status in ${file}`);
+    }
+    for (const section of ['Product Ideal', 'Experience Principles', 'Boundaries']) {
+      if (!hasAuthoredContent(extractMarkdownSection(content, section))) {
+        issues.push(`Missing ideal ${section} content in ${file}`);
+      }
+    }
   }
 };
 
@@ -801,7 +830,7 @@ const validateFeatureFiles = async (root, issues) => {
   const files = await listMarkdownFiles(root, 'ops/scopes/features');
   for (const file of files) {
     const basename = path.basename(file);
-    if (!/^[a-z0-9][a-z0-9-]*\.md$/.test(basename)) {
+    if (!/^f[0-9]{3}-[a-z0-9][a-z0-9-]*\.md$/.test(basename)) {
       issues.push(`Invalid feature file name: ${file}`);
     }
 
@@ -1266,7 +1295,7 @@ const runPlanTemplate = ({ runId, sourceId, now, linkedFeature, linkedRoadmap, l
   '',
   '## Selected Tasks',
   '',
-  '- TBD',
+  `- ${linkedTasks || linkStatus('Linked Tasks', linkedSpec)}`,
   '',
 ].join('\n');
 
@@ -1902,8 +1931,8 @@ const addFeature = async (args) => {
   if (!['epic', 'supporting'].includes(args.featureKind)) {
     throw new Error('Feature kind must be epic or supporting');
   }
-  if (slugify(args.featureId) !== args.featureId) {
-    throw new Error('Feature id must be lowercase kebab-case ASCII');
+  if (!/^f[0-9]{3}-[a-z0-9][a-z0-9-]*$/.test(args.featureId)) {
+    throw new Error('Feature id must match fNNN-lowercase-kebab-case');
   }
   if (!args.eventSummary) {
     throw new Error('Usage: cc-iasd feature add <id> --summary <text> --pillar <name>');
@@ -2127,6 +2156,7 @@ const markCampaignRunCommand = async (args) => {
     status: args.status,
   }, args, created);
   await updateRunResult(root, args.scopeId, args.status, args, created);
+  await updateCampaignResultFromQueue(root, args.campaignId, args, created);
   await writeLogEvent(root, {
     eventType: 'campaign-mark-run',
     summary: `Marked ${args.scopeId} as ${args.status} in ${args.campaignId}`,
@@ -2164,6 +2194,40 @@ const markCampaignRun = async (root, { campaignId, runId, status }, args, create
     const cells = lines[index].split('|').map((cell) => cell.trim());
     lines[index] = `| ${cells[1]} | ${cells[2]} | ${cells[3]} | ${status} | ${cells[5]} |`;
     return lines.join('\n');
+  }, args, created);
+};
+
+const updateCampaignResultFromQueue = async (root, campaignId, args, created) => {
+  const queuePath = `ops/execution/campaigns/${campaignId}/queue.md`;
+  const statePath = `ops/execution/campaigns/${campaignId}/state.md`;
+  const queue = await readOptionalText(root, queuePath);
+  if (!queue || !await exists(path.join(root, statePath))) return;
+
+  const statuses = queue
+    .split('\n')
+    .filter((line) => /^\| [0-9]+ \|/.test(line))
+    .map((line) => line.split('|').map((cell) => cell.trim())[4])
+    .filter(Boolean);
+
+  const result = (() => {
+    if (!statuses.length) return 'in-progress';
+    if (statuses.every((status) => status === 'completed')) return 'completed';
+    if (statuses.includes('blocked')) return 'blocked';
+    if (statuses.includes('escalated')) return 'escalated';
+    if (statuses.includes('deferred') && statuses.every((status) => status === 'completed' || status === 'deferred')) return 'deferred';
+    return 'in-progress';
+  })();
+
+  const activeBlocker = ['blocked', 'escalated'].includes(result)
+    ? 'See campaign queue for blocked or escalated run.'
+    : 'none recorded';
+  const now = new Date().toISOString();
+
+  await updateTextFile(root, statePath, (content) => {
+    let next = replaceLine(content, '- Result:', `- Result: ${result}`);
+    next = replaceLine(next, '- Active Blocker:', `- Active Blocker: ${activeBlocker}`);
+    next = replaceLine(next, '- Last Update:', `- Last Update: ${now}`);
+    return next;
   }, args, created);
 };
 

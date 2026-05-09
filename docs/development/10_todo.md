@@ -30,4 +30,5 @@ TODO:
 - evidence の粒度が粗すぎるか細かすぎるか確認する
 - completion report が人間の後続判断に足りるか確認する
 - tasks 起点の implementation loop が run / evidence と過不足なく接続できるか確認する
+- 開発用資料を project-context doctor から切り離し、release 前の削除または別管理方針への委譲を扱う検査を別系統にする
 ```

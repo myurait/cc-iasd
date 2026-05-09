@@ -26,6 +26,15 @@ const cleanup = async (root) => {
   await rm(root, { recursive: true, force: true });
 };
 
+const fillIdeal = async (root, idealId = 'i001-core') => {
+  const idealPath = path.join(root, 'product/ideal', `${idealId}.md`);
+  let content = await readFile(idealPath, 'utf8');
+  content = content.replace('## Product Ideal\n\n- TBD', '## Product Ideal\n\n- Core product ideal.');
+  content = content.replace('## Experience Principles\n\n- TBD', '## Experience Principles\n\n- Core experience principle.');
+  content = content.replace('## Boundaries\n\n- TBD', '## Boundaries\n\n- Core product boundary.');
+  await writeFile(idealPath, content, 'utf8');
+};
+
 test('init creates the product ops reference structure', async () => {
   const root = await createContext();
   try {
@@ -71,13 +80,14 @@ test('artifact commands write to the new structure and keep doctor green', async
   const root = await createContext();
   try {
     runCli(['ideal', 'add', 'i001-core', '--summary', 'Core ideal', '--root', root]);
-    runCli(['feature', 'add', 'feature-a', '--kind', 'epic', '--summary', 'Add feature A', '--pillar', 'Core', '--root', root]);
+    await fillIdeal(root);
+    runCli(['feature', 'add', 'f001-feature-a', '--kind', 'epic', '--summary', 'Add feature A', '--pillar', 'Core', '--root', root]);
     runCli(['roadmap', 'add', 'r001-roadmap-a', '--summary', 'Roadmap A', '--goal', 'Ship A', '--root', root]);
     runCli(['spec', 'add', 's001-spec-a', '--summary', 'Spec A', '--root', root]);
-    runCli(['campaign', 'add', 'c001-campaign-a', '--summary', 'Campaign 1', '--feature', 'feature-a', '--roadmap', 'r001-roadmap-a', '--spec', 's001-spec-a', '--tasks', 's001-spec-a', '--root', root]);
+    runCli(['campaign', 'add', 'c001-campaign-a', '--summary', 'Campaign 1', '--feature', 'f001-feature-a', '--roadmap', 'r001-roadmap-a', '--spec', 's001-spec-a', '--tasks', 's001-spec-a', '--root', root]);
     const runOutput = runCli(['run', 'start', 'c001-campaign-a', '--root', root]);
     const runId = runOutput.match(/Prepared run (run_[0-9]{17}_c001-campaign-a)/)[1];
-    runCli(['open-item', 'add', runId, '--kind', 'follow-up', '--summary', 'Follow up A', '--target', 'ops/scopes/features/feature-a.md', '--root', root]);
+    runCli(['open-item', 'add', runId, '--kind', 'follow-up', '--summary', 'Follow up A', '--target', 'ops/scopes/features/f001-feature-a.md', '--root', root]);
     runCli(['open-item', 'resolve', runId, 'oi-001', '--resolution', 'resolved', '--summary', 'Handled', '--root', root]);
     runCli(['campaign', 'mark-run', 'c001-campaign-a', runId, '--status', 'completed', '--root', root]);
     runCli(['review', 'add', runId, '--type', 'light', '--summary', 'Review A', '--result', 'passed', '--root', root]);
@@ -104,7 +114,7 @@ test('artifact commands write to the new structure and keep doctor green', async
     assert.match(runView, new RegExp(`# Run View: ${runId}`));
     assert.match(runView, /## State/);
 
-    const feature = await readFile(path.join(root, 'ops/scopes/features/feature-a.md'), 'utf8');
+    const feature = await readFile(path.join(root, 'ops/scopes/features/f001-feature-a.md'), 'utf8');
     assert.match(feature, /## Backlog/);
 
     assert.equal(existsSync(path.join(root, 'product/specs/s001-spec-a/spec.md')), true);
@@ -118,18 +128,24 @@ test('artifact commands write to the new structure and keep doctor green', async
     assert.doesNotMatch(runState, /## Open Item Resolution/);
     assert.match(runState, /- Result: completed/);
 
+    const runPlan = await readFile(path.join(root, 'ops/execution/runs', runId, 'plan.md'), 'utf8');
+    assert.match(runPlan, /## Selected Tasks\n\n- s001-spec-a/);
+
     const openItems = await readFile(path.join(root, 'ops/execution/runs', runId, 'open-items.md'), 'utf8');
     assert.match(openItems, /- ID: oi-001/);
     assert.match(openItems, /- Status: resolved/);
-    assert.match(openItems, /- Target: ops\/scopes\/features\/feature-a\.md/);
+    assert.match(openItems, /- Target: ops\/scopes\/features\/f001-feature-a\.md/);
 
     const campaign = await readFile(path.join(root, 'ops/execution/campaigns/c001-campaign-a/plan.md'), 'utf8');
-    assert.match(campaign, /- Linked Feature: feature-a/);
+    assert.match(campaign, /- Linked Feature: f001-feature-a/);
     assert.match(campaign, /- Linked Roadmap: r001-roadmap-a/);
     assert.match(campaign, /- Linked Spec: s001-spec-a/);
 
     const queue = await readFile(path.join(root, 'ops/execution/campaigns/c001-campaign-a/queue.md'), 'utf8');
     assert.match(queue, new RegExp(`\\| 1 \\| c001-campaign-a \\| s001-spec-a \\| completed \\| ${runId} \\|`));
+
+    const campaignState = await readFile(path.join(root, 'ops/execution/campaigns/c001-campaign-a/state.md'), 'utf8');
+    assert.match(campaignState, /- Result: completed/);
 
     assert.equal(existsSync(path.join(root, 'product/ideal/i001-core.md')), true);
     assert.equal(existsSync(path.join(root, 'reference/notes/planning-note.md')), true);
@@ -150,6 +166,19 @@ test('profile update refreshes runtime profile files without overwriting by defa
     assert.match(output, /Skipped 4 existing file/);
 
     runCli(['doctor', root]);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('doctor rejects thin ideal artifacts', async () => {
+  const root = await createContext();
+  try {
+    runCli(['ideal', 'add', 'i001-core', '--summary', 'Core ideal', '--root', root]);
+    assert.throws(
+      () => runCli(['doctor', root]),
+      /Missing ideal Product Ideal content in product\/ideal\/i001-core\.md/,
+    );
   } finally {
     await cleanup(root);
   }
@@ -196,8 +225,8 @@ test('campaign add rejects unresolved links', async () => {
   const root = await createContext();
   try {
     assert.throws(
-      () => runCli(['campaign', 'add', 'c001-campaign-a', '--summary', 'Campaign 1', '--feature', 'missing-feature', '--roadmap', 'missing-roadmap', '--root', root]),
-      /Cannot resolve Linked Feature: missing-feature/,
+      () => runCli(['campaign', 'add', 'c001-campaign-a', '--summary', 'Campaign 1', '--feature', 'f999-missing-feature', '--roadmap', 'missing-roadmap', '--root', root]),
+      /Cannot resolve Linked Feature: f999-missing-feature/,
     );
   } finally {
     await cleanup(root);
@@ -220,6 +249,7 @@ test('product outdate and ops archive move artifacts to inactive storage', async
   const root = await createContext();
   try {
     runCli(['ideal', 'add', 'i001-core', '--summary', 'Core ideal', '--root', root]);
+    await fillIdeal(root);
     runCli(['spec', 'add', 's001-spec-a', '--summary', 'Spec A', '--root', root]);
     runCli(['roadmap', 'add', 'r001-roadmap-a', '--summary', 'Roadmap A', '--goal', 'Ship A', '--root', root]);
 
@@ -247,10 +277,10 @@ test('product outdate and ops archive move artifacts to inactive storage', async
 test('ops archive supports every ops layer and preserves doctor validity', async () => {
   const root = await createContext();
   try {
-    runCli(['feature', 'add', 'feature-a', '--kind', 'epic', '--summary', 'Add feature A', '--pillar', 'Core', '--root', root]);
+    runCli(['feature', 'add', 'f001-feature-a', '--kind', 'epic', '--summary', 'Add feature A', '--pillar', 'Core', '--root', root]);
     runCli(['roadmap', 'add', 'r001-roadmap-a', '--summary', 'Roadmap A', '--goal', 'Ship A', '--root', root]);
     runCli(['spec', 'add', 's001-spec-a', '--summary', 'Spec A', '--root', root]);
-    runCli(['campaign', 'add', 'c001-campaign-a', '--summary', 'Campaign 1', '--feature', 'feature-a', '--roadmap', 'r001-roadmap-a', '--spec', 's001-spec-a', '--tasks', 's001-spec-a', '--root', root]);
+    runCli(['campaign', 'add', 'c001-campaign-a', '--summary', 'Campaign 1', '--feature', 'f001-feature-a', '--roadmap', 'r001-roadmap-a', '--spec', 's001-spec-a', '--tasks', 's001-spec-a', '--root', root]);
     const runOutput = runCli(['run', 'start', 'c001-campaign-a', '--root', root]);
     const runId = runOutput.match(/Prepared run (run_[0-9]{17}_c001-campaign-a)/)[1];
     runCli(['review', 'add', runId, '--type', 'light', '--summary', 'Review A', '--result', 'passed', '--root', root]);
@@ -265,10 +295,10 @@ test('ops archive supports every ops layer and preserves doctor validity', async
     runCli(['ops', 'archive', 'review', reviewId, '--root', root]);
     runCli(['ops', 'archive', 'report', reportId, '--root', root]);
     runCli(['ops', 'archive', 'log', logId, '--root', root]);
-    runCli(['ops', 'archive', 'feature', 'feature-a', '--root', root]);
+    runCli(['ops', 'archive', 'feature', 'f001-feature-a', '--root', root]);
     runCli(['ops', 'archive', 'roadmap', 'r001-roadmap-a', '--root', root]);
 
-    assert.equal(existsSync(path.join(root, 'ops/scopes/features/archived/feature-a.md')), true);
+    assert.equal(existsSync(path.join(root, 'ops/scopes/features/archived/f001-feature-a.md')), true);
     assert.equal(existsSync(path.join(root, 'ops/scopes/roadmaps/archived/r001-roadmap-a.md')), true);
     assert.equal(existsSync(path.join(root, 'ops/execution/campaigns/archived/c001-campaign-a/plan.md')), true);
     assert.equal(existsSync(path.join(root, 'ops/execution/runs/archived', runId, 'state.md')), true);
@@ -285,11 +315,11 @@ test('ops archive supports every ops layer and preserves doctor validity', async
 test('ops archive refuses to overwrite an existing destination', async () => {
   const root = await createContext();
   try {
-    runCli(['feature', 'add', 'feature-b', '--kind', 'epic', '--summary', 'Add feature B', '--pillar', 'Core', '--root', root]);
-    await writeFile(path.join(root, 'ops/scopes/features/archived/feature-b.md'), '# Existing archive\n', 'utf8');
+    runCli(['feature', 'add', 'f002-feature-b', '--kind', 'epic', '--summary', 'Add feature B', '--pillar', 'Core', '--root', root]);
+    await writeFile(path.join(root, 'ops/scopes/features/archived/f002-feature-b.md'), '# Existing archive\n', 'utf8');
     assert.throws(
-      () => runCli(['ops', 'archive', 'feature', 'feature-b', '--root', root]),
-      /Destination already exists: ops\/scopes\/features\/archived\/feature-b\.md/,
+      () => runCli(['ops', 'archive', 'feature', 'f002-feature-b', '--root', root]),
+      /Destination already exists: ops\/scopes\/features\/archived\/f002-feature-b\.md/,
     );
   } finally {
     await cleanup(root);
