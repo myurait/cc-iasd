@@ -22,15 +22,15 @@
 4. ops/scopes/features/ で feature scope を整理する
 5. ops/scopes/roadmaps/ で roadmap を定義する
 6. product/specs/ で spec / plan / tasks を作る
-7. cc-iasd milestone add <id> で milestone scope を定義する
-8. cc-iasd run cycle <id>
+7. ops/execution/campaigns/ で campaign を定義する
+8. cc-iasd run start <id> で run を開始する
 9. Worker runtime が src/ を編集する
 10. Reviewer runtime または人間が ops/evidence/reviews/ に review を記録する
 11. 必要に応じて cc-iasd escalate <scope-ref>
 12. 人間判断後に再開する
 13. cc-iasd report <scope-ref>
 14. 必要な一時 context は cc-iasd view ... で生成する
-15. 完了した cycle / evidence / scope artifact を cc-iasd ops archive で archived/ へ退避する
+15. 完了した run / campaign / evidence / scope artifact を cc-iasd ops archive で archived/ へ退避する
 16. 正本でなくなった product artifact を cc-iasd product outdate で outdated/ へ退避する
 ```
 
@@ -44,8 +44,9 @@
 - 成果物 project が src/ に分離されている
 - product 正本と ops transaction が分離されている
 - ideal / spec の正本が product/ にある
-- features / roadmap / milestone が scope artifact として整理されている
-- cycle が自走実行単位として定義されている
+- features / roadmap が scope artifact として整理されている
+- campaign が複数 run の進行制御として定義されている
+- run が task 実行選択と runtime context として定義されている
 - logs / reviews / reports が evidence layer にある
 - spec / plan / tasks の正本が二重化していない
 - Escalation Packet が人間判断に足る情報を持つ
@@ -63,7 +64,7 @@
 人間判断:
 - ideal の目的変更
 - roadmap 変更
-- milestone 目的変更
+- campaign の目的変更
 - spec の大幅変更
 - 技術スタック変更
 - 外部サービス導入

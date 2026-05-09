@@ -16,7 +16,7 @@ cc-iasd の目的:
 - project-context を作る
 - spec / plan / tasks を正本化する
 - 実装対象 project を src/ に隔離する
-- milestone 単位で自走範囲を定義する
+- campaign / run 単位で自走範囲を定義する
 - 自律実装を既存 framework / runtime に委譲する
 - 判断・レビュー・残リスクを追跡できる形にする
 - 必要な場合だけ人間判断へ戻す
@@ -35,7 +35,7 @@ cc-iasd の目的:
   この機能を作って
 
 cc-iasd:
-  対象 spec / milestone を確認し、
+  対象 spec / campaign / run を確認し、
   tasks を分解し、
   実装 runtime に委譲し、
   review / audit を実行し、
@@ -60,7 +60,7 @@ AI 開発チームは、roadmap 全体を自由に変更しない。
 
 ```text
 AI 開発チームが行えること:
-- 承認済み cycle scope 内の task 分解
+- 承認済み run scope 内の task 分解
 - task の順序変更
 - task-local な実装判断
 - review / audit に基づく bounded remediation
@@ -68,7 +68,7 @@ AI 開発チームが行えること:
 
 AI 開発チームが行えないこと:
 - roadmap の目的変更
-- milestone の目的変更
+- campaign の目的変更
 - 技術スタックの大幅変更
 - 費用・外部サービス・セキュリティに関わる決裁
 - ユーザー価値判断を伴う仕様変更
@@ -106,7 +106,9 @@ cc-iasd は以下を初期化できること:
 - product/specs/
 - ops/
 - ops/scopes/
-- ops/cycles/
+- ops/execution/
+- ops/execution/campaigns/
+- ops/execution/runs/
 - ops/evidence/
 - src/
 - profile / lock / framework version
@@ -139,22 +141,22 @@ cc-iasd は、成果物 project を `src/` に隔離する。
 - 実装対象 root は src/
 - build / test / lint は src/ 内で実行
 - spec は product/ 側に保持
-- cycle / evidence / report は ops/ 側に保持
+- run / evidence / report は ops/ 側に保持
 - coding agent に渡す root を明示
 - cc-iasd 管理 artifact を src/ 配下に作成しない
 - src/ 配下の成果物 project は cc-iasd なしでも分離可能である
 ```
 
-### 3.4 cycle 自走
+### 3.4 campaign / run 自走
 
-cc-iasd は、spec / task / milestone などの bounded scope に対して cycle 単位で自走を開始できる。
+cc-iasd は、spec / task を campaign / run に接続して自走を開始できる。
 
 ```text
 必要な定義:
 - 自走開始条件
 - 自走継続条件
 - 停止条件
-- cycle 内変更可能範囲
+- run 内変更可能範囲
 - roadmap 変更禁止条件
 ```
 
@@ -165,7 +167,7 @@ cc-iasd は、spec / task / milestone などの bounded scope に対して cycle
 ```text
 Escalation Packet に含めるもの:
 - 何が止まっているか
-- 対象 spec / milestone / task
+- 対象 spec / campaign / run / task
 - ここまでに実施したこと
 - 現在の状態
 - 既に判断したこと
@@ -181,12 +183,12 @@ Escalation Packet に含めるもの:
 
 ### 3.6 Evidence Bridge
 
-cc-iasd は、全情報を独自ログや横断 index として複製しない。product / scope / cycle / evidence の artifact を参照で結び、後から判断を追跡できる構造を作る。
+cc-iasd は、全情報を独自ログや横断 index として複製しない。product / scope / execution / evidence の artifact を参照で結び、後から判断を追跡できる構造を作る。
 
 ```text
 Evidence Bridge:
 - spec / plan / tasks への参照
-- cycle state への参照
+- run state への参照
 - log への参照
 - review 結果への参照
 - escalation packet への参照
@@ -197,7 +199,7 @@ Evidence Bridge:
 
 ### 3.7 Completion Report
 
-milestone 完了時には Completion Report を生成する。
+run または campaign 完了時には Completion Report を生成する。
 
 ```text
 Completion Report:
@@ -265,10 +267,10 @@ cc-iasd は次を目標にしない。
 - 新規 project-context を作成できる
 - src/ に成果物 project を隔離できる
 - ideal / spec を product 正本として扱える
-- features / roadmap / milestone を scope artifact として扱える
+- features / roadmap を scope artifact として扱える
 - spec / plan / tasks を正本として扱える
 - logs / reviews / reports を evidence layer に記録できる
-- cycle 自走範囲を明示できる
+- campaign / run 自走範囲を明示できる
 - 実装 runtime に渡す作業単位を定義できる
 - 停止時に Escalation Packet を生成できる
 - 完了時に Completion Report を生成できる
