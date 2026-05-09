@@ -58,18 +58,11 @@ project-context/
   runtime/
     cc-iasd.yaml
     lock.json
-    framework-version.md
-    plugins/
-      spec-profile.yaml
-      implementation-runtime.yaml
-      bmad.yaml
+    profile.md
+    plugins.yaml
     adapters/
-      agent-runtime.yaml
-    commands/
-      init.md
-      run-cycle.md
-      escalate.md
-      report.md
+      README.md
+      role-runtime.md
 
   rules/
     policies/
@@ -187,7 +180,7 @@ runtime/ の責務:
 - framework lock
 - plugin 定義
 - adapter 設定
-- command 定義
+- role runtime manifest
 - project-context の実行設定
 ```
 

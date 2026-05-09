@@ -25,6 +25,7 @@ Usage:
   cc-iasd roadmap add <id> --summary <text> --goal <text> [--root <project-context-path>]
   cc-iasd milestone add <id> --summary <text> [--feature <ref>] [--roadmap <ref>] [--spec <ref>] [--tasks <ref>] [--root <project-context-path>]
   cc-iasd spec add <id> --summary <text> [--root <project-context-path>]
+  cc-iasd profile update [--root <project-context-path>]
   cc-iasd product outdate ideal <id> [--root <project-context-path>]
   cc-iasd product outdate spec <id> [--root <project-context-path>]
   cc-iasd ops archive feature|roadmap|milestone|cycle|log|review|report <id> [--root <project-context-path>]
@@ -89,7 +90,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'view', 'log', 'review', 'feature', 'roadmap', 'milestone', 'spec', 'product', 'ops'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'view', 'log', 'review', 'feature', 'roadmap', 'milestone', 'spec', 'profile', 'product', 'ops'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -168,6 +169,11 @@ const parseArgs = (argv) => {
     parsed.specId = tokens.shift() ?? '';
     if (!parsed.specId || parsed.specId.startsWith('-')) {
       throw new Error('Usage: cc-iasd spec add <id> --summary <text>');
+    }
+  } else if (parsed.command === 'profile') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'update') {
+      throw new Error('Usage: cc-iasd profile update');
     }
   } else if (parsed.command === 'product') {
     parsed.runTarget = tokens.shift() ?? '';
@@ -370,6 +376,10 @@ const copyTopLevelFiles = async (root, sourceDir, destDir, options, created) => 
 const requiredPaths = [
   'runtime/cc-iasd.yaml',
   'runtime/lock.json',
+  'runtime/profile.md',
+  'runtime/plugins.yaml',
+  'runtime/adapters/README.md',
+  'runtime/adapters/role-runtime.md',
   'rules/policies',
   'rules/roles',
   'rules/templates',
@@ -1331,6 +1341,99 @@ const logEventTemplate = ({ now, eventType, summary, relatedMilestone, relatedEv
   '',
 ].join('\n');
 
+const runtimePluginsTemplate = ({ now }) => [
+  `generated_at: ${now}`,
+  'profile: default',
+  'spec_profile:',
+  '  name: spec-kit-compatible-artifact-vocabulary',
+  '  owner: cc-iasd',
+  '  artifacts_root: product/specs',
+  'implementation_runtime:',
+  '  type: external-agent',
+  '  adapter: generic-markdown-handoff',
+  '  source_root: src',
+  'role_runtime:',
+  '  type: generated-manifest',
+  '  manifest: runtime/adapters/role-runtime.md',
+  'source_provenance_adapter:',
+  '  type: none',
+  '  policy_owner: project',
+  '',
+].join('\n');
+
+const runtimeProfileTemplate = ({ now }) => [
+  '# Runtime Profile',
+  '',
+  `- Generated At: ${now}`,
+  `- cc-iasd Version: ${VERSION}`,
+  '- Profile: default',
+  '- Schema Version: 1',
+  '',
+  '## Update Policy',
+  '',
+  '`cc-iasd profile update` adds missing runtime profile, plugin, and adapter files without overwriting existing files unless `--force` is supplied.',
+  '',
+  '## Migration Policy',
+  '',
+  '- Product canon is not rewritten automatically.',
+  '- Ops artifacts are not rewritten automatically.',
+  '- Runtime adapter files may be regenerated from current rules and roles.',
+  '- User-authored files require explicit human review before migration.',
+  '',
+].join('\n');
+
+const runtimeAdaptersReadmeTemplate = () => [
+  '# Runtime Adapters',
+  '',
+  'This directory contains generated adapter metadata for external implementation runtimes.',
+  '',
+  'Adapters connect cc-iasd artifacts to runtimes. They do not execute the runtime and they do not place cc-iasd-managed files under `src/`.',
+  '',
+].join('\n');
+
+const roleRuntimeTemplate = ({ now, roleFiles }) => [
+  '# Role Runtime Manifest',
+  '',
+  `- Generated At: ${now}`,
+  '- Source Root: rules/roles',
+  '- Target Runtime: generic-markdown',
+  '',
+  '## Roles',
+  '',
+  ...(roleFiles.length ? roleFiles.map((file) => `- ${path.basename(file, '.md')}: ${file}`) : ['- None']),
+  '',
+  '## Generation Rule',
+  '',
+  'Role runtime metadata is generated from canonical role files under `rules/roles/`. Tool-specific wrappers may refer to these files, but the canonical role text remains under `rules/roles/`.',
+  '',
+].join('\n');
+
+const writableRoleFiles = async (root) => {
+  const files = await listMarkdownFiles(root, 'rules/roles');
+  return files
+    .filter((file) => !['README.md', 'PATH_CONVENTION.md'].includes(path.basename(file)))
+    .sort();
+};
+
+const writeRuntimeProfileFiles = async (root, args, created) => {
+  const now = new Date().toISOString();
+  const roleFiles = await writableRoleFiles(root);
+  await writeText(root, 'runtime/profile.md', runtimeProfileTemplate({ now }), args, created);
+  await writeText(root, 'runtime/plugins.yaml', runtimePluginsTemplate({ now }), args, created);
+  await writeText(root, 'runtime/adapters/README.md', runtimeAdaptersReadmeTemplate(), args, created);
+  await writeText(root, 'runtime/adapters/role-runtime.md', roleRuntimeTemplate({ now, roleFiles }), args, created);
+};
+
+const updateProfile = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  if (!await exists(root)) {
+    throw new Error(`Project-context does not exist: ${root}`);
+  }
+  const created = { written: [], skipped: [] };
+  await writeRuntimeProfileFiles(root, args, created);
+  return { root, written: created.written, skipped: created.skipped };
+};
+
 const listCycleStateEntries = async (root, scopeId) => {
   const cycleDirs = await listDirectories(root, 'ops/cycles');
   const entries = [];
@@ -1969,6 +2072,7 @@ const init = async (args) => {
   await copyTree(root, path.join(packageRoot, 'rules'), 'rules/policies', args, created, variables);
   await copyTree(root, path.join(packageRoot, 'roles'), 'rules/roles', args, created, variables);
   await copyTopLevelFiles(root, path.join(packageRoot, 'templates'), 'rules/templates', args, created);
+  await writeRuntimeProfileFiles(root, args, created);
 
   await writeText(root, 'rules/project-policies.md', [
     '# Project Policies',
@@ -2220,6 +2324,13 @@ try {
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Spec add does not overwrite spec records.`);
+    }
+  } else if (args.command === 'profile') {
+    const result = await updateProfile(args);
+    console.log(`Updated runtime profile in ${result.root}.`);
+    console.log(`Created ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Use --force to regenerate runtime profile files.`);
     }
   } else if (args.command === 'product') {
     const result = await outdateProduct(args);

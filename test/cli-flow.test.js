@@ -33,6 +33,9 @@ test('init creates the product ops reference structure', async () => {
 
     assert.equal(existsSync(path.join(root, 'product/ideal')), true);
     assert.equal(existsSync(path.join(root, 'product/specs/outdated')), true);
+    assert.equal(existsSync(path.join(root, 'runtime/profile.md')), true);
+    assert.equal(existsSync(path.join(root, 'runtime/plugins.yaml')), true);
+    assert.equal(existsSync(path.join(root, 'runtime/adapters/role-runtime.md')), true);
     assert.equal(existsSync(path.join(root, 'ops/scopes/milestones/archived')), true);
     assert.equal(existsSync(path.join(root, 'ops/cycles/archived')), true);
     assert.equal(existsSync(path.join(root, 'ops/evidence/reviews/archived')), true);
@@ -41,6 +44,10 @@ test('init creates the product ops reference structure', async () => {
     const projectPolicies = await readFile(path.join(root, 'rules/project-policies.md'), 'utf8');
     assert.match(projectPolicies, /## Source Projects/);
     assert.match(projectPolicies, /Primary Project Path: src\//);
+
+    const roleRuntime = await readFile(path.join(root, 'runtime/adapters/role-runtime.md'), 'utf8');
+    assert.match(roleRuntime, /rules\/roles\/worker\.md/);
+    assert.match(roleRuntime, /rules\/roles\/planning-lead\.md/);
 
     assert.equal(existsSync(path.join(root, 'ops/evidence-index.md')), false);
     assert.equal(existsSync(path.join(root, 'ops/milestones')), false);
@@ -98,6 +105,19 @@ test('artifact commands write to the new structure and keep doctor green', async
     assert.match(milestone, /- Linked Feature: feature-a/);
     assert.match(milestone, /- Linked Roadmap: roadmap-a/);
     assert.match(milestone, /- Linked Spec: spec-a/);
+
+    runCli(['doctor', root]);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('profile update refreshes runtime profile files without overwriting by default', async () => {
+  const root = await createContext();
+  try {
+    const output = runCli(['profile', 'update', '--root', root]);
+    assert.match(output, /Updated runtime profile/);
+    assert.match(output, /Skipped 4 existing file/);
 
     runCli(['doctor', root]);
   } finally {

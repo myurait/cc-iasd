@@ -30,6 +30,7 @@ cc-iasd feature add <id>
 cc-iasd roadmap add <id>
 cc-iasd milestone add <id>
 cc-iasd spec add <id>
+cc-iasd profile update
 cc-iasd product outdate ideal|spec <id>
 cc-iasd ops archive feature|roadmap|milestone|cycle|log|review|report <id>
 cc-iasd doctor
@@ -62,14 +63,15 @@ cc-iasd init <project-context-path>
 5. user/ を作成する
 6. product/ を作成する
 7. product/ideal/ を作成する
-8. product/specs/ を作成する、または Spec Kit 初期化を実行する
+8. product/specs/ を作成する
 9. ops/scopes/ を作成する
 10. ops/cycles/ を作成する
 11. ops/evidence/ を作成する
 12. reference/ を作成する
 13. src/ を作成する
 14. 最小 template を配置する
-15. framework version を記録する
+15. runtime profile / plugin / adapter metadata を記録する
+16. framework version を記録する
 ```
 
 ### 3.4 出力
@@ -371,7 +373,38 @@ product/specs/<id>/tasks.md
 
 ---
 
-## 13. 初期 workflow
+## 13. cc-iasd profile update
+
+### 13.1 目的
+
+runtime profile、plugin metadata、adapter metadata を非破壊で補完する。
+
+### 13.2 処理
+
+```text
+処理:
+1. project-context root を解決する
+2. rules/roles/ から role runtime manifest を生成する
+3. runtime/profile.md を作成する
+4. runtime/plugins.yaml を作成する
+5. runtime/adapters/README.md を作成する
+6. runtime/adapters/role-runtime.md を作成する
+```
+
+### 13.3 出力
+
+```text
+runtime/profile.md
+runtime/plugins.yaml
+runtime/adapters/README.md
+runtime/adapters/role-runtime.md
+```
+
+既存 file は上書きしない。runtime profile files を再生成する場合は `--force` を明示する。
+
+---
+
+## 14. 初期 workflow
 
 ```text
 0. project-context 作成
@@ -394,7 +427,7 @@ product/specs/<id>/tasks.md
 
 ---
 
-## 14. 実行 runtime への handoff
+## 15. 実行 runtime への handoff
 
 初期実装では、cycle handoff は cycle-local な Markdown packet とする。
 

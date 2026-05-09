@@ -82,6 +82,9 @@ node bin/cc-iasd.js ops archive roadmap roadmap-a --root /tmp/my-project-context
 runtime/
   cc-iasd.yaml
   lock.json
+  profile.md
+  plugins.yaml
+  adapters/
 
 rules/
   policies/

@@ -13,18 +13,7 @@
 
 ---
 
-## 2. 未実装項目
-
-```text
-TODO:
-- role runtime の自動生成方式を実装する
-- plugin / adapter 設定を runtime/ に接続する
-- profile update / migration の方式を実装する
-```
-
----
-
-## 3. 未決定事項
+## 2. 未決定事項
 
 ```text
 TODO:
@@ -34,7 +23,7 @@ TODO:
 
 ---
 
-## 4. 観察後に判断する事項
+## 3. 観察後に判断する事項
 
 ```text
 TODO:
