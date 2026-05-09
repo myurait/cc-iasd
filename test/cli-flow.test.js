@@ -106,9 +106,14 @@ test('artifact commands write to the new structure and keep doctor green', async
     assert.match(currentView, /ops\/execution\/campaigns\/c001-campaign-a/);
     assert.match(currentView, new RegExp(`ops/execution/runs/${runId}`));
 
-    const scopeView = runCli(['view', 'scope', 'c001-campaign-a', '--root', root]);
-    assert.match(scopeView, /# Scope View: c001-campaign-a/);
-    assert.match(scopeView, /## Campaign/);
+    const scopeView = runCli(['view', 'scope', 'f001-feature-a', '--root', root]);
+    assert.match(scopeView, /# Scope Boundary View: f001-feature-a/);
+    assert.match(scopeView, /## Feature Scope/);
+    assert.match(scopeView, /## Roadmap Scope/);
+    assert.match(scopeView, /## Spec/);
+    assert.match(scopeView, /## Campaign Plan/);
+    assert.match(scopeView, /## Run State/);
+    assert.match(scopeView, new RegExp(`ops/execution/runs/${runId}/state\\.md`));
 
     const runView = runCli(['view', 'run', runId, '--root', root]);
     assert.match(runView, new RegExp(`# Run View: ${runId}`));

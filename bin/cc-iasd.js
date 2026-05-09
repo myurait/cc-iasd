@@ -1647,12 +1647,27 @@ const contentSection = (title, relPath, content) => [
   '',
 ];
 
-const scopeViewTemplate = ({ now, scopeId, sections, relatedRuns, relatedReviews, relatedReports }) => [
-  `# Scope View: ${scopeId}`,
+const scopeViewTemplate = ({ now, scopeId, boundary, sections, relatedRuns, relatedReviews, relatedReports }) => [
+  `# Scope Boundary View: ${scopeId}`,
   '',
   `- Generated At: ${now}`,
   '',
-  ...(sections.length ? sections.flatMap((section) => contentSection(section.title, section.path, section.content)) : ['## Scope Artifacts', '', '- No matching scope artifacts found.', '']),
+  '## Boundary Graph',
+  '',
+  '- Features:',
+  ...(boundary.features.length ? boundary.features.map((item) => `  - ${item}`) : ['  - none']),
+  '- Roadmaps:',
+  ...(boundary.roadmaps.length ? boundary.roadmaps.map((item) => `  - ${item}`) : ['  - none']),
+  '- Specs:',
+  ...(boundary.specs.length ? boundary.specs.map((item) => `  - ${item}`) : ['  - none']),
+  '- Campaigns:',
+  ...(boundary.campaigns.length ? boundary.campaigns.map((item) => `  - ${item}`) : ['  - none']),
+  '- Runs:',
+  ...(boundary.runs.length ? boundary.runs.map((item) => `  - ${item}`) : ['  - none']),
+  '',
+  '## Boundary Artifacts',
+  '',
+  ...(sections.length ? sections.flatMap((section) => contentSection(section.title, section.path, section.content)) : ['- No matching boundary artifacts found.', '']),
   '## Related Evidence',
   '',
   '- Runs:',
@@ -1838,6 +1853,155 @@ const readExistingSections = async (root, entries) => {
     });
   }
   return sections;
+};
+
+const normalizeBoundaryRef = (value) => {
+  if (isUnset(value)) return '';
+  const cleaned = value
+    .trim()
+    .replace(/^[-*]\s+/, '')
+    .replaceAll('`', '')
+    .replace(/\.md$/, '')
+    .replace(/\/$/, '');
+  const parts = cleaned.split('/').filter(Boolean);
+  const typedDirs = [
+    ['features', 'features'],
+    ['roadmaps', 'roadmaps'],
+    ['campaigns', 'campaigns'],
+    ['runs', 'runs'],
+    ['specs', 'specs'],
+  ];
+  for (const [marker] of typedDirs) {
+    const index = parts.indexOf(marker);
+    if (index !== -1 && parts[index + 1]) return parts[index + 1];
+  }
+  return path.basename(cleaned);
+};
+
+const addBoundaryId = (boundary, id) => {
+  if (isUnset(id)) return;
+  if (/^f\d{3}-/.test(id)) boundary.features.add(id);
+  if (/^r\d{3}-/.test(id)) boundary.roadmaps.add(id);
+  if (/^s\d{3}-/.test(id)) boundary.specs.add(id);
+  if (/^c\d{3}-/.test(id)) boundary.campaigns.add(id);
+  if (/^run_/.test(id)) boundary.runs.add(id);
+};
+
+const boundaryIds = (boundary) => new Set([
+  ...boundary.features,
+  ...boundary.roadmaps,
+  ...boundary.specs,
+  ...boundary.campaigns,
+  ...boundary.runs,
+]);
+
+const linkedIdsFromContent = (content) => [
+  extractField(content, 'Campaign ID'),
+  extractField(content, 'Run ID'),
+  extractField(content, 'Source ID'),
+  extractField(content, 'Linked Feature'),
+  extractField(content, 'Linked Roadmap'),
+  extractField(content, 'Linked Campaign'),
+  extractField(content, 'Linked Spec'),
+  extractField(content, 'Linked Tasks'),
+].map(normalizeBoundaryRef).filter(Boolean);
+
+const absorbLinkedIds = (boundary, content) => {
+  for (const id of linkedIdsFromContent(content)) {
+    addBoundaryId(boundary, id);
+  }
+};
+
+const hasBoundaryIntersection = (seedId, knownIds, content) => linkedIdsFromContent(content)
+  .some((id) => id === seedId || knownIds.has(id));
+
+const toBoundaryList = (boundary) => ({
+  features: [...boundary.features].sort(),
+  roadmaps: [...boundary.roadmaps].sort(),
+  specs: [...boundary.specs].sort(),
+  campaigns: [...boundary.campaigns].sort(),
+  runs: [...boundary.runs].sort(),
+});
+
+const collectBoundaryEvidence = async (root, boundary) => {
+  const ids = boundaryIds(boundary);
+  const relatedRuns = new Set();
+  const relatedReviews = new Set();
+  const relatedReports = new Set();
+  for (const runId of boundary.runs) {
+    const runStatePath = `ops/execution/runs/${runId}/state.md`;
+    if (await exists(path.join(root, runStatePath))) relatedRuns.add(runStatePath);
+  }
+  for (const id of ids) {
+    for (const entry of await listRunStateEntries(root, id)) relatedRuns.add(entry.path);
+    for (const review of await listReviewFilesForScope(root, id)) relatedReviews.add(review);
+    for (const report of await listReportFilesForScope(root, id)) relatedReports.add(report);
+  }
+  return {
+    relatedRuns: [...relatedRuns].sort(),
+    relatedReviews: [...relatedReviews].sort(),
+    relatedReports: [...relatedReports].sort(),
+  };
+};
+
+const collectScopeBoundary = async (root, scopeId) => {
+  const boundary = {
+    features: new Set(),
+    roadmaps: new Set(),
+    specs: new Set(),
+    campaigns: new Set(),
+    runs: new Set(),
+  };
+  addBoundaryId(boundary, normalizeBoundaryRef(scopeId));
+
+  const scanCampaigns = async () => {
+    let changed = false;
+    const knownIds = boundaryIds(boundary);
+    for (const campaignDir of await listDirectories(root, 'ops/execution/campaigns')) {
+      if (path.basename(campaignDir) === 'archived') continue;
+      const campaignId = path.basename(campaignDir);
+      const content = await readOptionalText(root, `${campaignDir}/plan.md`);
+      if (!content) continue;
+      if (!boundary.campaigns.has(campaignId) && campaignId !== scopeId && !hasBoundaryIntersection(scopeId, knownIds, content)) {
+        continue;
+      }
+      const before = boundaryIds(boundary).size;
+      boundary.campaigns.add(campaignId);
+      absorbLinkedIds(boundary, content);
+      changed = changed || boundaryIds(boundary).size !== before;
+    }
+    return changed;
+  };
+
+  const scanRuns = async () => {
+    let changed = false;
+    const knownIds = boundaryIds(boundary);
+    for (const runDir of await listDirectories(root, 'ops/execution/runs')) {
+      if (path.basename(runDir) === 'archived') continue;
+      const runId = path.basename(runDir);
+      const plan = await readOptionalText(root, `${runDir}/plan.md`);
+      const state = await readOptionalText(root, `${runDir}/state.md`);
+      const content = [plan, state].filter(Boolean).join('\n');
+      if (!content) continue;
+      if (!boundary.runs.has(runId) && runId !== scopeId && !hasBoundaryIntersection(scopeId, knownIds, content)) {
+        continue;
+      }
+      const before = boundaryIds(boundary).size;
+      boundary.runs.add(runId);
+      absorbLinkedIds(boundary, content);
+      changed = changed || boundaryIds(boundary).size !== before;
+    }
+    return changed;
+  };
+
+  for (let index = 0; index < 4; index += 1) {
+    const campaignChanged = await scanCampaigns();
+    const runChanged = await scanRuns();
+    const changed = campaignChanged || runChanged;
+    if (!changed) break;
+  }
+
+  return boundary;
 };
 
 const latest = (items, count) => [...items].sort().slice(-count);
@@ -2430,20 +2594,31 @@ const viewScope = async (args) => {
 
   assertArchiveId(args.viewId);
   const scopeId = args.viewId;
+  const boundary = await collectScopeBoundary(root, scopeId);
+  const boundaryList = toBoundaryList(boundary);
   const sections = await readExistingSections(root, [
-    ['Feature Scope', `ops/scopes/features/${scopeId}.md`],
-    ['Roadmap Scope', `ops/scopes/roadmaps/${scopeId}.md`],
-    ['Campaign', `ops/execution/campaigns/${scopeId}/plan.md`],
-    ['Run State', `ops/execution/runs/${scopeId}/state.md`],
-    ['Spec', `product/specs/${scopeId}/spec.md`],
-    ['Spec Plan', `product/specs/${scopeId}/plan.md`],
-    ['Spec Tasks', `product/specs/${scopeId}/tasks.md`],
+    ...boundaryList.features.map((id) => ['Feature Scope', `ops/scopes/features/${id}.md`]),
+    ...boundaryList.roadmaps.map((id) => ['Roadmap Scope', `ops/scopes/roadmaps/${id}.md`]),
+    ...boundaryList.specs.flatMap((id) => [
+      ['Spec', `product/specs/${id}/spec.md`],
+      ['Spec Plan', `product/specs/${id}/plan.md`],
+      ['Spec Tasks', `product/specs/${id}/tasks.md`],
+    ]),
+    ...boundaryList.campaigns.flatMap((id) => [
+      ['Campaign Plan', `ops/execution/campaigns/${id}/plan.md`],
+      ['Campaign State', `ops/execution/campaigns/${id}/state.md`],
+      ['Campaign Queue', `ops/execution/campaigns/${id}/queue.md`],
+      ['Campaign Aggregate Report', `ops/execution/campaigns/${id}/aggregate-report.md`],
+    ]),
+    ...boundaryList.runs.flatMap((id) => [
+      ['Run Plan', `ops/execution/runs/${id}/plan.md`],
+      ['Run State', `ops/execution/runs/${id}/state.md`],
+      ['Run Open Items', `ops/execution/runs/${id}/open-items.md`],
+    ]),
   ]);
-  const relatedRuns = (await listRunStateEntries(root, scopeId)).map((entry) => entry.path);
-  const relatedReviews = await listReviewFilesForScope(root, scopeId);
-  const relatedReports = await listReportFilesForScope(root, scopeId);
+  const { relatedRuns, relatedReviews, relatedReports } = await collectBoundaryEvidence(root, boundary);
   const now = new Date().toISOString();
-  return { root, view: scopeViewTemplate({ now, scopeId, sections, relatedRuns, relatedReviews, relatedReports }) };
+  return { root, view: scopeViewTemplate({ now, scopeId, boundary: boundaryList, sections, relatedRuns, relatedReviews, relatedReports }) };
 };
 
 const viewRun = async (args) => {
