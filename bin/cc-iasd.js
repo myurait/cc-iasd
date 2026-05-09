@@ -705,6 +705,9 @@ const validateSpecFiles = async (root, issues) => {
     const requiredSpecFiles = [
       'spec.md',
       'plan.md',
+      'research.md',
+      'data-model.md',
+      'contracts/README.md',
       'tasks.md',
     ];
 
@@ -898,6 +901,59 @@ const specPlanTemplate = ({ specId, summary, now }) => [
   '## Dependencies',
   '',
   '- TBD',
+  '',
+].join('\n');
+
+const specResearchTemplate = ({ specId, summary, now }) => [
+  `# Research: ${specId}`,
+  '',
+  `- ID: ${specId}`,
+  `- Summary: ${summary}`,
+  `- Created At: ${now}`,
+  '',
+  '## Decisions',
+  '',
+  '- None recorded.',
+  '',
+  '## Alternatives Considered',
+  '',
+  '- None recorded.',
+  '',
+  '## Open Questions',
+  '',
+  '- None recorded.',
+  '',
+].join('\n');
+
+const specDataModelTemplate = ({ specId, summary, now }) => [
+  `# Data Model: ${specId}`,
+  '',
+  `- ID: ${specId}`,
+  `- Summary: ${summary}`,
+  `- Created At: ${now}`,
+  '',
+  '## Entities',
+  '',
+  '- None recorded.',
+  '',
+  '## Relationships',
+  '',
+  '- None recorded.',
+  '',
+  '## Validation Rules',
+  '',
+  '- None recorded.',
+  '',
+].join('\n');
+
+const specContractsTemplate = ({ specId, summary, now }) => [
+  `# Contracts: ${specId}`,
+  '',
+  `- ID: ${specId}`,
+  `- Summary: ${summary}`,
+  `- Created At: ${now}`,
+  '',
+  'Contract artifacts live in this directory when the spec needs API, event, CLI, schema, or integration contracts.',
   '',
 ].join('\n');
 
@@ -1476,6 +1532,21 @@ const addSpec = async (args) => {
     summary: args.eventSummary,
     now,
   }), { ...args, force: false }, created);
+  await writeText(root, `${specRoot}/research.md`, specResearchTemplate({
+    specId: args.specId,
+    summary: args.eventSummary,
+    now,
+  }), { ...args, force: false }, created);
+  await writeText(root, `${specRoot}/data-model.md`, specDataModelTemplate({
+    specId: args.specId,
+    summary: args.eventSummary,
+    now,
+  }), { ...args, force: false }, created);
+  await writeText(root, `${specRoot}/contracts/README.md`, specContractsTemplate({
+    specId: args.specId,
+    summary: args.eventSummary,
+    now,
+  }), { ...args, force: false }, created);
   await writeText(root, `${specRoot}/tasks.md`, specTasksTemplate({
     specId: args.specId,
     summary: args.eventSummary,
@@ -1910,6 +1981,26 @@ const init = async (args) => {
     `- Development Language: ${args.devLang}`,
     '- Code-Internal Language: English',
     `- Product Languages: ${args.productLang ?? args.docLang}`,
+    '',
+    '## Source Projects',
+    '',
+    'Define every source project under `src/` here. cc-iasd does not define Git management policy, but it must know which source project is the primary implementation target when multiple repositories exist.',
+    '',
+    '- Primary Project ID: TBD',
+    '- Primary Project Path: src/',
+    '- Additional Projects: none',
+    '',
+    '### Project Entry Schema',
+    '',
+    '- Project ID: lowercase-kebab-case',
+    '- Path: src/<repository-or-alias>',
+    '- Role: primary / service / library / tool / docs / infra',
+    '- Runtime: TBD',
+    '- Test Command: TBD',
+    '- Build Command: TBD',
+    '- Notes: TBD',
+    '',
+    'Do not place cc-iasd-managed specs, runtime state, cycles, evidence, reports, or policies inside these source projects.',
     '',
   ].join('\n'), args, created);
 

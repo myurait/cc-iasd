@@ -182,8 +182,8 @@ cc-iasd が担当する:
 - Spec Kit も丸ごと入れる
 - MetaGPT も丸ごと入れる
 - AI Governance も丸ごと入れる
-- それぞれが requirements / tasks / workflow を持つ
-- cc-iasd も独自 requirements / tasks を持つ
+- それぞれが spec / tasks / workflow を持つ
+- cc-iasd も重複する spec / tasks を持つ
 - src/ 配下に cc-iasd 管理の仕様、runtime、evidence を置く
 ```
 

@@ -38,6 +38,10 @@ test('init creates the product ops reference structure', async () => {
     assert.equal(existsSync(path.join(root, 'ops/evidence/reviews/archived')), true);
     assert.equal(existsSync(path.join(root, 'reference/INDEX.md')), true);
 
+    const projectPolicies = await readFile(path.join(root, 'rules/project-policies.md'), 'utf8');
+    assert.match(projectPolicies, /## Source Projects/);
+    assert.match(projectPolicies, /Primary Project Path: src\//);
+
     assert.equal(existsSync(path.join(root, 'ops/evidence-index.md')), false);
     assert.equal(existsSync(path.join(root, 'ops/milestones')), false);
     assert.equal(existsSync(path.join(root, 'ops/logs')), false);
@@ -79,6 +83,12 @@ test('artifact commands write to the new structure and keep doctor green', async
 
     const feature = await readFile(path.join(root, 'ops/scopes/features/feature-a.md'), 'utf8');
     assert.match(feature, /## Backlog/);
+
+    assert.equal(existsSync(path.join(root, 'product/specs/spec-a/spec.md')), true);
+    assert.equal(existsSync(path.join(root, 'product/specs/spec-a/research.md')), true);
+    assert.equal(existsSync(path.join(root, 'product/specs/spec-a/data-model.md')), true);
+    assert.equal(existsSync(path.join(root, 'product/specs/spec-a/contracts/README.md')), true);
+    assert.equal(existsSync(path.join(root, 'product/specs/spec-a/tasks.md')), true);
 
     const cycleState = await readFile(path.join(root, 'ops/cycles', cycleDir, 'state.md'), 'utf8');
     assert.match(cycleState, /## Open Items/);

@@ -173,7 +173,7 @@ project-context/
     tests/
 ```
 
-実際の `product/specs/` 構造は Spec Kit の生成物に合わせる。cc-iasd は Spec Kit の構造を壊さない。
+実際の `product/specs/` 構造は Spec Kit の artifact vocabulary に寄せる。cc-iasd は Spec Kit tooling の成果物正本性や lifecycle には依存しない。
 
 ---
 
@@ -287,6 +287,7 @@ product/specs/
     research.md
     data-model.md
     contracts/
+      README.md
     tasks.md
   outdated/
     <spec-id>/
@@ -295,6 +296,7 @@ product/specs/
       research.md
       data-model.md
       contracts/
+        README.md
       tasks.md
 ```
 

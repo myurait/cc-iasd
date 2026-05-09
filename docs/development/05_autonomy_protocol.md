@@ -68,6 +68,50 @@ campaign plan:
 - campaign 全体の completion / escalation report 条件
 ```
 
+実装する場合の artifact model は次を候補とする。ただし、現時点では計画概念に留め、CLI や directory は作らない。
+
+```text
+ops/campaigns/
+  campaign_<timestamp>_<scope>/
+    plan.md
+    state.md
+    queue.md
+    aggregate-report.md
+  archived/
+    campaign_<timestamp>_<scope>/
+```
+
+```text
+plan.md:
+- Campaign ID
+- Target Feature / Roadmap
+- Milestone Queue
+- Allowed Scope
+- Automatic Progression Conditions
+- Mandatory Stop Conditions
+- Report Conditions
+
+state.md:
+- Status: planned / running / completed / escalated / aborted
+- Current Cycle
+- Completed Cycles
+- Current Queue Position
+- Active Blocker
+- Last Progression Decision
+
+queue.md:
+- Ordered milestone / task set refs
+- Per-entry status
+- Per-entry cycle refs
+
+aggregate-report.md:
+- Completed cycles
+- Progression rationale
+- Escalation reason
+- User decision candidates
+- Human confirmation points
+```
+
 Campaign の導入によって、Planning Lead は「高度な人間判断が必要な領域以外は、可能な限り段階的に進める」という指示を扱える。ただし、Planning Lead は campaign plan の外側へ自走範囲を拡大してはならない。
 
 `cycle` / `campaign` という名称は仮称である。語感が直感的でない可能性があるため、実装前にリネームを検討する。

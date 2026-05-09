@@ -92,7 +92,7 @@ cc-iasd は最初から完全な multi-agent 開発 OS として作らない。
 初期実装:
 - project-context を初期化できる
 - product/ideal/ を product 正本として扱える
-- product/specs/ で Spec Kit 由来の spec / plan / tasks を正本として扱える
+- product/specs/ で Spec Kit 互換 dialect の spec / plan / tasks を正本として扱える
 - ops/scopes/ で features / roadmaps / milestones を扱える
 - ops/cycles/ で自走実行単位を扱える
 - 成果物 project を src/ に隔離できる

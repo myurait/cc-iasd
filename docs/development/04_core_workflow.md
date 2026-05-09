@@ -21,7 +21,7 @@
 3. product/ideal/ に ideal 正本を作成または更新する
 4. ops/scopes/features/ で feature scope を整理する
 5. ops/scopes/roadmaps/ で roadmap を定義する
-6. product/specs/ で requirements / plan / tasks を作る
+6. product/specs/ で spec / plan / tasks を作る
 7. cc-iasd milestone add <id> で milestone scope を定義する
 8. cc-iasd run cycle <id>
 9. Worker runtime が src/ を編集する

@@ -341,7 +341,7 @@ MetaGPT、ChatDev、BMAD、SuperClaude などは、role / workflow / command / a
 
 ```text
 衝突する領域:
-- requirements / plan / tasks の正本
+- spec / plan / tasks の正本
 - workflow の主導権
 - role の命名体系
 - review / audit の成果物形式
@@ -575,7 +575,7 @@ category: review
 version: 0.1.0
 
 purpose: >
-  実装差分が requirements / plan / tasks に対して妥当であり、
+  実装差分が spec / plan / tasks に対して妥当であり、
   保守性・可読性・局所的品質の観点で問題がないかを検査する。
 
 non_goals:

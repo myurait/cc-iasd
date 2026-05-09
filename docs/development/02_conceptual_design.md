@@ -131,7 +131,7 @@ Task は実装 runtime に委譲可能な作業単位である。
 
 ```text
 Task:
-- requirements / plan から導出される
+- spec / plan から導出される
 - implementation plugin が実行対象にする
 - review / audit の単位にもなる
 ```
