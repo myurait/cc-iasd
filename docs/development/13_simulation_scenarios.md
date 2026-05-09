@@ -1,19 +1,21 @@
-# 13. Simulation Scenarios
+# 13. Simulation Scenario Tests
 
 作成日: 2026-05-09  
-状態: 初期シナリオ
+状態: 初期テスト手順
 
 ---
 
 ## 1. この文書の目的
 
-この文書は、cc-iasd の artifact 境界、cycle の進み方、campaign の粒度、debt の漏れ方を検証するための再利用可能なシミュレーションシナリオを定義する。
+この文書は、cc-iasd の artifact 境界、cycle の進み方、未実装 artifact の扱い、feedback の漏れ方を確認するための再利用可能なシミュレーションテスト手順を定義する。
 
-ここにあるシナリオは、実装コードを書くための要件定義ではない。cc-iasd の governance framework が、複合機能、debt、spec への戻し、milestone/cycle/campaign の境界を扱えるかを確認するための検証素材である。
+ここにある内容は、シミュレーションの方向性を決定するための要件定義ではない。cc-iasd の governance framework が、複合機能、未決定事項、debt、spec への戻し、実行単位の境界を扱えるかを確認するための結合テスト手順である。
+
+この文書で固定するものは、入力シナリオ、実行手順、観察観点、判定観点である。シミュレーション中に実際に作成される artifact の一覧や具体的な分割結果は、テストの出力結果として観察する。
 
 ---
 
-## 2. Scenario A: Rich Memo Web App
+## 2. Scenario Test A: Rich Memo Web App
 
 ### 2.1 想定プロダクト
 
@@ -30,175 +32,88 @@ WYSIWYG を持つリッチなメモ Web アプリ。
 - smartphone support
 - notification delivery
 
-### 2.2 シミュレーション目的
+### 2.2 テスト目的
 
-このシナリオでは、次を観察する。
+このテストでは、次を観察する。
 
 ```text
 観察対象:
-- product/ideal から feature / roadmap / spec / milestone へ落ちる粒度
-- plan.md が spec-local implementation plan として機能するか
-- milestone が必須の実行境界として機能するか
-- campaign が複数 cycle の進行 envelope として過剰でないか
-- cycle feedback がどの artifact へ漏れるか
-- debt を feature backlog と spec で二重管理せずに扱えるか
+- product 正本から scope / spec / execution boundary へ分解される粒度
+- spec-local plan が、上位の進行計画や runtime state と衝突しないか
+- execution boundary が、実装単位として過不足なく機能するか
+- 複数 execution cycle をまとめる未実装 artifact が必要になるか
+- cycle feedback が、どの責務の文書へ移管されるべきか
+- debt や follow-up を二重管理せず、単一の所有先に分類できるか
 ```
 
-### 2.3 セットアップ手順
+### 2.3 実行環境
+
+```text
+作業ディレクトリ:
+  /tmp/cc-iasd-rich-memo-sim
+
+前提:
+  cc-iasd の現行 CLI を使う
+  実装コードは書かない
+  artifact は実行結果として観察する
+```
+
+### 2.4 実行手順
+
+この手順では、artifact の具体的な ID や個数を先に固定しない。実行者は、想定プロダクトを入力として読み、cc-iasd の現行コマンドで必要な artifact を作成する。
+
+記録するもの:
+
+```text
+- 実際に実行したコマンド
+- 作成された artifact
+- 途中で既存 artifact では不足した箇所
+- 手書きまたは暫定で補った artifact
+- 実行後に見直した分解
+```
+
+初期化する。
 
 ```bash
-rm -rf /tmp/cc-iasd-rich-memo-sim
 node bin/cc-iasd.js init /tmp/cc-iasd-rich-memo-sim --doc-lang Japanese --dev-lang TypeScript --force
 node bin/cc-iasd.js doctor /tmp/cc-iasd-rich-memo-sim
 ```
 
-### 2.4 作成する主要 artifact
+product 入力を作成する。
 
 ```text
-product/ideal/rich-note-experience.md
-
-ops/scopes/features/
-  editor-workspace.md
-  integration-surface.md
-  scheduled-mobile-delivery.md
-  platform-debt.md
-
-ops/scopes/roadmaps/
-  roadmap-mvp.md
-
-product/specs/
-  wysiwyg-editor-dashboard/
-  external-api-ai-mcp/
-  schedule-mobile-notifications/
-  platform-debt-hardening/
-
-ops/scopes/milestones/
-  m001-editor-dashboard.md
-  m002-api-ai-mcp.md
-  m003-schedule-mobile-notify.md
-  m004-debt-hardening.md
-
-ops/campaigns/
-  campaign_20260509_rich-note-mvp/
-    plan.md
-    state.md
-    queue.md
-    aggregate-report.md
-
-ops/cycles/
-  cycle_<timestamp>_m001-editor-dashboard/
-  cycle_<timestamp>_m002-api-ai-mcp/
-  cycle_<timestamp>_m003-schedule-mobile-notify/
-  cycle_<timestamp>_m004-debt-hardening/
+product 正本には、2.1 の想定プロダクトを一つの体験入力として記述する。
 ```
 
-`ops/campaigns/` は現時点では CLI 未実装である。そのため、このシナリオでは手書き artifact として作る。
-
-### 2.5 CLI 実行例
+scope / progression / spec を作成する。
 
 ```bash
-node bin/cc-iasd.js feature add editor-workspace \
-  --kind epic \
-  --summary "WYSIWYG memo editor and dashboard workspace" \
-  --pillar "Rich note experience" \
-  --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js feature add integration-surface \
-  --kind epic \
-  --summary "External API, AI agent adapter, and MCP surface" \
-  --pillar "Automation boundary" \
-  --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js feature add scheduled-mobile-delivery \
-  --kind epic \
-  --summary "Scheduling, smartphone support, and notification delivery" \
-  --pillar "Reliable follow-up" \
-  --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js feature add platform-debt \
-  --kind supporting \
-  --summary "Cross-cutting debt and hardening work discovered during cycles" \
-  --pillar "Operational sustainability" \
-  --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js roadmap add roadmap-mvp \
-  --summary "Rich memo MVP roadmap" \
-  --goal "Ship a coherent editor-first product with bounded automation" \
-  --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js spec add wysiwyg-editor-dashboard \
-  --summary "Create the editor shell, rich note model, and dashboard read model" \
-  --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js spec add external-api-ai-mcp \
-  --summary "Define external API, AI agent adapter, and MCP boundaries" \
-  --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js spec add schedule-mobile-notifications \
-  --summary "Define scheduling, smartphone workflow, and notification delivery" \
-  --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js spec add platform-debt-hardening \
-  --summary "Track hardening specs promoted from cycle feedback" \
-  --root /tmp/cc-iasd-rich-memo-sim
+node bin/cc-iasd.js feature add <feature-id> --kind <kind> --summary <summary> --pillar <pillar> --root /tmp/cc-iasd-rich-memo-sim
+node bin/cc-iasd.js roadmap add <roadmap-id> --summary <summary> --goal <goal> --root /tmp/cc-iasd-rich-memo-sim
+node bin/cc-iasd.js spec add <spec-id> --summary <summary> --root /tmp/cc-iasd-rich-memo-sim
 ```
 
-milestone 作成:
+execution boundary を作成する。
 
 ```bash
-node bin/cc-iasd.js milestone add m001-editor-dashboard \
-  --summary "Editor and dashboard execution boundary" \
-  --feature editor-workspace \
-  --roadmap roadmap-mvp \
-  --spec wysiwyg-editor-dashboard \
-  --tasks wysiwyg-editor-dashboard \
-  --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js milestone add m002-api-ai-mcp \
-  --summary "Integration surface execution boundary" \
-  --feature integration-surface \
-  --roadmap roadmap-mvp \
-  --spec external-api-ai-mcp \
-  --tasks external-api-ai-mcp \
-  --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js milestone add m003-schedule-mobile-notify \
-  --summary "Schedule mobile notification execution boundary" \
-  --feature scheduled-mobile-delivery \
-  --roadmap roadmap-mvp \
-  --spec schedule-mobile-notifications \
-  --tasks schedule-mobile-notifications \
-  --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js milestone add m004-debt-hardening \
-  --summary "Promoted debt and hardening execution boundary" \
-  --feature platform-debt \
-  --roadmap roadmap-mvp \
-  --spec platform-debt-hardening \
-  --tasks platform-debt-hardening \
+node bin/cc-iasd.js milestone add <milestone-id> \
+  --summary <summary> \
+  --feature <feature-id> \
+  --roadmap <roadmap-id> \
+  --spec <spec-id> \
+  --tasks <spec-id> \
   --root /tmp/cc-iasd-rich-memo-sim
 ```
 
-cycle / review / report:
+execution cycle、review、report を実行する。
 
 ```bash
-node bin/cc-iasd.js run cycle m001-editor-dashboard --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js run cycle m002-api-ai-mcp --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js run cycle m003-schedule-mobile-notify --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js run cycle m004-debt-hardening --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js review add m001-editor-dashboard --type light --summary "Review editor simulation boundary" --result "passed-with-simulation-assumptions" --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js review add m002-api-ai-mcp --type light --summary "Review integration simulation boundary" --result "passed-with-contract-parity-debt" --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js review add m003-schedule-mobile-notify --type light --summary "Review schedule mobile notification boundary" --result "passed-with-provider-assumption" --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js review add m004-debt-hardening --type light --summary "Review debt ownership normalization" --result "passed" --root /tmp/cc-iasd-rich-memo-sim
-
-node bin/cc-iasd.js report m001-editor-dashboard --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js report m002-api-ai-mcp --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js report m003-schedule-mobile-notify --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js report m004-debt-hardening --root /tmp/cc-iasd-rich-memo-sim
+node bin/cc-iasd.js run cycle <milestone-id> --root /tmp/cc-iasd-rich-memo-sim
+node bin/cc-iasd.js review add <milestone-id> --type <type> --summary <summary> --result <result> --root /tmp/cc-iasd-rich-memo-sim
+node bin/cc-iasd.js report <milestone-id> --root /tmp/cc-iasd-rich-memo-sim
 ```
 
-検査:
+検査する。
 
 ```bash
 node bin/cc-iasd.js doctor /tmp/cc-iasd-rich-memo-sim
@@ -208,11 +123,29 @@ node bin/cc-iasd.js view evidence --root /tmp/cc-iasd-rich-memo-sim
 
 ---
 
-## 3. Artifact 記述例
+## 3. 観察手順
 
-### 3.1 ideal
+### 3.1 作成された artifact の観察
 
-`product/ideal/rich-note-experience.md` には、プロダクトの目標体験を書く。
+実行後に、作成された artifact を列挙する。
+
+観察するもの:
+
+```text
+- product 正本として何が作られたか
+- scope artifact として何が作られたか
+- spec artifact として何が作られたか
+- execution boundary として何が作られたか
+- runtime I/O として何が作られたか
+- evidence として何が作られたか
+- 未実装 artifact の代替物として何が作られたか
+```
+
+ここでは、期待一覧と実出力を一致させることを目的にしない。実出力が、cc-iasd の責務境界に照らして説明可能かを確認する。
+
+### 3.2 product 正本
+
+`product/ideal/<ideal-id>.md` には、プロダクトの目標体験を書く。
 
 記述するもの:
 
@@ -226,46 +159,36 @@ node bin/cc-iasd.js view evidence --root /tmp/cc-iasd-rich-memo-sim
 - Open Questions
 ```
 
-このシナリオでは、WYSIWYG editor、dashboard、external API、AI adapter、MCP、schedule、SP、notification を一つの体験として扱う。
+このテストでは、WYSIWYG editor、dashboard、external API、AI adapter、MCP、schedule、SP、notification を一つの体験入力として扱う。
 
-### 3.2 feature
+### 3.3 scope 分解
 
-このシナリオでは、feature を次の4つに分ける。
+scope 分解では、プロダクト入力がどの粒度へ分解されたかを観察する。
 
-```text
-editor-workspace:
-  WYSIWYG editor、note model、dashboard
-
-integration-surface:
-  external API、AI agent adapter、MCP
-
-scheduled-mobile-delivery:
-  schedule、SP workflow、notification
-
-platform-debt:
-  cycle feedback から promoted された debt / hardening
-```
-
-`platform-debt` は、現行設計の範囲内で debt を受けるための supporting feature である。
-
-重要なのは、debt の詳細本文を feature backlog に持たせすぎないことである。feature backlog は参照とrouting状態に留め、詳細は必要に応じて spec へ移す。
-
-### 3.3 roadmap
-
-`ops/scopes/roadmaps/roadmap-mvp.md` には、MVP の実現順序を書く。
-
-このシナリオでは次の順序にする。
+観察するもの:
 
 ```text
-1. m001-editor-dashboard
-2. m002-api-ai-mcp
-3. m003-schedule-mobile-notify
-4. m004-debt-hardening
+- scope が大きすぎて実行境界を曖昧にしていないか
+- scope が細かすぎて上位文脈を失っていないか
+- debt / refactor / research が feature 名に押し込まれていないか
+- backlog は詳細本文ではなく参照と routing 状態に留まっているか
 ```
 
-roadmap は実行状態やcycle feedbackを持たない。
+debt を受ける artifact が作られた場合、それはテスト出力として記録する。あらかじめ特定の artifact 名や個数を正解として固定しない。
 
-### 3.4 spec
+### 3.4 progression plan
+
+progression plan では、複数の実行境界の順序と依存関係が表現できるかを観察する。
+
+観察するもの:
+
+```text
+- 実行順序が product 正本や spec と矛盾していないか
+- 実行状態や runtime output を保持していないか
+- 途中で新しい scope や spec が必要になった場合の扱いが説明できるか
+```
+
+### 3.5 spec
 
 spec は `product/specs/<spec-id>/` に置く。
 
@@ -282,11 +205,11 @@ tasks.md
 
 `plan.md` は spec-local implementation plan とする。roadmap、milestone queue、campaign progression、cycle state、runtime handoff、execution evidence は入れない。
 
-### 3.5 milestone
+### 3.6 execution boundary
 
-milestone は必須の実行境界として使う。
+execution boundary は必須の実行境界として使う。現行実装では milestone がこれに対応する。
 
-milestone に書くもの:
+execution boundary に書くもの:
 
 ```text
 - Linked Feature
@@ -298,7 +221,7 @@ milestone に書くもの:
 - Autonomous Proceed Status
 ```
 
-milestone に書かないもの:
+execution boundary に書かないもの:
 
 ```text
 - 実行ログ
@@ -308,134 +231,133 @@ milestone に書かないもの:
 - review body
 ```
 
-### 3.6 campaign
+### 3.7 未実装 artifact
 
-campaign は現時点では未実装であり、このシナリオでは手書きする。
-
-campaign に書くもの:
+CLI 未実装の artifact が必要になった場合は、次のルールで扱う。
 
 ```text
-- milestone queue
-- allowed scope
-- automatic progression conditions
-- mandatory stop conditions
-- report conditions
-- aggregate report
+1. まず、なぜ既存 artifact では不足するのかを記録する
+2. 次に、暫定 artifact を手書きで作る場合は temporary / experimental であることを明記する
+3. その artifact が受け持つ責務と、受け持たない責務を記録する
+4. runtime I/O、実装証跡、source code change を直接受け取らせない
+5. 実行後、正式 artifact として昇格すべきか、既存 artifact に吸収すべきかを評価する
 ```
 
-campaign に書かないもの:
+複数 cycle をまとめる artifact が必要になった場合に観察するもの:
 
 ```text
-- runtime handoff
-- implementation evidence body
-- source code changes
+- 複数 execution boundary の進行条件
+- 自動進行してよい範囲
+- 人間判断で停止すべき条件
+- aggregate report が必要な理由
+- runtime I/O を持たずに orchestration だけを表現できるか
 ```
 
-campaign は runtime I/O を持たない。runtime I/O は cycle に閉じる。
+この節は、campaign を先に正解として固定しない。未実装 artifact の必要性を観察するための手順である。
 
-### 3.7 cycle
+### 3.8 runtime cycle
 
-cycle は runtime I/O の唯一の単位である。
+runtime cycle は runtime I/O の唯一の単位である。
 
-cycle に書くもの:
+runtime cycle に書くもの:
 
 ```text
-state.md:
+state:
   result、open items、review evidence、remaining risk
 
-handoff.md:
+handoff:
   runtime に渡す入力packet
 
-knowledge.md:
+knowledge:
   cycle-local な観察、promotion candidates
 ```
 
 ---
 
-## 4. Cycle Feedback と Debt Routing
+## 4. Feedback と Debt Routing の観察
 
-このシナリオで観察する中心は、cycle feedback が cycle 内に閉じないことである。
+このテストで観察する中心は、runtime cycle の feedback が cycle 内に閉じないことである。
 
-例:
+観察する feedback の例:
 
 ```text
-m001:
-  editor recovery tests
-  serialization migration risk
-
-m002:
-  API/MCP contract parity tests
-  AI write confirmation UX
-
-m003:
-  mobile viewport regression
-  failed notification evidence mapping
+- 実装中に判明した設計不足
+- acceptance criteria の不足
+- contract / data model の不足
+- test strategy の不足
+- user decision が必要な未決定事項
+- 実行境界の切り直しが必要な作業
+- 将来対応でよいが忘れてはならない debt
 ```
 
-routing rule:
+routing rule は次である。
 
 ```text
-cycle feedback
-  -> cycle open item
+runtime feedback
+  -> runtime-local open item
   -> classified
-  -> exactly one owner artifact
+  -> exactly one owner
 ```
 
-owner artifact 候補:
+owner の分類観点:
 
 ```text
-cycle-local
-feature backlog reference
-product/specs/<spec-id>
-user/decisions.md candidate
-review finding
-report item
+- その cycle 内で閉じるもの
+- product / spec 正本へ戻すもの
+- scope backlog へ参照として残すもの
+- 人間判断として提示するもの
+- review finding として記録するもの
+- completion / progress report に載せるもの
 ```
 
 禁止すること:
 
 ```text
-- debt を cycle に閉じ込めて死蔵する
-- debt を feature backlog に全文管理して肥大化させる
-- debt を spec と backlog に二重記載する
+- feedback を runtime cycle に閉じ込めて死蔵する
+- backlog に詳細本文を集約して肥大化させる
+- 正本と backlog に同じ内容を二重記載する
 - owner のない TBD を残す
+- 状況に応じて判断する、という未分類のまま残す
 ```
 
 ---
 
-## 5. シナリオから得た設計示唆
+## 5. 判定観点
 
-有効だった原則:
+このテストで確認する原則:
 
 ```text
 Only cycle owns runtime I/O.
-Campaign orchestrates cycle progression, but does not receive runtime output directly.
-Milestone bounds execution, but does not store execution state.
-Feature backlog may reference debt, but should not duplicate spec detail.
-Spec receives debt only when behavior, contract, data model, acceptance criteria, or task breakdown changes.
+An orchestration artifact may coordinate multiple cycles, but must not receive runtime output directly.
+An execution boundary bounds execution, but does not store execution state.
+Backlog may reference debt, but should not duplicate spec detail.
+Spec receives feedback only when behavior, contract, data model, acceptance criteria, or task breakdown changes.
 ```
 
-再検討が必要な点:
+判定時に確認する点:
 
 ```text
-- feature という名前は debt / refactor / research を扱うには狭い
-- campaign / cycle の語感はまだ重い
-- campaign artifact を正式導入するなら、context肥大化を抑える view が必要
-- completion report は生成直後の要約が粗く、実運用では追記規律が必要
+- 作成された artifact が、事前想定ではなく実行結果として説明できるか
+- 未実装 artifact が、temporary / experimental として扱われているか
+- runtime I/O が cycle 以外へ漏れていないか
+- feedback が exactly one owner へ分類されているか
+- evidence / review / report が実行証跡として追跡できるか
+- context 肥大化を起こす artifact が作られていないか
 ```
 
 ---
 
-## 6. シナリオ完了条件
+## 6. テスト完了条件
 
-このシナリオは、次を満たせば完了とする。
+このテストは、次を満たせば完了とする。
 
 ```text
 - cc-iasd doctor が通る
 - view current で product / scope / cycle / evidence が追える
 - view evidence で milestone -> cycle -> review/report の関係が追える
-- campaign aggregate report が progression rationale を持つ
-- debt が exactly one owner artifact に分類されている
+- 未実装 artifact を使った場合、その必要性と責務境界が説明されている
+- feedback / debt が exactly one owner に分類されている
+- 作成された artifact 一覧が、テスト出力として別途記録されている
 ```
 
 ---
