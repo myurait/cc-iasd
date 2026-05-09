@@ -37,6 +37,8 @@ TODO:
 - ops/scopes/features/ の item schema を固定する
 - ops/scopes/roadmaps/ の保存形式を固定する
 - ops/scopes/milestones/ の保存形式を固定する
+- campaign を cycle 統合計画として導入する場合の artifact model を固定する
+- cycle / campaign の名称を維持するかリネームするかを決める
 - ops/cycles/ の state / handoff / knowledge schema を固定する
 - ops/evidence/logs/ の entry schema を固定する
 - ops/evidence/reviews/ の review lifecycle を固定する

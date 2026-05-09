@@ -42,7 +42,39 @@ cycle が参照できる scope:
 
 ---
 
-## 3. Planning Lead
+## 3. Campaign
+
+Campaign は、複数の cycle を段階的に消化するための上位計画概念である。
+
+```text
+campaign:
+- 複数 milestone または task set を順番に処理する long-run 計画
+- 各 cycle の bounded scope は維持する
+- 次の cycle へ進む条件を明示する
+- 停止条件に触れたら escalation へ切り替える
+```
+
+Campaign は巨大な cycle ではない。campaign は cycle を統合する計画 envelope であり、実行 transaction の最小単位は引き続き cycle である。
+
+Campaign で定義するものは次である。
+
+```text
+campaign plan:
+- 対象 feature / roadmap / milestone queue
+- 実行してよい scope の上限
+- 自動で次 cycle へ進めてよい条件
+- 必ず停止して user decision に戻す条件
+- 各 cycle の handoff に引き継ぐ情報
+- campaign 全体の completion / escalation report 条件
+```
+
+Campaign の導入によって、Planning Lead は「高度な人間判断が必要な領域以外は、可能な限り段階的に進める」という指示を扱える。ただし、Planning Lead は campaign plan の外側へ自走範囲を拡大してはならない。
+
+`cycle` / `campaign` という名称は仮称である。語感が直感的でない可能性があるため、実装前にリネームを検討する。
+
+---
+
+## 4. Planning Lead
 
 Planning Lead は project-context 内の開発チームリーダーである。
 
@@ -57,7 +89,7 @@ Planning Lead の責務:
 - completion report の整理
 ```
 
-## 4. Planning Lead ができること
+## 5. Planning Lead ができること
 
 ```text
 Planning Lead can:
@@ -69,11 +101,12 @@ Planning Lead can:
 - Worker / Reviewer の再実行を指示する
 - review 結果に基づく bounded remediation を行う
 - cycle 内で安全と判断できる範囲を自走させる
+- campaign plan に明示された条件の範囲で次の cycle へ進める
 ```
 
 ---
 
-## 5. Planning Lead ができないこと
+## 6. Planning Lead ができないこと
 
 ```text
 Planning Lead cannot:
@@ -83,13 +116,14 @@ Planning Lead cannot:
 - 技術 stack を大きく変更する
 - infrastructure / cost / security decision を勝手に行う
 - cycle scope を黙って拡大する
+- campaign plan にない milestone へ進む
 - ユーザー価値判断が必要な仕様判断を代行する
 - 既存 user decision を黙って上書きする
 ```
 
 ---
 
-## 6. 自走開始条件
+## 7. 自走開始条件
 
 ```text
 自走開始条件:
@@ -103,7 +137,7 @@ Planning Lead cannot:
 
 ---
 
-## 7. 自走継続条件
+## 8. 自走継続条件
 
 ```text
 自走継続条件:
@@ -118,9 +152,21 @@ Planning Lead cannot:
 - 判断内容が cycle state / logs / reviews / reports から追跡できる
 ```
 
+campaign 内で次の cycle へ進む場合は、上記に加えて次を満たす必要がある。
+
+```text
+campaign progression 条件:
+- 現 cycle が completed である
+- blocking review finding がない
+- unresolved open item が user decision を要求していない
+- 次 milestone / task set が campaign plan に含まれている
+- 前 cycle の handoff が作成されている
+- campaign state に進行判断の根拠が残る
+```
+
 ---
 
-## 8. 停止・エスカレーション条件
+## 9. 停止・エスカレーション条件
 
 ```text
 停止条件:
@@ -134,13 +180,14 @@ Planning Lead cannot:
 - 大きな手戻りの可能性が高い
 - review / audit で重大な未解決リスクが残った
 - 成果物 project の root が不明で継続不能になった
+- campaign plan の上限を越える必要が出た
 ```
 
 停止時は、単に質問を返さず、Escalation Packet を生成する。
 
 ---
 
-## 9. 軽微判断の扱い
+## 10. 軽微判断の扱い
 
 軽微判断は、Planning Lead が cycle 内で行ってよい。ただし、cycle state、cycle-local knowledge、logs、reviews、reports のいずれか適切な artifact に残す。
 
@@ -164,7 +211,7 @@ Planning Lead cannot:
 
 ---
 
-## 10. 自走結果の扱い
+## 11. 自走結果の扱い
 
 自走結果は completion report にまとめる。
 
@@ -180,9 +227,20 @@ completion report に含めるもの:
 - 人間確認点
 ```
 
+campaign を使う場合、各 cycle の completion report に加えて、campaign 全体の aggregate report を作る。
+
+```text
+campaign aggregate report:
+- 消化した cycle / milestone
+- 自動で次 cycle へ進めた根拠
+- 停止または escalation した理由
+- campaign 中に発生した user decision candidates
+- 次に人間が確認すべき事項
+```
+
 ---
 
-## 11. Autonomy Protocol の初期固定項目
+## 12. Autonomy Protocol の初期固定項目
 
 初期実装では、次だけを固定する。
 
@@ -194,6 +252,7 @@ completion report に含めるもの:
 - 停止条件
 - escalation packet 生成条件
 - completion report 必須項目
+- campaign は計画概念として扱い、実装対象にはしない
 ```
 
 複雑な multi-role workflow や compliance gate は後段でよい。
