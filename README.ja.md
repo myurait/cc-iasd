@@ -39,14 +39,19 @@ project-context root で npx から実行します。
 ```bash
 npx cc-iasd@latest init --doc-lang Japanese --dev-lang TypeScript
 npx cc-iasd@latest doctor
+npx cc-iasd@latest ideal add i001-core --summary "Core product ideal"
 npx cc-iasd@latest feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience"
 npx cc-iasd@latest roadmap add r001-first-roadmap --summary "First roadmap" --goal "Ship the first usable flow"
 npx cc-iasd@latest spec add s001-first-slice --summary "Define the first implementation slice"
 npx cc-iasd@latest campaign add c001-first-campaign --summary "First campaign" --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice
 npx cc-iasd@latest run start c001-first-campaign
+npx cc-iasd@latest open-item add <run-id> --kind follow-up --summary "Follow-up item"
+npx cc-iasd@latest open-item resolve <run-id> oi-001 --resolution resolved --summary "Handled in this run"
+npx cc-iasd@latest campaign mark-run c001-first-campaign <run-id> --status completed
 npx cc-iasd@latest review add <run-id> --type light --summary "Review implementation result" --result "No blocking findings"
 npx cc-iasd@latest escalate <run-id>
 npx cc-iasd@latest report <run-id>
+npx cc-iasd@latest reference add note planning-note --summary "Planning note"
 npx cc-iasd@latest view evidence
 npx cc-iasd@latest view current
 npx cc-iasd@latest view run <run-id>
@@ -60,14 +65,19 @@ npx cc-iasd@latest ops archive roadmap r001-first-roadmap
 ```bash
 node bin/cc-iasd.js init /tmp/my-project-context --doc-lang Japanese --dev-lang TypeScript
 node bin/cc-iasd.js doctor /tmp/my-project-context
+node bin/cc-iasd.js ideal add i001-core --summary "Core product ideal" --root /tmp/my-project-context
 node bin/cc-iasd.js feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience" --root /tmp/my-project-context
 node bin/cc-iasd.js roadmap add r001-first-roadmap --summary "First roadmap" --goal "Ship the first usable flow" --root /tmp/my-project-context
 node bin/cc-iasd.js spec add s001-first-slice --summary "Define the first implementation slice" --root /tmp/my-project-context
 node bin/cc-iasd.js campaign add c001-first-campaign --summary "First campaign" --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice --root /tmp/my-project-context
 node bin/cc-iasd.js run start c001-first-campaign --root /tmp/my-project-context
+node bin/cc-iasd.js open-item add <run-id> --kind follow-up --summary "Follow-up item" --root /tmp/my-project-context
+node bin/cc-iasd.js open-item resolve <run-id> oi-001 --resolution resolved --summary "Handled in this run" --root /tmp/my-project-context
+node bin/cc-iasd.js campaign mark-run c001-first-campaign <run-id> --status completed --root /tmp/my-project-context
 node bin/cc-iasd.js review add <run-id> --type light --summary "Review implementation result" --result "No blocking findings" --root /tmp/my-project-context
 node bin/cc-iasd.js escalate <run-id> --root /tmp/my-project-context
 node bin/cc-iasd.js report <run-id> --root /tmp/my-project-context
+node bin/cc-iasd.js reference add note planning-note --summary "Planning note" --root /tmp/my-project-context
 node bin/cc-iasd.js view evidence --root /tmp/my-project-context
 node bin/cc-iasd.js view current --root /tmp/my-project-context
 node bin/cc-iasd.js view run <run-id> --root /tmp/my-project-context
@@ -142,9 +152,11 @@ src/
 
 `src/` は成果物のための清潔な境界です。cc-iasd が管理する spec、runtime、run state、evidence、report、policy は `src/` の外側に置きます。cc-iasd は `src/` 配下の成果物 project に対して command を実行できますが、cc-iasd 所有 artifact を成果物 project 内に置くことを前提にしてはいけません。
 
+AI agent は `src/` 配下ではファイルを作成・編集できます。`src/` の外側では、cc-iasd-managed artifact の新規作成は `cc-iasd` command または明示的人間操作で行い、AI agent は command が作成した artifact の authored content section を執筆します。
+
 ## 現在の状態
 
-現在の npm CLI は、product / ops / reference 構造の作成と検査に加え、feature、roadmap、spec、campaign、run、review、report、escalation、log、view、product outdate、ops archive の各コマンドに対応しています。
+現在の npm CLI は、product / ops / reference 構造の作成と検査に加え、ideal、feature、roadmap、spec、campaign、run、open item、review、report、escalation、log、view、reference、product outdate、ops archive の各コマンドに対応しています。
 
 ## ライセンス
 

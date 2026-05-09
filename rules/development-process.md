@@ -75,7 +75,7 @@ Worker spawns review roles after completing Steps 1-4.
 ### 1.4 Development Log Entry
 
 - Record in `ops/evidence/logs/`.
-- Active log file name: `log_{YYYYMMDDhhmmss}.md` (timestamp is the file creation time).
+- Log file name: `log_{YYYYMMDDhhmmssSSS}_{type}.md` (timestamp is the file creation time).
 - Every entry must include `Date` (exact execution timestamp with timezone) and `Author`.
 - Fields: Date, Author, Task, Changes, Verification, Issues, Follow-up, Reusable lesson.
 - Keep at most 20 entries in one active log file.
@@ -197,7 +197,7 @@ Post-fix re-review is mandatory after every review round that produced findings.
 - Log human decisions in `user/decisions.md`; log run-local decisions in `ops/execution/runs/<run-id>/state.md`.
 - Extract reusable lessons into run-local `ops/execution/runs/<run-id>/knowledge.md` before promoting stable lessons to `rules/policies/`.
 - Keep current roadmap scopes outside `archived/` under `ops/scopes/roadmaps/`.
-- Name roadmap files `roadmap_{YYYYMMDDhhmmss}_{scope}.md`.
+- Name roadmap files `rNNN-lowercase-kebab-case.md`.
 - Move replaced, completed, cancelled, or superseded ops artifacts with `cc-iasd ops archive`.
 - Canonical ideal artifacts live in `product/ideal/`.
 - Move product artifacts that are no longer canonical with `cc-iasd product outdate`.
@@ -205,6 +205,16 @@ Post-fix re-review is mandatory after every review round that produced findings.
 - Raw interviews, imported user specifications, superseded drafts, and other historical planning inputs must be archived under `reference/historical-documents/`.
 - Historical documents are preserved for traceability only. They are not authoritative for active planning once normalized.
 - Every historical document archive must have an entry in `reference/INDEX.md` with archive date, summary, and canonical successor documents when applicable.
+
+### Artifact Creation Authority
+
+- AI agents may create and edit files under `src/` as normal implementation output.
+- AI agents must not directly create, move, rename, archive, outdate, or delete files under `product/`, `ops/`, `rules/`, `runtime/`, `user/`, or `reference/`.
+- New cc-iasd-managed artifacts must be created by `cc-iasd` commands or explicit human file operations.
+- AI agents may edit authored content sections inside command-created artifacts.
+- Tool-owned metadata, IDs, lifecycle state, source references, archive placement, and outdate placement must be updated by `cc-iasd` commands or explicit human file operations.
+- Campaign queue status must be changed with `cc-iasd campaign mark-run`.
+- Run-local open item entries must be created with `cc-iasd open-item add` and resolved with `cc-iasd open-item resolve`.
 
 ## 5. File Classification
 

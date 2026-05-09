@@ -459,6 +459,28 @@ deferred:
   今回は扱わない。Completion Report に根拠を残す。
 ```
 
+open item は operation metadata と authored content を分離する。
+
+```text
+tool-owned metadata:
+- ID
+- Kind
+- Status
+- Source Run
+- Target
+- Resolution
+- Created At
+- Updated At
+
+authored content:
+- Background
+- Options
+- Recommendation
+- Notes
+```
+
+AI agent は authored content を執筆してよい。ただし、open item の作成、status 変更、resolution 変更、target 変更は cc-iasd command が行う。
+
 ### 7.2.2 handoff.md
 
 ```text
@@ -615,6 +637,8 @@ reports は、人間に返す構造化報告である。completion report、esca
 
 report は正本の複製ではなく、product / scope / execution / evidence への参照と、人間判断に必要な要約を持つ。
 
+report も hybrid artifact として扱う。Source Artifact、Source Campaign、Source Run、review refs、related report refs は command が作成する。AI agent は Scope Summary、Completion Assessment、Human Confirmation Points などの本文 section を執筆する。
+
 report lifecycle は次である。
 
 ```text
@@ -671,9 +695,53 @@ historical documents、外部資料、調査メモは `reference/` に置く。
 
 `reference/` にある資料は直接の実装判断正本ではない。必要な内容は `product/`、`ops/`、`rules/` に昇格する。
 
+reference artifact の新規作成も cc-iasd command が行う。AI agent は作成済み reference の Notes / Source Material などの authored section を編集する。
+
 ---
 
-## 10. Evidence Bridge
+## 10. Artifact Creation Authority
+
+project-context 運用時、AI agent は `src/` 以外の cc-iasd-managed 領域で新規ファイルを直接作成しない。
+
+```text
+AI agent may create/edit:
+- src/
+
+AI agent must not directly create files under:
+- product/
+- ops/
+- rules/
+- runtime/
+- user/
+- reference/
+```
+
+新規 artifact は cc-iasd command または明示的人間操作で作成する。
+
+```text
+command-owned:
+- file path
+- artifact ID
+- metadata
+- source refs
+- lifecycle status
+- archive / outdate movement
+
+AI-authored:
+- purpose
+- background
+- reasoning
+- findings
+- options
+- recommendation
+- summary
+```
+
+この方針は、AI の執筆能力を使いつつ、project-context の構造、ID、参照、状態遷移を AI の自由編集に依存させないための制約である。
+
+---
+
+## 11. Evidence Bridge
 
 Evidence Bridge は、単一の `evidence-index.md` ではない。
 
@@ -705,7 +773,7 @@ ops/evidence/reports/
 
 ---
 
-## 11. Escalation Packet テンプレート
+## 12. Escalation Packet テンプレート
 
 ```markdown
 # Escalation Packet: <scope-id>
@@ -753,7 +821,7 @@ ops/evidence/reports/
 
 ---
 
-## 12. Completion Report テンプレート
+## 13. Completion Report テンプレート
 
 ```markdown
 # Completion Report: <scope-id>
@@ -785,7 +853,7 @@ ops/evidence/reports/
 
 ---
 
-## 13. no silent overwrite
+## 14. no silent overwrite
 
 cc-iasd は、過去の判断や証跡を黙って上書きしない。
 

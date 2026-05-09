@@ -33,6 +33,13 @@ Follow this sequence for every task:
 5. **Review** — Spawn review roles according to the spawn rules below.
 6. **Commit** — After review findings are addressed, commit the changes.
 
+## File Authority
+
+- You may create and edit files under `src/` as implementation output.
+- Do not directly create, move, rename, archive, outdate, or delete files under `product/`, `ops/`, `rules/`, `runtime/`, `user/`, or `reference/`.
+- Use `cc-iasd` commands, or ask the spawn origin to perform an explicit human file operation, when a new cc-iasd-managed artifact is required.
+- After a command creates an artifact, edit only authored content sections. Do not free-edit tool-owned metadata, IDs, lifecycle state, source references, archive placement, or outdate placement.
+
 ## Spawn Rules
 
 ### Light Review (every commit with changes)

@@ -40,10 +40,18 @@ test('init creates the product ops reference structure', async () => {
     assert.equal(existsSync(path.join(root, 'ops/execution/runs/archived')), true);
     assert.equal(existsSync(path.join(root, 'ops/evidence/reviews/archived')), true);
     assert.equal(existsSync(path.join(root, 'reference/INDEX.md')), true);
+    assert.equal(existsSync(path.join(root, 'rules/templates/open_item_template.md')), true);
+    assert.equal(existsSync(path.join(root, 'rules/templates/campaign_queue_template.md')), true);
 
     const projectPolicies = await readFile(path.join(root, 'rules/project-policies.md'), 'utf8');
     assert.match(projectPolicies, /## Source Projects/);
     assert.match(projectPolicies, /Primary Project Path: src\//);
+    assert.match(projectPolicies, /## Artifact Creation Authority/);
+    assert.match(projectPolicies, /AI agents may create and edit files under `src\/`/);
+
+    const agents = await readFile(path.join(root, 'AGENTS.md'), 'utf8');
+    assert.match(agents, /## Artifact Rules/);
+    assert.match(agents, /Use `cc-iasd` commands/);
 
     const roleRuntime = await readFile(path.join(root, 'runtime/adapters/role-runtime.md'), 'utf8');
     assert.match(roleRuntime, /rules\/roles\/worker\.md/);
@@ -60,17 +68,22 @@ test('init creates the product ops reference structure', async () => {
 });
 
 test('artifact commands write to the new structure and keep doctor green', async () => {
-    const root = await createContext();
+  const root = await createContext();
   try {
+    runCli(['ideal', 'add', 'i001-core', '--summary', 'Core ideal', '--root', root]);
     runCli(['feature', 'add', 'feature-a', '--kind', 'epic', '--summary', 'Add feature A', '--pillar', 'Core', '--root', root]);
     runCli(['roadmap', 'add', 'r001-roadmap-a', '--summary', 'Roadmap A', '--goal', 'Ship A', '--root', root]);
     runCli(['spec', 'add', 's001-spec-a', '--summary', 'Spec A', '--root', root]);
     runCli(['campaign', 'add', 'c001-campaign-a', '--summary', 'Campaign 1', '--feature', 'feature-a', '--roadmap', 'r001-roadmap-a', '--spec', 's001-spec-a', '--tasks', 's001-spec-a', '--root', root]);
     const runOutput = runCli(['run', 'start', 'c001-campaign-a', '--root', root]);
     const runId = runOutput.match(/Prepared run (run_[0-9]{17}_c001-campaign-a)/)[1];
+    runCli(['open-item', 'add', runId, '--kind', 'follow-up', '--summary', 'Follow up A', '--target', 'ops/scopes/features/feature-a.md', '--root', root]);
+    runCli(['open-item', 'resolve', runId, 'oi-001', '--resolution', 'resolved', '--summary', 'Handled', '--root', root]);
+    runCli(['campaign', 'mark-run', 'c001-campaign-a', runId, '--status', 'completed', '--root', root]);
     runCli(['review', 'add', runId, '--type', 'light', '--summary', 'Review A', '--result', 'passed', '--root', root]);
     runCli(['escalate', runId, '--root', root]);
     runCli(['report', runId, '--root', root]);
+    runCli(['reference', 'add', 'note', 'planning-note', '--summary', 'Planning note', '--root', root]);
 
     const evidenceView = runCli(['view', 'evidence', '--root', root]);
     assert.match(evidenceView, /# Evidence View/);
@@ -102,12 +115,26 @@ test('artifact commands write to the new structure and keep doctor green', async
 
     const runState = await readFile(path.join(root, 'ops/execution/runs', runId, 'state.md'), 'utf8');
     assert.match(runState, /## Open Items/);
-    assert.match(runState, /## Open Item Resolution/);
+    assert.doesNotMatch(runState, /## Open Item Resolution/);
+    assert.match(runState, /- Result: completed/);
+
+    const openItems = await readFile(path.join(root, 'ops/execution/runs', runId, 'open-items.md'), 'utf8');
+    assert.match(openItems, /- ID: oi-001/);
+    assert.match(openItems, /- Status: resolved/);
+    assert.match(openItems, /- Target: ops\/scopes\/features\/feature-a\.md/);
 
     const campaign = await readFile(path.join(root, 'ops/execution/campaigns/c001-campaign-a/plan.md'), 'utf8');
     assert.match(campaign, /- Linked Feature: feature-a/);
     assert.match(campaign, /- Linked Roadmap: r001-roadmap-a/);
     assert.match(campaign, /- Linked Spec: s001-spec-a/);
+
+    const queue = await readFile(path.join(root, 'ops/execution/campaigns/c001-campaign-a/queue.md'), 'utf8');
+    assert.match(queue, new RegExp(`\\| 1 \\| c001-campaign-a \\| s001-spec-a \\| completed \\| ${runId} \\|`));
+
+    assert.equal(existsSync(path.join(root, 'product/ideal/i001-core.md')), true);
+    assert.equal(existsSync(path.join(root, 'reference/notes/planning-note.md')), true);
+    const referenceIndex = await readFile(path.join(root, 'reference/INDEX.md'), 'utf8');
+    assert.match(referenceIndex, /reference\/notes\/planning-note\.md: Planning note/);
 
     runCli(['doctor', root]);
   } finally {
@@ -192,7 +219,7 @@ test('run start requires an existing source scope', async () => {
 test('product outdate and ops archive move artifacts to inactive storage', async () => {
   const root = await createContext();
   try {
-    await writeFile(path.join(root, 'product/ideal/i001-core.md'), '# Core Ideal\n', 'utf8');
+    runCli(['ideal', 'add', 'i001-core', '--summary', 'Core ideal', '--root', root]);
     runCli(['spec', 'add', 's001-spec-a', '--summary', 'Spec A', '--root', root]);
     runCli(['roadmap', 'add', 'r001-roadmap-a', '--summary', 'Roadmap A', '--goal', 'Ship A', '--root', root]);
 

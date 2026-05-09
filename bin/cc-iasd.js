@@ -13,6 +13,7 @@ Usage:
   cc-iasd init [project-context-path] [options]
   cc-iasd doctor [project-context-path]
   cc-iasd campaign add <id> --summary <text> --roadmap <ref> [--spec <ref>] [--tasks <ref>] [--root <project-context-path>]
+  cc-iasd campaign mark-run <campaign-id> <run-id> --status completed|blocked|escalated|deferred [--root <project-context-path>]
   cc-iasd run start <id> [--root <project-context-path>]
   cc-iasd escalate <scope-id> [--root <project-context-path>]
   cc-iasd report <scope-id> [--root <project-context-path>]
@@ -22,9 +23,13 @@ Usage:
   cc-iasd view run <id> [--root <project-context-path>]
   cc-iasd log event --summary <text> [--type <type>] [--source-campaign <id>] [--source-run <id>] [--evidence <path>] [--root <project-context-path>]
   cc-iasd review add <scope-id> --summary <text> --result <text> [--type light|full] [--root <project-context-path>]
+  cc-iasd open-item add <run-id> --kind <kind> --summary <text> [--target <ref>] [--root <project-context-path>]
+  cc-iasd open-item resolve <run-id> <item-id> --resolution resolved|escalated|promoted|deferred [--target <ref>] [--summary <text>] [--root <project-context-path>]
+  cc-iasd ideal add <id> --summary <text> [--root <project-context-path>]
   cc-iasd feature add <id> --summary <text> --pillar <name> [--kind epic|supporting] [--root <project-context-path>]
   cc-iasd roadmap add <id> --summary <text> --goal <text> [--root <project-context-path>]
   cc-iasd spec add <id> --summary <text> [--root <project-context-path>]
+  cc-iasd reference add historical|external|note <id> --summary <text> [--root <project-context-path>]
   cc-iasd profile update [--root <project-context-path>]
   cc-iasd product outdate ideal <id> [--root <project-context-path>]
   cc-iasd product outdate spec <id> [--root <project-context-path>]
@@ -39,6 +44,9 @@ Options:
   --type <type>           Log event type, or review type for review add
   --summary <text>        Log event or review summary
   --result <text>         Review result summary
+  --resolution <status>   Open item resolution
+  --status <status>       Campaign run status
+  --target <ref>          Target artifact reference
   --source-campaign <id>  Source campaign id for log events
   --source-run <id>       Source run id for log events
   --evidence <path>       Related evidence path for log events
@@ -66,9 +74,13 @@ const parseArgs = (argv) => {
     scopeId: '',
     runSourceId: '',
     campaignId: '',
+    openItemId: '',
     eventType: 'manual',
     eventSummary: '',
     reviewResult: '',
+    resolution: '',
+    status: '',
+    targetRef: '',
     sourceCampaign: '',
     sourceRun: '',
     relatedEvidence: '',
@@ -78,10 +90,14 @@ const parseArgs = (argv) => {
     linkedTasks: '',
     featureId: '',
     featureKind: 'epic',
+    openItemKind: '',
     idealPillar: '',
+    idealId: '',
     roadmapId: '',
     roadmapGoal: '',
     specId: '',
+    referenceKind: '',
+    referenceId: '',
     productLayer: '',
     productId: '',
     archiveLayer: '',
@@ -94,7 +110,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'view', 'log', 'review', 'feature', 'roadmap', 'campaign', 'spec', 'profile', 'product', 'ops'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'view', 'log', 'review', 'open-item', 'ideal', 'feature', 'roadmap', 'campaign', 'spec', 'reference', 'profile', 'product', 'ops'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -138,6 +154,30 @@ const parseArgs = (argv) => {
     if (!parsed.scopeId || parsed.scopeId.startsWith('-')) {
       throw new Error('Usage: cc-iasd review add <scope-id> --summary <text> --result <text>');
     }
+  } else if (parsed.command === 'open-item') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (!['add', 'resolve'].includes(parsed.runTarget)) {
+      throw new Error('Usage: cc-iasd open-item add|resolve ...');
+    }
+    parsed.scopeId = tokens.shift() ?? '';
+    if (!parsed.scopeId || parsed.scopeId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd open-item add <run-id> --kind <kind> --summary <text>');
+    }
+    if (parsed.runTarget === 'resolve') {
+      parsed.openItemId = tokens.shift() ?? '';
+      if (!parsed.openItemId || parsed.openItemId.startsWith('-')) {
+        throw new Error('Usage: cc-iasd open-item resolve <run-id> <item-id> --resolution resolved|escalated|promoted|deferred');
+      }
+    }
+  } else if (parsed.command === 'ideal') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'add') {
+      throw new Error('Usage: cc-iasd ideal add <id> --summary <text>');
+    }
+    parsed.idealId = tokens.shift() ?? '';
+    if (!parsed.idealId || parsed.idealId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd ideal add <id> --summary <text>');
+    }
   } else if (parsed.command === 'feature') {
     parsed.runTarget = tokens.shift() ?? '';
     if (parsed.runTarget !== 'add') {
@@ -158,12 +198,18 @@ const parseArgs = (argv) => {
     }
   } else if (parsed.command === 'campaign') {
     parsed.runTarget = tokens.shift() ?? '';
-    if (parsed.runTarget !== 'add') {
-      throw new Error('Usage: cc-iasd campaign add <id> --summary <text> --roadmap <ref>');
+    if (!['add', 'mark-run'].includes(parsed.runTarget)) {
+      throw new Error('Usage: cc-iasd campaign add|mark-run ...');
     }
     parsed.campaignId = tokens.shift() ?? '';
     if (!parsed.campaignId || parsed.campaignId.startsWith('-')) {
       throw new Error('Usage: cc-iasd campaign add <id> --summary <text> --roadmap <ref>');
+    }
+    if (parsed.runTarget === 'mark-run') {
+      parsed.scopeId = tokens.shift() ?? '';
+      if (!parsed.scopeId || parsed.scopeId.startsWith('-')) {
+        throw new Error('Usage: cc-iasd campaign mark-run <campaign-id> <run-id> --status completed|blocked|escalated|deferred');
+      }
     }
   } else if (parsed.command === 'spec') {
     parsed.runTarget = tokens.shift() ?? '';
@@ -173,6 +219,16 @@ const parseArgs = (argv) => {
     parsed.specId = tokens.shift() ?? '';
     if (!parsed.specId || parsed.specId.startsWith('-')) {
       throw new Error('Usage: cc-iasd spec add <id> --summary <text>');
+    }
+  } else if (parsed.command === 'reference') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (parsed.runTarget !== 'add') {
+      throw new Error('Usage: cc-iasd reference add historical|external|note <id> --summary <text>');
+    }
+    parsed.referenceKind = tokens.shift() ?? '';
+    parsed.referenceId = tokens.shift() ?? '';
+    if (!['historical', 'external', 'note'].includes(parsed.referenceKind) || !parsed.referenceId || parsed.referenceId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd reference add historical|external|note <id> --summary <text>');
     }
   } else if (parsed.command === 'profile') {
     parsed.runTarget = tokens.shift() ?? '';
@@ -236,6 +292,15 @@ const parseArgs = (argv) => {
       case '--result':
         parsed.reviewResult = readValue(token);
         break;
+      case '--resolution':
+        parsed.resolution = readValue(token);
+        break;
+      case '--status':
+        parsed.status = readValue(token);
+        break;
+      case '--target':
+        parsed.targetRef = readValue(token);
+        break;
       case '--source-campaign':
         parsed.sourceCampaign = readValue(token);
         break;
@@ -258,7 +323,11 @@ const parseArgs = (argv) => {
         parsed.linkedTasks = readValue(token);
         break;
       case '--kind':
-        parsed.featureKind = readValue(token);
+        if (parsed.command === 'open-item') {
+          parsed.openItemKind = readValue(token);
+        } else {
+          parsed.featureKind = readValue(token);
+        }
         break;
       case '--pillar':
         parsed.idealPillar = readValue(token);
@@ -418,7 +487,10 @@ const requiredPaths = [
   'src',
 ];
 
+const developmentDocsPath = ['docs', 'development'].join('/');
+
 const forbiddenPaths = [
+  developmentDocsPath,
   'development-docs',
   'ops/ideal',
   'ops/specs',
@@ -435,6 +507,8 @@ const forbiddenPaths = [
 ];
 
 const forbiddenContent = [
+  `${developmentDocsPath}/`,
+  developmentDocsPath,
   'development-docs',
   'ops/ideal/',
   'ops/specs/',
@@ -660,6 +734,12 @@ const validateCampaignFiles = async (root, issues) => {
         issues.push(`Missing campaign file: ${relPath}`);
       }
     }
+    const campaignFiles = await listMarkdownFiles(root, campaignDir);
+    for (const file of campaignFiles) {
+      if (!['plan.md', 'state.md', 'queue.md', 'aggregate-report.md'].includes(path.basename(file))) {
+        issues.push(`Unexpected campaign file: ${file}`);
+      }
+    }
 
     const content = await readOptionalText(root, `${campaignDir}/plan.md`);
     const linkedFeature = extractField(content, 'Linked Feature');
@@ -696,6 +776,12 @@ const validateRunFiles = async (root, issues) => {
       const relPath = `${runDir}/${fileName}`;
       if (!await exists(path.join(root, relPath))) {
         issues.push(`Missing run file: ${relPath}`);
+      }
+    }
+    const runFiles = await listMarkdownFiles(root, runDir);
+    for (const file of runFiles) {
+      if (!['plan.md', 'handoff.md', 'state.md', 'open-items.md', 'knowledge.md'].includes(path.basename(file))) {
+        issues.push(`Unexpected run file: ${file}`);
       }
     }
   }
@@ -830,6 +916,55 @@ const assertArchiveId = (id) => {
 
 const markdownId = (id) => id.endsWith('.md') ? id : `${id}.md`;
 
+const replaceLine = (content, prefix, nextLine) => {
+  const lines = content.split('\n');
+  const index = lines.findIndex((line) => line.startsWith(prefix));
+  if (index === -1) return content;
+  lines[index] = nextLine;
+  return lines.join('\n');
+};
+
+const appendSection = (content, section) => {
+  const trimmed = content.endsWith('\n') ? content : `${content}\n`;
+  return `${trimmed}${section}`;
+};
+
+const openItemStatusValues = ['open', 'resolved', 'escalated', 'promoted', 'deferred'];
+
+const openItemKindValues = [
+  'product-decision',
+  'spec-refinement',
+  'scope-refinement',
+  'implementation-debt',
+  'blocker',
+  'follow-up',
+];
+
+const ensureRunId = (runId) => {
+  if (!/^run_[0-9]{17}_[a-z0-9][a-z0-9-]*$/.test(runId)) {
+    throw new Error('Run id must match run_<timestamp>_<source-id>');
+  }
+};
+
+const updateTextFile = async (root, relPath, updater, args, created) => {
+  const current = await readOptionalText(root, relPath);
+  if (!current) {
+    throw new Error(`Cannot update missing file: ${relPath}`);
+  }
+  const next = updater(current);
+  if (next === current) {
+    created.skipped.push(relPath);
+    return;
+  }
+  await writeText(root, relPath, next, { ...args, force: true }, created);
+};
+
+const nextOpenItemId = (content) => {
+  const ids = [...content.matchAll(/^- ID: oi-([0-9]{3})$/gm)].map((match) => Number(match[1]));
+  const next = Math.max(0, ...ids) + 1;
+  return `oi-${String(next).padStart(3, '0')}`;
+};
+
 const featureIndexTemplate = () => [
   '# Feature Index',
   '',
@@ -903,6 +1038,28 @@ const featureFileTemplate = ({ featureId, featureKind, summary, idealPillar, now
   '## Backlog',
   '',
   '- None',
+  '',
+].join('\n');
+
+const idealFileTemplate = ({ idealId, summary, now }) => [
+  `# Ideal: ${idealId}`,
+  '',
+  `- ID: ${idealId}`,
+  `- Summary: ${summary}`,
+  '- Status: current',
+  `- Created At: ${now}`,
+  '',
+  '## Product Ideal',
+  '',
+  '- TBD',
+  '',
+  '## Experience Principles',
+  '',
+  '- TBD',
+  '',
+  '## Boundaries',
+  '',
+  '- TBD',
   '',
 ].join('\n');
 
@@ -1076,7 +1233,6 @@ const campaignQueueTemplate = ({ campaignId }) => [
   '',
   '| Order | Run Source | Selected Tasks | Status | Run |',
   '| --- | --- | --- | --- | --- |',
-  '| 1 | TBD | TBD | pending | TBD |',
   '',
 ].join('\n');
 
@@ -1139,14 +1295,8 @@ const runStateTemplate = ({ runId, sourceId, now, linkedFeature, linkedRoadmap, 
   '',
   '## Open Items',
   '',
-  '- None',
-  '',
-  '## Open Item Resolution',
-  '',
-  '- Resolved: none',
-  '- Escalated: none',
-  '- Promoted To Feature Backlog: none',
-  '- Deferred: none',
+  `- Open Items File: ops/execution/runs/${runId}/open-items.md`,
+  '- Open Item Summary: use `cc-iasd open-item add` and `cc-iasd open-item resolve` to maintain operational metadata.',
   '',
   '## Remaining Risk',
   '',
@@ -1177,7 +1327,9 @@ const runHandoffTemplate = ({ runId, sourceId, linkedFeature, linkedRoadmap, lin
   '## Constraints',
   '',
   '- Do not change roadmap, feature scope, campaign purpose, or selected tasks without human approval.',
-  '- Keep implementation changes inside `src/` unless the run explicitly requires project-context changes.',
+  '- Keep implementation file creation inside `src/`.',
+  '- Use cc-iasd commands or explicit human file operations for new project-context artifacts.',
+  '- Edit only authored content sections in command-created project-context artifacts.',
   '',
   '## Expected Output',
   '',
@@ -1196,6 +1348,10 @@ const runHandoffTemplate = ({ runId, sourceId, linkedFeature, linkedRoadmap, lin
 
 const runOpenItemsTemplate = ({ runId }) => [
   `# Run Open Items: ${runId}`,
+  '',
+  'Tool-owned metadata lines are created and updated by cc-iasd commands. AI agents may edit authored Background, Options, Recommendation, and Notes sections after entries are created.',
+  '',
+  '## Items',
   '',
   '- None',
   '',
@@ -1217,28 +1373,78 @@ const runKnowledgeTemplate = ({ runId, now }) => [
   '',
 ].join('\n');
 
-const completionReportTemplate = ({ scopeId, now, scopeContent, runStates, reviewFiles }) => [
+const openItemEntryTemplate = ({ itemId, runId, kind, summary, targetRef, now }) => [
+  `### ${itemId}`,
+  '',
+  `- ID: ${itemId}`,
+  `- Kind: ${kind}`,
+  '- Status: open',
+  `- Summary: ${summary}`,
+  `- Source Run: ${runId}`,
+  `- Target: ${targetRef || 'TBD'}`,
+  '- Resolution: TBD',
+  `- Created At: ${now}`,
+  `- Updated At: ${now}`,
+  '',
+  '#### Background',
+  '',
+  '- TBD',
+  '',
+  '#### Options',
+  '',
+  '- TBD',
+  '',
+  '#### Recommendation',
+  '',
+  '- TBD',
+  '',
+  '#### Notes',
+  '',
+  '- TBD',
+  '',
+].join('\n');
+
+const referenceFileTemplate = ({ referenceKind, referenceId, summary, now }) => [
+  `# Reference: ${referenceId}`,
+  '',
+  `- ID: ${referenceId}`,
+  `- Kind: ${referenceKind}`,
+  `- Summary: ${summary}`,
+  `- Created At: ${now}`,
+  '- Canonical Successor: TBD',
+  '',
+  '## Notes',
+  '',
+  '- TBD',
+  '',
+  '## Source Material',
+  '',
+  '- TBD',
+  '',
+].join('\n');
+
+const completionReportTemplate = ({ scopeId, scopePath, now, runStates, reviewFiles, reportFiles }) => [
   `# Completion Report: ${scopeId}`,
   '',
   `- Scope ID: ${scopeId}`,
+  `- Source Artifact: ${scopePath}`,
   `- Generated At: ${now}`,
   '',
   '## Scope Summary',
   '',
-  scopeContent.trim() || 'No scope content found.',
+  '- TBD',
   '',
-  '## Run State Summary',
+  '## Source Runs',
   '',
-  ...(runStates.length ? runStates.flatMap((entry) => [
-    `### ${entry.path}`,
-    '',
-    entry.content.trim() || 'No state.md content found.',
-    '',
-  ]) : ['No run state files found.', '']),
+  ...(runStates.length ? runStates.map((entry) => `- ${entry.path}`) : ['- No run state files found.']),
   '',
   '## Review Evidence',
   '',
   ...(reviewFiles.length ? reviewFiles.map((file) => `- ${file}`) : ['- No review files found.']),
+  '',
+  '## Related Reports',
+  '',
+  ...(reportFiles.length ? reportFiles.map((file) => `- ${file}`) : ['- No related reports found.']),
   '',
   '## Completion Assessment',
   '',
@@ -1656,6 +1862,37 @@ const logEvent = async (args) => {
   });
 };
 
+const addIdeal = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for ideal add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  if (!/^i[0-9]{3}-[a-z0-9][a-z0-9-]*$/.test(args.idealId)) {
+    throw new Error('Ideal id must match iNNN-lowercase-kebab-case');
+  }
+  if (!args.eventSummary) {
+    throw new Error('Usage: cc-iasd ideal add <id> --summary <text>');
+  }
+
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const relPath = `product/ideal/${args.idealId}.md`;
+  await writeText(root, relPath, idealFileTemplate({
+    idealId: args.idealId,
+    summary: args.eventSummary,
+    now,
+  }), { ...args, force: false }, created);
+
+  await writeLogEvent(root, {
+    eventType: 'ideal-add',
+    summary: `Added ideal ${args.idealId}`,
+    relatedEvidence: relPath,
+  });
+
+  return { root, idealId: args.idealId, idealPath: relPath, written: created.written, skipped: created.skipped };
+};
+
 const addFeature = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
@@ -1786,6 +2023,48 @@ const addSpec = async (args) => {
   return { root, specId: args.specId, specRoot, written: created.written, skipped: created.skipped };
 };
 
+const addReference = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for reference add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  if (slugify(args.referenceId) !== args.referenceId) {
+    throw new Error('Reference id must be lowercase kebab-case ASCII');
+  }
+  if (!args.eventSummary) {
+    throw new Error('Usage: cc-iasd reference add historical|external|note <id> --summary <text>');
+  }
+  const kindDirs = {
+    historical: 'reference/historical-documents',
+    external: 'reference/external',
+    note: 'reference/notes',
+  };
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const relPath = `${kindDirs[args.referenceKind]}/${args.referenceId}.md`;
+  await writeText(root, relPath, referenceFileTemplate({
+    referenceKind: args.referenceKind,
+    referenceId: args.referenceId,
+    summary: args.eventSummary,
+    now,
+  }), { ...args, force: false }, created);
+
+  await updateTextFile(root, 'reference/INDEX.md', (content) => {
+    const row = `- ${relPath}: ${args.eventSummary}`;
+    if (content.includes(row)) return content;
+    return appendSection(content.replace(/\n+$/, '\n'), `${row}\n`);
+  }, args, created);
+
+  await writeLogEvent(root, {
+    eventType: 'reference-add',
+    summary: `Added reference ${args.referenceId}`,
+    relatedEvidence: relPath,
+  });
+
+  return { root, referenceId: args.referenceId, referencePath: relPath, written: created.written, skipped: created.skipped };
+};
+
 const addCampaign = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
@@ -1828,6 +2107,167 @@ const addCampaign = async (args) => {
   });
 
   return { root, campaignId, campaignRoot, written: created.written, skipped: created.skipped };
+};
+
+const markCampaignRunCommand = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for campaign mark-run.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  const allowed = ['completed', 'blocked', 'escalated', 'deferred'];
+  if (!allowed.includes(args.status)) {
+    throw new Error(`Campaign run status must be one of: ${allowed.join(', ')}`);
+  }
+  ensureRunId(args.scopeId);
+  const created = { written: [], skipped: [] };
+  await markCampaignRun(root, {
+    campaignId: args.campaignId,
+    runId: args.scopeId,
+    status: args.status,
+  }, args, created);
+  await updateRunResult(root, args.scopeId, args.status, args, created);
+  await writeLogEvent(root, {
+    eventType: 'campaign-mark-run',
+    summary: `Marked ${args.scopeId} as ${args.status} in ${args.campaignId}`,
+    sourceCampaign: args.campaignId,
+    sourceRun: args.scopeId,
+    relatedEvidence: `ops/execution/campaigns/${args.campaignId}/queue.md`,
+  });
+  return { root, campaignId: args.campaignId, runId: args.scopeId, status: args.status, written: created.written, skipped: created.skipped };
+};
+
+const appendCampaignRun = async (root, { campaignId, runId, sourceId, linkedTasks }, args, created) => {
+  if (!campaignId) return;
+  const queuePath = `ops/execution/campaigns/${campaignId}/queue.md`;
+  if (!await exists(path.join(root, queuePath))) return;
+  await updateTextFile(root, queuePath, (content) => {
+    if (content.includes(`| ${runId} |`)) return content;
+    const rows = content.split('\n').filter((line) => /^\| [0-9]+ \|/.test(line));
+    const order = rows.length + 1;
+    const nextRow = `| ${order} | ${sourceId} | ${linkedTasks || 'TBD'} | running | ${runId} |`;
+    return appendSection(content.replace(/\n+$/, '\n'), `${nextRow}\n`);
+  }, args, created);
+};
+
+const markCampaignRun = async (root, { campaignId, runId, status }, args, created) => {
+  const queuePath = `ops/execution/campaigns/${campaignId}/queue.md`;
+  if (!await exists(path.join(root, queuePath))) {
+    throw new Error(`Campaign queue does not exist: ${queuePath}`);
+  }
+  await updateTextFile(root, queuePath, (content) => {
+    const lines = content.split('\n');
+    const index = lines.findIndex((line) => line.includes(`| ${runId} |`));
+    if (index === -1) {
+      throw new Error(`Run is not registered in campaign queue: ${runId}`);
+    }
+    const cells = lines[index].split('|').map((cell) => cell.trim());
+    lines[index] = `| ${cells[1]} | ${cells[2]} | ${cells[3]} | ${status} | ${cells[5]} |`;
+    return lines.join('\n');
+  }, args, created);
+};
+
+const updateRunResult = async (root, runId, result, args, created) => {
+  const statePath = `ops/execution/runs/${runId}/state.md`;
+  if (!await exists(path.join(root, statePath))) return;
+  const now = new Date().toISOString();
+  await updateTextFile(root, statePath, (content) => {
+    let next = replaceLine(content, '- Result:', `- Result: ${result}`);
+    next = replaceLine(next, '- Last Update:', `- Last Update: ${now}`);
+    return next;
+  }, args, created);
+};
+
+const addOpenItem = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for open item add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  const runId = args.scopeId;
+  ensureRunId(runId);
+  if (!openItemKindValues.includes(args.openItemKind)) {
+    throw new Error(`Open item kind must be one of: ${openItemKindValues.join(', ')}`);
+  }
+  if (!args.eventSummary) {
+    throw new Error('Usage: cc-iasd open-item add <run-id> --kind <kind> --summary <text>');
+  }
+
+  const openItemsPath = `ops/execution/runs/${runId}/open-items.md`;
+  const current = await readOptionalText(root, openItemsPath);
+  if (!current) {
+    throw new Error(`Run open items file does not exist: ${openItemsPath}`);
+  }
+  const itemId = nextOpenItemId(current);
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  await updateTextFile(root, openItemsPath, (content) => {
+    const withoutNone = content.replace(/## Items\n\n- None\n?/m, '## Items\n\n');
+    return appendSection(withoutNone.replace(/\n+$/, '\n'), `${openItemEntryTemplate({
+      itemId,
+      runId,
+      kind: args.openItemKind,
+      summary: args.eventSummary,
+      targetRef: args.targetRef,
+      now,
+    })}\n`);
+  }, args, created);
+
+  await writeLogEvent(root, {
+    eventType: 'open-item-add',
+    summary: `Added open item ${itemId} for ${runId}`,
+    sourceRun: runId,
+    relatedEvidence: openItemsPath,
+  });
+
+  return { root, runId, itemId, openItemsPath, written: created.written, skipped: created.skipped };
+};
+
+const resolveOpenItem = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for open item resolve.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  const runId = args.scopeId;
+  ensureRunId(runId);
+  if (!openItemStatusValues.includes(args.resolution) || args.resolution === 'open') {
+    throw new Error('Resolution must be resolved, escalated, promoted, or deferred');
+  }
+  if (!/^oi-[0-9]{3}$/.test(args.openItemId)) {
+    throw new Error('Open item id must match oi-NNN');
+  }
+
+  const openItemsPath = `ops/execution/runs/${runId}/open-items.md`;
+  const current = await readOptionalText(root, openItemsPath);
+  if (!current.includes(`- ID: ${args.openItemId}`)) {
+    throw new Error(`Open item does not exist: ${args.openItemId}`);
+  }
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  await updateTextFile(root, openItemsPath, (content) => {
+    const start = content.indexOf(`### ${args.openItemId}`);
+    const end = content.indexOf('\n### ', start + 1);
+    const before = content.slice(0, start);
+    const section = content.slice(start, end === -1 ? undefined : end);
+    const after = end === -1 ? '' : content.slice(end);
+    let nextSection = replaceLine(section, '- Status:', `- Status: ${args.resolution}`);
+    nextSection = replaceLine(nextSection, '- Resolution:', `- Resolution: ${args.eventSummary || args.resolution}`);
+    nextSection = replaceLine(nextSection, '- Updated At:', `- Updated At: ${now}`);
+    if (args.targetRef) {
+      nextSection = replaceLine(nextSection, '- Target:', `- Target: ${args.targetRef}`);
+    }
+    return `${before}${nextSection}${after}`;
+  }, args, created);
+
+  await writeLogEvent(root, {
+    eventType: 'open-item-resolve',
+    summary: `Resolved open item ${args.openItemId} for ${runId} as ${args.resolution}`,
+    sourceRun: runId,
+    relatedEvidence: openItemsPath,
+  });
+
+  return { root, runId, itemId: args.openItemId, resolution: args.resolution, openItemsPath, written: created.written, skipped: created.skipped };
 };
 
 const addReview = async (args) => {
@@ -2012,6 +2452,13 @@ const runStart = async (args) => {
 
   await writeText(root, `${runRoot}/knowledge.md`, runKnowledgeTemplate({ runId, now }), { ...args, force: false }, created);
 
+  await appendCampaignRun(root, {
+    campaignId: linkedCampaign,
+    runId,
+    sourceId,
+    linkedTasks,
+  }, args, created);
+
   await writeLogEvent(root, {
     eventType: 'run',
     summary: `Prepared run ${runId} from ${sourceId}`,
@@ -2044,17 +2491,18 @@ const reportScope = async (args) => {
 
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
-  const scopeContent = await readOptionalText(root, scopePath);
   const runStates = await listRunStateEntries(root, scopeId);
   const reviewFiles = await listReviewFilesForScope(root, scopeId);
+  const reportFiles = await listReportFilesForScope(root, scopeId);
   const reportPath = `ops/evidence/reports/report_${timestampForFile(now)}_${scopeId}.md`;
 
   await writeText(root, reportPath, completionReportTemplate({
     scopeId,
+    scopePath,
     now,
-    scopeContent,
     runStates,
     reviewFiles,
+    reportFiles,
   }), { ...args, force: false }, created);
 
   await writeLogEvent(root, {
@@ -2266,6 +2714,14 @@ const init = async (args) => {
     '',
     'Do not place cc-iasd-managed specs, runtime state, runs, evidence, reports, or policies inside these source projects.',
     '',
+    '## Artifact Creation Authority',
+    '',
+    '- AI agents may create and edit files under `src/` as normal implementation output.',
+    '- AI agents must not directly create, move, rename, archive, outdate, or delete files under `product/`, `ops/`, `rules/`, `runtime/`, `user/`, or `reference/`.',
+    '- New cc-iasd-managed artifacts must be created by `cc-iasd` commands or explicit human file operations.',
+    '- AI agents may edit authored content sections inside command-created artifacts.',
+    '- Tool-owned metadata, IDs, lifecycle state, source references, archive placement, and outdate placement must be updated by `cc-iasd` commands or explicit human file operations.',
+    '',
   ].join('\n'), args, created);
 
   await writeText(root, 'user/product-intent.md', '# Product Intent\n', args, created);
@@ -2402,6 +2858,13 @@ const init = async (args) => {
     '- `rules/policies/AI_RUNTIME_RULES.md`',
     '- `rules/project-policies.md`',
     '',
+    '## Artifact Rules',
+    '',
+    '- `src/` is the normal implementation area. AI agents may create and edit source project files under `src/`.',
+    '- Do not directly create, move, rename, archive, outdate, or delete cc-iasd-managed files under `product/`, `ops/`, `rules/`, `runtime/`, `user/`, or `reference/`.',
+    '- Use `cc-iasd` commands or explicit human file operations to create new cc-iasd-managed artifacts.',
+    '- After a command creates an artifact, AI agents may edit its authored content sections, but must not free-edit tool-owned metadata, IDs, lifecycle state, source references, archive placement, or outdate placement.',
+    '',
   ].join('\n'), args, created);
 
   return created;
@@ -2457,6 +2920,20 @@ try {
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Review add does not overwrite review records.`);
     }
+  } else if (args.command === 'open-item') {
+    const result = args.runTarget === 'add' ? await addOpenItem(args) : await resolveOpenItem(args);
+    console.log(`${args.runTarget === 'add' ? 'Added' : 'Resolved'} open item ${result.itemId} for run ${result.runId} in ${result.root}.`);
+    console.log(`Updated ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} unchanged file(s).`);
+    }
+  } else if (args.command === 'ideal') {
+    const result = await addIdeal(args);
+    console.log(`Prepared ideal ${result.idealId} in ${result.root}.`);
+    console.log(`Created ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Ideal add does not overwrite ideal records.`);
+    }
   } else if (args.command === 'feature') {
     const result = await addFeature(args);
     console.log(`Prepared feature ${result.featureId} in ${result.root}.`);
@@ -2472,11 +2949,16 @@ try {
       console.log(`Skipped ${result.skipped.length} existing file(s). Roadmap add does not overwrite roadmap records.`);
     }
   } else if (args.command === 'campaign') {
-    const result = await addCampaign(args);
-    console.log(`Prepared campaign ${result.campaignId} in ${result.root}.`);
-    console.log(`Created ${result.written.length} file(s).`);
-    if (result.skipped.length) {
-      console.log(`Skipped ${result.skipped.length} existing file(s). Campaign add does not overwrite campaign records.`);
+    const result = args.runTarget === 'add' ? await addCampaign(args) : await markCampaignRunCommand(args);
+    if (args.runTarget === 'add') {
+      console.log(`Prepared campaign ${result.campaignId} in ${result.root}.`);
+      console.log(`Created ${result.written.length} file(s).`);
+      if (result.skipped.length) {
+        console.log(`Skipped ${result.skipped.length} existing file(s). Campaign add does not overwrite campaign records.`);
+      }
+    } else {
+      console.log(`Marked run ${result.runId} as ${result.status} in campaign ${result.campaignId}.`);
+      console.log(`Updated ${result.written.length} file(s).`);
     }
   } else if (args.command === 'spec') {
     const result = await addSpec(args);
@@ -2484,6 +2966,13 @@ try {
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Spec add does not overwrite spec records.`);
+    }
+  } else if (args.command === 'reference') {
+    const result = await addReference(args);
+    console.log(`Prepared reference ${result.referenceId} in ${result.root}.`);
+    console.log(`Created ${result.written.length} file(s).`);
+    if (result.skipped.length) {
+      console.log(`Skipped ${result.skipped.length} existing file(s). Reference add does not overwrite reference records.`);
     }
   } else if (args.command === 'profile') {
     const result = await updateProfile(args);

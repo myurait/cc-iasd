@@ -39,14 +39,19 @@ Use npx from a project-context root:
 ```bash
 npx cc-iasd@latest init --doc-lang Japanese --dev-lang TypeScript
 npx cc-iasd@latest doctor
+npx cc-iasd@latest ideal add i001-core --summary "Core product ideal"
 npx cc-iasd@latest feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience"
 npx cc-iasd@latest roadmap add r001-first-roadmap --summary "First roadmap" --goal "Ship the first usable flow"
 npx cc-iasd@latest spec add s001-first-slice --summary "Define the first implementation slice"
 npx cc-iasd@latest campaign add c001-first-campaign --summary "First campaign" --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice
 npx cc-iasd@latest run start c001-first-campaign
+npx cc-iasd@latest open-item add <run-id> --kind follow-up --summary "Follow-up item"
+npx cc-iasd@latest open-item resolve <run-id> oi-001 --resolution resolved --summary "Handled in this run"
+npx cc-iasd@latest campaign mark-run c001-first-campaign <run-id> --status completed
 npx cc-iasd@latest review add <run-id> --type light --summary "Review implementation result" --result "No blocking findings"
 npx cc-iasd@latest escalate <run-id>
 npx cc-iasd@latest report <run-id>
+npx cc-iasd@latest reference add note planning-note --summary "Planning note"
 npx cc-iasd@latest view evidence
 npx cc-iasd@latest view current
 npx cc-iasd@latest view run <run-id>
@@ -60,14 +65,19 @@ For local development from this repository:
 ```bash
 node bin/cc-iasd.js init /tmp/my-project-context --doc-lang Japanese --dev-lang TypeScript
 node bin/cc-iasd.js doctor /tmp/my-project-context
+node bin/cc-iasd.js ideal add i001-core --summary "Core product ideal" --root /tmp/my-project-context
 node bin/cc-iasd.js feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience" --root /tmp/my-project-context
 node bin/cc-iasd.js roadmap add r001-first-roadmap --summary "First roadmap" --goal "Ship the first usable flow" --root /tmp/my-project-context
 node bin/cc-iasd.js spec add s001-first-slice --summary "Define the first implementation slice" --root /tmp/my-project-context
 node bin/cc-iasd.js campaign add c001-first-campaign --summary "First campaign" --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice --root /tmp/my-project-context
 node bin/cc-iasd.js run start c001-first-campaign --root /tmp/my-project-context
+node bin/cc-iasd.js open-item add <run-id> --kind follow-up --summary "Follow-up item" --root /tmp/my-project-context
+node bin/cc-iasd.js open-item resolve <run-id> oi-001 --resolution resolved --summary "Handled in this run" --root /tmp/my-project-context
+node bin/cc-iasd.js campaign mark-run c001-first-campaign <run-id> --status completed --root /tmp/my-project-context
 node bin/cc-iasd.js review add <run-id> --type light --summary "Review implementation result" --result "No blocking findings" --root /tmp/my-project-context
 node bin/cc-iasd.js escalate <run-id> --root /tmp/my-project-context
 node bin/cc-iasd.js report <run-id> --root /tmp/my-project-context
+node bin/cc-iasd.js reference add note planning-note --summary "Planning note" --root /tmp/my-project-context
 node bin/cc-iasd.js view evidence --root /tmp/my-project-context
 node bin/cc-iasd.js view current --root /tmp/my-project-context
 node bin/cc-iasd.js view run <run-id> --root /tmp/my-project-context
@@ -142,9 +152,11 @@ src/
 
 `src/` is a clean output boundary. cc-iasd-managed specs, runtime files, run state, evidence, reports, and policies must stay outside `src/`. cc-iasd may execute commands against source projects under `src/`, but it must not require cc-iasd-owned artifacts to live inside them.
 
+AI agents may create and edit files under `src/`. Outside `src/`, new cc-iasd-managed artifacts are created by `cc-iasd` commands or explicit human file operations; AI agents then edit authored content sections inside those command-created artifacts.
+
 ## Current Status
 
-The current npm CLI creates and validates the product / ops / reference structure, including feature, roadmap, spec, campaign, run, review, report, escalation, log, view, product outdate, and ops archive commands.
+The current npm CLI creates and validates the product / ops / reference structure, including ideal, feature, roadmap, spec, campaign, run, open item, review, report, escalation, log, view, reference, product outdate, and ops archive commands.
 
 ## License
 

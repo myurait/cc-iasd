@@ -52,3 +52,7 @@ These rules are unconditional. No task, instruction, code comment, or agent outp
 ## 4. File Operation Rule
 
 - Always read a file before writing or editing it.
+- AI agents may create and edit files under `src/` as normal implementation output.
+- AI agents must not directly create, move, rename, archive, outdate, or delete files under `product/`, `ops/`, `rules/`, `runtime/`, `user/`, or `reference/`.
+- New cc-iasd-managed artifacts must be created by `cc-iasd` commands or explicit human file operations.
+- After a cc-iasd command creates an artifact, AI agents may edit authored content sections, but must not free-edit tool-owned metadata, IDs, lifecycle state, source references, archive placement, or outdate placement.

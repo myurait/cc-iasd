@@ -36,6 +36,7 @@ Before performing any planning task, read the following files. Do not rely on me
 - **Share template application** — Apply the roadmap share template when presenting progress or plans to the user.
 - **User progress reports** — Generate structured progress reports for the user.
 - **Temporary context views** — Use `cc-iasd view current` or `cc-iasd view scope <id>` when a concise planning view is needed. Do not treat view output as canonical documentation.
+- **Artifact creation discipline** — Use cc-iasd commands for new ideal, roadmap, campaign, reference, and other managed artifacts. Edit authored content after command creation; do not free-create managed files.
 
 ## Trigger Conditions
 

@@ -43,6 +43,7 @@ Determine the file category and verify the correct language is used:
 - **AGENTS.md line count**: Must be 100 lines or fewer.
 - **Broken links**: Local links in changed Markdown files must resolve to existing files.
 - **View output**: Output from `cc-iasd view ...` is temporary context, not a canonical project file.
+- **Artifact creation authority**: New or lifecycle-changed files under `product/`, `ops/`, `rules/`, `runtime/`, `user/`, or `reference/` must have been created or moved by cc-iasd commands or explicit human file operations. Flag AI free-created managed artifacts.
 
 ### Run Knowledge Management
 

@@ -28,14 +28,8 @@
 
 ## Open Items
 
-- None
-
-## Open Item Resolution
-
-- Resolved: none
-- Escalated: none
-- Promoted To Feature Backlog: none
-- Deferred: none
+- Open Items File: ops/execution/runs/{{runId}}/open-items.md
+- Open Item Summary: use `cc-iasd open-item add` and `cc-iasd open-item resolve` to maintain operational metadata.
 
 ## Remaining Risk
 
