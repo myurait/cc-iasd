@@ -161,7 +161,7 @@ project-context は作成時点の cc-iasd profile を lock する。
 
 ## 10. Knowledge promotion
 
-将来的には、milestone 完了後に得られた知識を project-local knowledge に昇格する仕組みを持てる。
+将来的には、campaign 完了後に得られた知識を project-local knowledge に昇格する仕組みを持てる。
 
 ```text
 knowledge promotion:

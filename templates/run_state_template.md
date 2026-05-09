@@ -1,7 +1,7 @@
-# Cycle State: {{cycleId}}
+# Run State: {{runId}}
 
-- Cycle ID: {{cycleId}}
-- Milestone ID: {{milestoneId}}
+- Run ID: {{runId}}
+- Source Campaign: {{campaignId}}
 - Result: in-progress
 - Active Blocker: none recorded
 - Started At: {{startedAt}}

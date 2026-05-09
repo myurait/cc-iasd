@@ -1,9 +1,9 @@
-# Cycle Handoff: {{cycleId}}
+# Run Handoff: {{runId}}
 
 ## Scope
 
-Cycle: {{cycleId}}
-Milestone: {{milestoneId}}
+Run: {{runId}}
+Source Campaign: {{campaignId}}
 
 ## Source Root
 
@@ -18,8 +18,8 @@ src/
 
 ## Constraints
 
-- Do not change roadmap, feature scope, or milestone purpose without human approval.
-- Keep implementation changes inside `src/` unless the milestone explicitly requires project-context changes.
+- Do not change roadmap, feature scope, campaign purpose, or product canon without human approval.
+- Keep implementation changes inside `src/` unless the run explicitly requires project-context changes.
 
 ## Expected Output
 

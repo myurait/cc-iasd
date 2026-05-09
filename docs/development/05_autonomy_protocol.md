@@ -1,7 +1,7 @@
 # 05. Autonomy Protocol
 
 作成日: 2026-05-04  
-状態: 統合整理版 v0.2
+状態: 統合整理版 v0.3
 
 ---
 
@@ -22,14 +22,14 @@ scope を越える判断では停止し、
 
 ## 2. 自走単位
 
-標準的な自走実行単位は cycle である。
+標準的な自走実行単位は run である。
 
 ```text
 標準:
-- cycle
+- run
 
-cycle が参照できる scope:
-- milestone
+run が参照できる scope:
+- campaign
 - roadmap slice
 - feature
 - task set
@@ -38,83 +38,61 @@ cycle が参照できる scope:
 - Planning Lead が安全と判断した bounded scope
 ```
 
-自走単位を task に固定すると自走性が弱い。roadmap 全体に広げると権限が大きすぎる。cc-iasd では cycle を標準の実行単位とし、cycle が milestone や task set などの bounded scope を参照する。
+自走単位を task に固定すると自走性が弱い。roadmap 全体に広げると権限が大きすぎる。cc-iasd では run を標準の実行単位とし、run が campaign や task set などの bounded scope を参照する。
 
 ---
 
 ## 3. Campaign
 
-Campaign は、複数の cycle を段階的に消化するための上位計画概念である。
+Campaign は、複数の run を段階的に消化するための上位計画概念である。
 
 ```text
 campaign:
-- 複数 milestone または task set を順番に処理する long-run 計画
-- 各 cycle の bounded scope は維持する
-- 次の cycle へ進む条件を明示する
+- roadmap / feature / task set を順番に処理する long-run 計画
+- 各 run の bounded scope は維持する
+- 次の run へ進む条件を明示する
 - 停止条件に触れたら escalation へ切り替える
 ```
 
-Campaign は巨大な cycle ではない。campaign は cycle を統合する計画 envelope であり、実行 transaction の最小単位は引き続き cycle である。
+Campaign は巨大な run ではない。campaign は run を統合する計画 envelope であり、実行 transaction の最小単位は run である。
 
 Campaign で定義するものは次である。
 
 ```text
 campaign plan:
-- 対象 feature / roadmap / milestone queue
+- 対象 feature / roadmap / task queue
 - 実行してよい scope の上限
-- 自動で次 cycle へ進めてよい条件
+- task selector
+- 自動で次 run へ進めてよい条件
 - 必ず停止して user decision に戻す条件
-- 各 cycle の handoff に引き継ぐ情報
+- 各 run の handoff に引き継ぐ情報
 - campaign 全体の completion / escalation report 条件
 ```
 
-実装する場合の artifact model は次を候補とする。ただし、現時点では計画概念に留め、CLI や directory は作らない。
+Campaign の artifact model は次である。
 
 ```text
-ops/campaigns/
-  campaign_<timestamp>_<scope>/
-    plan.md
-    state.md
-    queue.md
-    aggregate-report.md
-  archived/
-    campaign_<timestamp>_<scope>/
-```
-
-```text
-plan.md:
-- Campaign ID
-- Target Feature / Roadmap
-- Milestone Queue
-- Allowed Scope
-- Automatic Progression Conditions
-- Mandatory Stop Conditions
-- Report Conditions
-
-state.md:
-- Status: planned / running / completed / escalated / aborted
-- Current Cycle
-- Completed Cycles
-- Current Queue Position
-- Active Blocker
-- Last Progression Decision
-
-queue.md:
-- Ordered milestone / task set refs
-- Per-entry status
-- Per-entry cycle refs
-
-aggregate-report.md:
-- Completed cycles
-- Progression rationale
-- Escalation reason
-- User decision candidates
-- Human confirmation points
+ops/execution/
+  campaigns/
+    cNNN-kebab-case/
+      plan.md
+      state.md
+      queue.md
+      aggregate-report.md
+    archived/
+      cNNN-kebab-case/
+  runs/
+    run_<timestamp>_<scope>/
+      plan.md
+      state.md
+      handoff.md
+      open-items.md
+      knowledge.md
+    archived/
+      run_<timestamp>_<scope>/
 ```
 
 Campaign の導入によって、Planning Lead は「高度な人間判断が必要な領域以外は、可能な限り段階的に進める」という指示を扱える。ただし、Planning Lead は campaign plan の外側へ自走範囲を拡大してはならない。
-
-`cycle` / `campaign` という名称は仮称である。語感が直感的でない可能性があるため、実装前にリネームを検討する。
 
 ---
 
@@ -124,7 +102,7 @@ Planning Lead は project-context 内の開発チームリーダーである。
 
 ```text
 Planning Lead の責務:
-- cycle 内の進行管理
+- run 内の進行管理
 - task breakdown の調整
 - Worker / Reviewer への割当
 - 実装結果を踏まえた局所計画変更
@@ -137,15 +115,15 @@ Planning Lead の責務:
 
 ```text
 Planning Lead can:
-- cycle 内の task を分割する
-- cycle 内の task を統合する
-- cycle 内の作業順序を変更する
-- cycle-local な handoff / knowledge を更新する
+- run 内の task を分割する
+- run 内の task を統合する
+- run 内の作業順序を変更する
+- run-local な handoff / knowledge を更新する
 - アプリケーション開発チーム視点で決定可能な軽微判断を行う
 - Worker / Reviewer の再実行を指示する
 - review 結果に基づく bounded remediation を行う
-- cycle 内で安全と判断できる範囲を自走させる
-- campaign plan に明示された条件の範囲で次の cycle へ進める
+- run 内で安全と判断できる範囲を自走させる
+- campaign plan に明示された条件の範囲で次の run へ進める
 ```
 
 ---
@@ -156,11 +134,11 @@ Planning Lead can:
 Planning Lead cannot:
 - roadmap を自由に変更する
 - product direction を変更する
-- milestone の目的を変更する
+- campaign の目的を変更する
 - 技術 stack を大きく変更する
 - infrastructure / cost / security decision を勝手に行う
-- cycle scope を黙って拡大する
-- campaign plan にない milestone へ進む
+- run scope を黙って拡大する
+- campaign plan にない task set へ進む
 - ユーザー価値判断が必要な仕様判断を代行する
 - 既存 user decision を黙って上書きする
 ```
@@ -171,7 +149,7 @@ Planning Lead cannot:
 
 ```text
 自走開始条件:
-- 対象 cycle と bounded scope が明示されている
+- 対象 run と bounded scope が明示されている
 - 対象 spec / tasks が存在する
 - 成果物 root が src/ として解決できる
 - 実行 runtime に渡す作業内容が明確である
@@ -185,26 +163,26 @@ Planning Lead cannot:
 
 ```text
 自走継続条件:
-- 現在の作業が承認済み cycle scope 内にある
+- 現在の作業が承認済み run scope 内にある
 - roadmap 変更を伴わない
-- milestone 目的変更を伴わない
+- campaign 目的変更を伴わない
 - 技術スタック変更を伴わない
 - 費用・外部サービス・セキュリティ決裁を伴わない
 - ユーザー価値判断に依存しない
 - 手戻りが局所的である
 - review / audit により検出可能な形で進んでいる
-- 判断内容が cycle state / logs / reviews / reports から追跡できる
+- 判断内容が run state / logs / reviews / reports から追跡できる
 ```
 
-campaign 内で次の cycle へ進む場合は、上記に加えて次を満たす必要がある。
+campaign 内で次の run へ進む場合は、上記に加えて次を満たす必要がある。
 
 ```text
 campaign progression 条件:
-- 現 cycle が completed である
+- 現 run が completed である
 - blocking review finding がない
 - unresolved open item が user decision を要求していない
-- 次 milestone / task set が campaign plan に含まれている
-- 前 cycle の handoff が作成されている
+- 次 task set が campaign plan に含まれている
+- 前 run の handoff が作成されている
 - campaign state に進行判断の根拠が残る
 ```
 
@@ -214,7 +192,7 @@ campaign progression 条件:
 
 ```text
 停止条件:
-- milestone の目的変更が必要になった
+- campaign の目的変更が必要になった
 - roadmap 変更が必要になった
 - 技術スタック変更が必要になった
 - infrastructure / cost / security に関わる決裁が必要になった
@@ -233,7 +211,7 @@ campaign progression 条件:
 
 ## 10. 軽微判断の扱い
 
-軽微判断は、Planning Lead が cycle 内で行ってよい。ただし、cycle state、cycle-local knowledge、logs、reviews、reports のいずれか適切な artifact に残す。
+軽微判断は、Planning Lead が run 内で行ってよい。ただし、run state、run-local knowledge、logs、reviews、reports のいずれか適切な artifact に残す。
 
 ```text
 軽微判断の例:
@@ -271,12 +249,12 @@ completion report に含めるもの:
 - 人間確認点
 ```
 
-campaign を使う場合、各 cycle の completion report に加えて、campaign 全体の aggregate report を作る。
+campaign を使う場合、各 run の completion report に加えて、campaign 全体の aggregate report を作る。
 
 ```text
 campaign aggregate report:
-- 消化した cycle / milestone
-- 自動で次 cycle へ進めた根拠
+- 消化した run / task set
+- 自動で次 run へ進めた根拠
 - 停止または escalation した理由
 - campaign 中に発生した user decision candidates
 - 次に人間が確認すべき事項
@@ -286,7 +264,7 @@ campaign aggregate report:
 
 ## 12. Autonomy Protocol の初期固定項目
 
-初期実装では、次だけを固定する。
+初期実装では、次を固定する。
 
 ```text
 初期固定項目:
@@ -296,7 +274,7 @@ campaign aggregate report:
 - 停止条件
 - escalation packet 生成条件
 - completion report 必須項目
-- campaign は計画概念として扱い、実装対象にはしない
+- campaign / run artifact model
 ```
 
 複雑な multi-role workflow や compliance gate は後段でよい。

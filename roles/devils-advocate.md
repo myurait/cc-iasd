@@ -22,7 +22,7 @@ Before reviewing any changes, read the following project rules in full. Do not r
 3. `rules/policies/language-policy.md` (~112 lines)
 4. `rules/policies/coding-conventions.md` (if code changes are in scope, ~197 lines)
 5. `rules/policies/testing.md` (if test changes are in scope, ~64 lines)
-6. Any related `product/specs/<spec-id>/*.md` or `ops/cycles/<cycle-id>/*.md` files (variable — read only those relevant to the changes under review)
+6. Any related `product/specs/<spec-id>/*.md` or `ops/execution/runs/<run-id>/*.md` files (variable — read only those relevant to the changes under review)
 
 ## Scope
 
@@ -79,7 +79,7 @@ Check every changed file against all of the following.
 - **Architecture change** — Module boundary changes, new service addition, communication pattern changes, major directory restructuring.
 - **Rule changes** — Changes to files in `rules/policies/` or rule sections of `CLAUDE.md`.
 - **Feature or function completion** — When a feature (epic or supporting feature) is fully implemented.
-- **Milestone achievement** — When a roadmap milestone is completed.
+- **Campaign or run completion** — When a campaign or run is completed.
 - **Explicit user request** — When the user explicitly requests a review.
 - This role is spawned only during Full review. It is never spawned for Light review.
 

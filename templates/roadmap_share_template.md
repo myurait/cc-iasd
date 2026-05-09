@@ -10,7 +10,7 @@ It should help the user quickly understand how the roadmap moves the product clo
 - Generate the final user-facing message in the Documentation Language defined in `rules/language-policy.md`.
 - Do not lead with document names, internal identifiers, or technical jargon.
 - Explain the user-facing meaning first, then add document references only if they help traceability.
-- Prefer the wording and experience framing used in `design/00-ideal-experience.md`.
+- Prefer the wording and experience framing used in active `product/ideal/iNNN-*.md` artifacts.
 - Focus on "how much closer this gets to the ideal experience" rather than listing implementation work.
 - Always include both progress and remaining gaps.
 
@@ -65,7 +65,7 @@ It should help the user quickly understand how the roadmap moves the product clo
 
 ## Bad Directions
 
-- `Milestone 1 is front-agent/context foundation.`
+- `Campaign 1 covers the front-agent/context foundation.`
 - `feature-004 remains deferred.`
 - `This has been reviewed and committed.`
 

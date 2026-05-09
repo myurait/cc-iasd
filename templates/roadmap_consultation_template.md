@@ -11,7 +11,7 @@ It should help the user quickly understand where the product stands against the 
 - Explain the user meaning first, then add internal document names or identifiers only if they improve traceability.
 - Do not make internal labels such as `feature-003`, `epic-001`, or `roadmap_...` the subject of the main message.
 - If technical or internal terms are necessary, explain the plain-language meaning first and add the internal term only as a supplement.
-- Prefer the wording and experience framing used in `design/00-ideal-experience.md`.
+- Prefer the wording and experience framing used in active `product/ideal/iNNN-*.md` artifacts.
 - Keep one consultation message focused on one decision.
 - Emphasize "which part of the ideal experience this roadmap will close" before listing implementation work.
 - Do not mix work-progress reporting with the decision request. A consultation message answers "what should we decide?" not "what did I do so far."
@@ -36,7 +36,7 @@ Use this format when the recommended option is clear and the escalation is for c
 
 ### Structure
 
-1. **What is being decided and why it needs confirmation** — one sentence connecting to the user experience, not to internal milestone names.
+1. **What is being decided and why it needs confirmation** — one sentence connecting to the user experience, not to internal campaign or run names.
 2. **Recommendation and reason** — one sentence stating the recommended direction and why.
 3. **Closing question** — one short, direct question. Mention that the user can redirect if they prefer a different direction.
 
@@ -67,7 +67,7 @@ Use this format when the tradeoffs are genuinely balanced and reasonable user pr
 - What is still missing:
   - what remains inconvenient or incomplete for the user
 - Progress view:
-  - which ideal-experience pillars have already advanced
+  - which ideal pillars have already advanced
   - which pillars are still clearly behind
 
 ### 3. The Decision Requested From the User
@@ -119,11 +119,11 @@ Use this format when the tradeoffs are genuinely balanced and reasonable user pr
 - `We should do feature-003 first.`
 - `We need to fix the context memory model before narrowing the dispatcher boundary.`
 - `We will place roadmap_202604... in current.`
-- `I have self-driven up to this point and produced the design package for Milestone 1. From here on it is a long-lived structural decision, so it is better not to lock it in without you.`
+- `I have self-driven up to this point and produced the design package for Campaign 1. From here on it is a long-lived structural decision, so it is better not to lock it in without you.`
 - `Before moving the first stage of the active roadmap into implementation, I need you to decide which foundation to start conversation continuity on.`
-- `Milestone 1: start with a lightweight approach using existing documents and recent task history, or add a dedicated conversation-continuity persistence layer at this stage.`
+- `Campaign 1: start with a lightweight approach using existing documents and recent task history, or add a dedicated conversation-continuity persistence layer at this stage.`
 
-The last three fail because they mix the agent's own progress reporting with the decision request, use internal milestone names and planning jargon as the subject, and assume the user has the same internal context as the agent.
+The last three fail because they mix the agent's own progress reporting with the decision request, use internal campaign names and planning jargon as the subject, and assume the user has the same internal context as the agent.
 
 The first three fail because they use internal identifiers as the primary subject and provide no user-facing context.
 

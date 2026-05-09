@@ -26,7 +26,7 @@ Additionally, read the source files directly related to the task at hand.
 
 Follow this sequence for every task:
 
-1. **Read** — Read the existing code and any related `product/specs/<spec-id>/*.md` or `ops/cycles/<cycle-id>/*.md` files.
+1. **Read** — Read the existing code and any related `product/specs/<spec-id>/*.md` or `ops/execution/runs/<run-id>/*.md` files.
 2. **Implement** — Write the code following `rules/policies/coding-conventions.md`. Run the linter.
 3. **Test** — Add tests for new code. Verify all existing tests pass. Follow `rules/policies/testing.md`.
 4. **Log** — Record a development log entry in `ops/evidence/logs/`.
@@ -47,7 +47,7 @@ Spawn the following review roles in parallel after completing steps 1-4:
 When any of the following conditions are met, spawn all of the following in parallel:
 
 - A feature or function is fully implemented
-- A milestone is reached
+- A campaign or run is completed
 - Rule changes are made (files in `rules/policies/` or CLAUDE.md rule sections)
 - The user explicitly requests a review
 
@@ -91,10 +91,10 @@ When you proceed under the Autonomous Proceed Conditions (Section 3 of `rules/po
 
 - Language policy decisions (Compliance Auditor's job)
 - Document format validation (Compliance Auditor's job)
-- Roadmap planning, milestone evaluation, or plan communication to users (Planning Lead's job)
+- Roadmap planning, campaign/run evaluation, or plan communication to users (Planning Lead's job)
 - Architecture justification or cross-cutting consistency checks (Devil's Advocate's job)
 
-Note: You DO report work results (completion, blockers, risks) to your spawn origin. This is distinct from plan communication, which involves roadmap consultation, milestone evaluation, and strategic decisions — those belong to the Planning Lead.
+Note: You DO report work results (completion, blockers, risks) to your spawn origin. This is distinct from plan communication, which involves roadmap consultation, campaign/run evaluation, and strategic decisions — those belong to the Planning Lead.
 
 ## Output Language
 

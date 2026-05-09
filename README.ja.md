@@ -4,7 +4,7 @@
 
 cc-iasd は、AI 駆動開発のための project-context framework です。
 
-Codex、Claude Code のような実装エージェントを置き換えるものではありません。それらの外側で、制約、ユーザー入力、理想状態、features、ロードマップ、仕様、マイルストーン、logs、証跡、エスカレーション、完了報告を管理する project-context を作ります。
+Codex、Claude Code のような実装エージェントを置き換えるものではありません。それらの外側で、制約、ユーザー入力、理想状態、features、ロードマップ、仕様、campaign、run、logs、証跡、エスカレーション、完了報告を管理する project-context を作ります。
 
 ## 基本構造
 
@@ -14,7 +14,7 @@ project-context/
   rules/     # 安定的な policy、role、template、checklist
   user/      # 人間が書いた意図、制約、判断、好み
   product/   # ideal、spec などの product 正本
-  ops/       # scopes、cycles、evidence
+  ops/       # scopes、execution、evidence
   reference/ # 正本ではない参照資料
   src/       # 成果物 project root。cc-iasd runtime や spec は置かない
 ```
@@ -27,8 +27,8 @@ user input
   -> ops/scopes/features
   -> ops/scopes/roadmaps
   -> product/specs
-  -> ops/scopes/milestones
-  -> ops/cycles
+  -> ops/execution/campaigns
+  -> ops/execution/runs
   -> ops/evidence
 ```
 
@@ -40,19 +40,19 @@ project-context root で npx から実行します。
 npx cc-iasd@latest init --doc-lang Japanese --dev-lang TypeScript
 npx cc-iasd@latest doctor
 npx cc-iasd@latest feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience"
-npx cc-iasd@latest roadmap add roadmap-a --summary "First roadmap" --goal "Ship the first usable flow"
-npx cc-iasd@latest spec add spec-a --summary "Define the first implementation slice"
-npx cc-iasd@latest milestone add milestone-a --summary "First milestone" --feature feature-a --roadmap roadmap-a --spec spec-a --tasks spec-a
-npx cc-iasd@latest run cycle milestone-a
-npx cc-iasd@latest review add milestone-a --type light --summary "Review implementation result" --result "No blocking findings"
-npx cc-iasd@latest escalate milestone-a
-npx cc-iasd@latest report milestone-a
+npx cc-iasd@latest roadmap add r001-first-roadmap --summary "First roadmap" --goal "Ship the first usable flow"
+npx cc-iasd@latest spec add s001-first-slice --summary "Define the first implementation slice"
+npx cc-iasd@latest campaign add c001-first-campaign --summary "First campaign" --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice
+npx cc-iasd@latest run start c001-first-campaign
+npx cc-iasd@latest review add <run-id> --type light --summary "Review implementation result" --result "No blocking findings"
+npx cc-iasd@latest escalate <run-id>
+npx cc-iasd@latest report <run-id>
 npx cc-iasd@latest view evidence
 npx cc-iasd@latest view current
-npx cc-iasd@latest view scope milestone-a
+npx cc-iasd@latest view run <run-id>
 npx cc-iasd@latest log event --summary "Updated project context"
-npx cc-iasd@latest product outdate spec spec-a
-npx cc-iasd@latest ops archive roadmap roadmap-a
+npx cc-iasd@latest product outdate spec s001-first-slice
+npx cc-iasd@latest ops archive roadmap r001-first-roadmap
 ```
 
 このリポジトリからローカルに確認する場合は次です。
@@ -61,19 +61,19 @@ npx cc-iasd@latest ops archive roadmap roadmap-a
 node bin/cc-iasd.js init /tmp/my-project-context --doc-lang Japanese --dev-lang TypeScript
 node bin/cc-iasd.js doctor /tmp/my-project-context
 node bin/cc-iasd.js feature add feature-a --kind epic --summary "Add a core feature" --pillar "Core experience" --root /tmp/my-project-context
-node bin/cc-iasd.js roadmap add roadmap-a --summary "First roadmap" --goal "Ship the first usable flow" --root /tmp/my-project-context
-node bin/cc-iasd.js spec add spec-a --summary "Define the first implementation slice" --root /tmp/my-project-context
-node bin/cc-iasd.js milestone add milestone-a --summary "First milestone" --feature feature-a --roadmap roadmap-a --spec spec-a --tasks spec-a --root /tmp/my-project-context
-node bin/cc-iasd.js run cycle milestone-a --root /tmp/my-project-context
-node bin/cc-iasd.js review add milestone-a --type light --summary "Review implementation result" --result "No blocking findings" --root /tmp/my-project-context
-node bin/cc-iasd.js escalate milestone-a --root /tmp/my-project-context
-node bin/cc-iasd.js report milestone-a --root /tmp/my-project-context
+node bin/cc-iasd.js roadmap add r001-first-roadmap --summary "First roadmap" --goal "Ship the first usable flow" --root /tmp/my-project-context
+node bin/cc-iasd.js spec add s001-first-slice --summary "Define the first implementation slice" --root /tmp/my-project-context
+node bin/cc-iasd.js campaign add c001-first-campaign --summary "First campaign" --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice --root /tmp/my-project-context
+node bin/cc-iasd.js run start c001-first-campaign --root /tmp/my-project-context
+node bin/cc-iasd.js review add <run-id> --type light --summary "Review implementation result" --result "No blocking findings" --root /tmp/my-project-context
+node bin/cc-iasd.js escalate <run-id> --root /tmp/my-project-context
+node bin/cc-iasd.js report <run-id> --root /tmp/my-project-context
 node bin/cc-iasd.js view evidence --root /tmp/my-project-context
 node bin/cc-iasd.js view current --root /tmp/my-project-context
-node bin/cc-iasd.js view scope milestone-a --root /tmp/my-project-context
+node bin/cc-iasd.js view run <run-id> --root /tmp/my-project-context
 node bin/cc-iasd.js log event --summary "Updated project context" --root /tmp/my-project-context
-node bin/cc-iasd.js product outdate spec spec-a --root /tmp/my-project-context
-node bin/cc-iasd.js ops archive roadmap roadmap-a --root /tmp/my-project-context
+node bin/cc-iasd.js product outdate spec s001-first-slice --root /tmp/my-project-context
+node bin/cc-iasd.js ops archive roadmap r001-first-roadmap --root /tmp/my-project-context
 ```
 
 ## `init` が作る構成
@@ -105,10 +105,11 @@ ops/
       archived/
     roadmaps/
       archived/
-    milestones/
+  execution/
+    campaigns/
       archived/
-  cycles/
-    archived/
+    runs/
+      archived/
   evidence/
     logs/
       archived/
@@ -139,11 +140,11 @@ src/
   shared-library/
 ```
 
-`src/` は成果物のための清潔な境界です。cc-iasd が管理する spec、runtime、cycle state、evidence、report、policy は `src/` の外側に置きます。cc-iasd は `src/` 配下の成果物 project に対して command を実行できますが、cc-iasd 所有 artifact を成果物 project 内に置くことを前提にしてはいけません。
+`src/` は成果物のための清潔な境界です。cc-iasd が管理する spec、runtime、run state、evidence、report、policy は `src/` の外側に置きます。cc-iasd は `src/` 配下の成果物 project に対して command を実行できますが、cc-iasd 所有 artifact を成果物 project 内に置くことを前提にしてはいけません。
 
 ## 現在の状態
 
-現在の npm CLI は、product / ops / reference 構造の作成と検査に加え、feature、roadmap、spec、cycle、review、report、escalation、log、view、product outdate、ops archive の各コマンドに対応しています。
+現在の npm CLI は、product / ops / reference 構造の作成と検査に加え、feature、roadmap、spec、campaign、run、review、report、escalation、log、view、product outdate、ops archive の各コマンドに対応しています。
 
 ## ライセンス
 

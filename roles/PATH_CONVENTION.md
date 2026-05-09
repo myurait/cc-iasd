@@ -10,7 +10,7 @@ Paths like `rules/policies/...`, `rules/roles/...`, `rules/templates/...` are re
 
 ### Project paths
 
-Paths like `product/ideal/`, `product/specs/`, `ops/scopes/`, `ops/cycles/`, `ops/evidence/`, and `reference/` are relative to the project root.
+Paths like `product/ideal/`, `product/specs/`, `ops/scopes/`, `ops/execution/`, `ops/evidence/`, and `reference/` are relative to the project root.
 
 ### Path mapping from framework source to project
 
@@ -25,7 +25,7 @@ After transcription, the mapping is:
 - `design/` -> `product/specs/<spec-id>/`
 - `features/` -> `ops/scopes/features/`
 - `decisions.md` -> `user/decisions.md`
-- `knowledge.md` -> `ops/cycles/<cycle-id>/knowledge.md`
+- `knowledge.md` -> `ops/execution/runs/<run-id>/knowledge.md`
 - `project-policies.md` -> `rules/project-policies.md`
 
 ### Changing paths
@@ -34,4 +34,4 @@ After `cc-iasd init`, the project owns all transcribed files. To change director
 
 ### Runtime views
 
-Commands such as `cc-iasd view current`, `cc-iasd view scope <id>`, `cc-iasd view cycle <id>`, and `cc-iasd view evidence` produce temporary stdout views. They are not canonical project files.
+Commands such as `cc-iasd view current`, `cc-iasd view scope <id>`, `cc-iasd view run <id>`, and `cc-iasd view evidence` produce temporary stdout views. They are not canonical project files.

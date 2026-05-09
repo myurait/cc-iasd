@@ -1,6 +1,6 @@
 # Feature Backlog
 
-Planning backlog for feature-scoped work candidates that have not yet been cut into roadmap, spec, milestone, or task artifacts.
+Planning backlog for feature-scoped work candidates that have not yet been cut into roadmap, spec, campaign, run, or task artifacts.
 
 ## Item Format
 

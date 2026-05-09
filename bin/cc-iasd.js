@@ -12,39 +12,40 @@ const usage = `cc-iasd ${VERSION}
 Usage:
   cc-iasd init [project-context-path] [options]
   cc-iasd doctor [project-context-path]
-  cc-iasd run cycle <id> [--root <project-context-path>]
+  cc-iasd campaign add <id> --summary <text> --roadmap <ref> [--spec <ref>] [--tasks <ref>] [--root <project-context-path>]
+  cc-iasd run start <id> [--root <project-context-path>]
   cc-iasd escalate <scope-id> [--root <project-context-path>]
   cc-iasd report <scope-id> [--root <project-context-path>]
   cc-iasd view evidence [--root <project-context-path>]
   cc-iasd view current [--root <project-context-path>]
   cc-iasd view scope <id> [--root <project-context-path>]
-  cc-iasd view cycle <id> [--root <project-context-path>]
-  cc-iasd log event --summary <text> [--type <type>] [--milestone <id>] [--evidence <path>] [--root <project-context-path>]
+  cc-iasd view run <id> [--root <project-context-path>]
+  cc-iasd log event --summary <text> [--type <type>] [--source-campaign <id>] [--source-run <id>] [--evidence <path>] [--root <project-context-path>]
   cc-iasd review add <scope-id> --summary <text> --result <text> [--type light|full] [--root <project-context-path>]
   cc-iasd feature add <id> --summary <text> --pillar <name> [--kind epic|supporting] [--root <project-context-path>]
   cc-iasd roadmap add <id> --summary <text> --goal <text> [--root <project-context-path>]
-  cc-iasd milestone add <id> --summary <text> [--feature <ref>] [--roadmap <ref>] [--spec <ref>] [--tasks <ref>] [--root <project-context-path>]
   cc-iasd spec add <id> --summary <text> [--root <project-context-path>]
   cc-iasd profile update [--root <project-context-path>]
   cc-iasd product outdate ideal <id> [--root <project-context-path>]
   cc-iasd product outdate spec <id> [--root <project-context-path>]
-  cc-iasd ops archive feature|roadmap|milestone|cycle|log|review|report <id> [--root <project-context-path>]
+  cc-iasd ops archive feature|roadmap|campaign|run|log|review|report <id> [--root <project-context-path>]
   cc-iasd --help
 
 Options:
   --doc-lang <language>   Documentation language. Default: Japanese
   --dev-lang <language>   Development language. Default: unspecified
   --product-lang <lang>   Product language. Default: same as --doc-lang
-  --root <path>           Project-context root for milestone commands. Default: current directory
+  --root <path>           Project-context root for commands. Default: current directory
   --type <type>           Log event type, or review type for review add
   --summary <text>        Log event or review summary
   --result <text>         Review result summary
-  --milestone <id>        Related milestone id for log events
+  --source-campaign <id>  Source campaign id for log events
+  --source-run <id>       Source run id for log events
   --evidence <path>       Related evidence path for log events
-  --feature <ref>         Linked feature for milestone add
-  --roadmap <ref>         Linked roadmap for milestone add
-  --spec <ref>            Linked spec for milestone add
-  --tasks <ref>           Linked tasks for milestone add
+  --feature <ref>         Linked feature
+  --roadmap <ref>         Linked roadmap
+  --spec <ref>            Linked spec
+  --tasks <ref>           Linked tasks
   --kind <kind>           Feature kind. Default: epic
   --pillar <name>         Ideal pillar for feature add
   --goal <text>           Goal for roadmap add
@@ -62,11 +63,14 @@ const parseArgs = (argv) => {
     dryRun: false,
     force: false,
     runTarget: '',
-    milestoneId: '',
+    scopeId: '',
+    runSourceId: '',
+    campaignId: '',
     eventType: 'manual',
     eventSummary: '',
     reviewResult: '',
-    relatedMilestone: '',
+    sourceCampaign: '',
+    sourceRun: '',
     relatedEvidence: '',
     linkedFeature: '',
     linkedRoadmap: '',
@@ -90,30 +94,30 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'view', 'log', 'review', 'feature', 'roadmap', 'milestone', 'spec', 'profile', 'product', 'ops'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'view', 'log', 'review', 'feature', 'roadmap', 'campaign', 'spec', 'profile', 'product', 'ops'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
   if (parsed.command === 'run') {
     parsed.runTarget = tokens.shift() ?? '';
-    if (parsed.runTarget !== 'cycle') {
-      throw new Error('Usage: cc-iasd run cycle <id>');
+    if (parsed.runTarget !== 'start') {
+      throw new Error('Usage: cc-iasd run start <id>');
     }
-    parsed.milestoneId = tokens.shift() ?? '';
-    if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
-      throw new Error('Usage: cc-iasd run cycle <id>');
+    parsed.runSourceId = tokens.shift() ?? '';
+    if (!parsed.runSourceId || parsed.runSourceId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd run start <id>');
     }
   } else if (parsed.command === 'escalate' || parsed.command === 'report') {
-    parsed.milestoneId = tokens.shift() ?? '';
-    if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
+    parsed.scopeId = tokens.shift() ?? '';
+    if (!parsed.scopeId || parsed.scopeId.startsWith('-')) {
       throw new Error(`Usage: cc-iasd ${parsed.command} <id>`);
     }
   } else if (parsed.command === 'view') {
     parsed.runTarget = tokens.shift() ?? '';
-    if (!['evidence', 'current', 'scope', 'cycle'].includes(parsed.runTarget)) {
-      throw new Error('Usage: cc-iasd view evidence|current|scope|cycle');
+    if (!['evidence', 'current', 'scope', 'run'].includes(parsed.runTarget)) {
+      throw new Error('Usage: cc-iasd view evidence|current|scope|run');
     }
-    if (parsed.runTarget === 'scope' || parsed.runTarget === 'cycle') {
+    if (parsed.runTarget === 'scope' || parsed.runTarget === 'run') {
       parsed.viewId = tokens.shift() ?? '';
       if (!parsed.viewId || parsed.viewId.startsWith('-')) {
         throw new Error(`Usage: cc-iasd view ${parsed.runTarget} <id>`);
@@ -130,8 +134,8 @@ const parseArgs = (argv) => {
     if (parsed.runTarget !== 'add') {
       throw new Error('Usage: cc-iasd review add <scope-id> --summary <text> --result <text>');
     }
-    parsed.milestoneId = tokens.shift() ?? '';
-    if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
+    parsed.scopeId = tokens.shift() ?? '';
+    if (!parsed.scopeId || parsed.scopeId.startsWith('-')) {
       throw new Error('Usage: cc-iasd review add <scope-id> --summary <text> --result <text>');
     }
   } else if (parsed.command === 'feature') {
@@ -152,14 +156,14 @@ const parseArgs = (argv) => {
     if (!parsed.roadmapId || parsed.roadmapId.startsWith('-')) {
       throw new Error('Usage: cc-iasd roadmap add <id> --summary <text> --goal <text>');
     }
-  } else if (parsed.command === 'milestone') {
+  } else if (parsed.command === 'campaign') {
     parsed.runTarget = tokens.shift() ?? '';
     if (parsed.runTarget !== 'add') {
-      throw new Error('Usage: cc-iasd milestone add <id> --summary <text>');
+      throw new Error('Usage: cc-iasd campaign add <id> --summary <text> --roadmap <ref>');
     }
-    parsed.milestoneId = tokens.shift() ?? '';
-    if (!parsed.milestoneId || parsed.milestoneId.startsWith('-')) {
-      throw new Error('Usage: cc-iasd milestone add <id> --summary <text>');
+    parsed.campaignId = tokens.shift() ?? '';
+    if (!parsed.campaignId || parsed.campaignId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd campaign add <id> --summary <text> --roadmap <ref>');
     }
   } else if (parsed.command === 'spec') {
     parsed.runTarget = tokens.shift() ?? '';
@@ -188,12 +192,12 @@ const parseArgs = (argv) => {
   } else if (parsed.command === 'ops') {
     parsed.runTarget = tokens.shift() ?? '';
     if (parsed.runTarget !== 'archive') {
-      throw new Error('Usage: cc-iasd ops archive feature|roadmap|milestone|cycle|log|review|report <id>');
+      throw new Error('Usage: cc-iasd ops archive feature|roadmap|campaign|run|log|review|report <id>');
     }
     parsed.archiveLayer = tokens.shift() ?? '';
     parsed.archiveId = tokens.shift() ?? '';
-    if (!['feature', 'roadmap', 'milestone', 'cycle', 'log', 'review', 'report'].includes(parsed.archiveLayer) || !parsed.archiveId || parsed.archiveId.startsWith('-')) {
-      throw new Error('Usage: cc-iasd ops archive feature|roadmap|milestone|cycle|log|review|report <id>');
+    if (!['feature', 'roadmap', 'campaign', 'run', 'log', 'review', 'report'].includes(parsed.archiveLayer) || !parsed.archiveId || parsed.archiveId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd ops archive feature|roadmap|campaign|run|log|review|report <id>');
     }
   } else if (tokens[0] && !tokens[0].startsWith('-')) {
     parsed.target = tokens.shift();
@@ -232,8 +236,11 @@ const parseArgs = (argv) => {
       case '--result':
         parsed.reviewResult = readValue(token);
         break;
-      case '--milestone':
-        parsed.relatedMilestone = readValue(token);
+      case '--source-campaign':
+        parsed.sourceCampaign = readValue(token);
+        break;
+      case '--source-run':
+        parsed.sourceRun = readValue(token);
         break;
       case '--evidence':
         parsed.relatedEvidence = readValue(token);
@@ -397,10 +404,10 @@ const requiredPaths = [
   'ops/scopes/features/archived',
   'ops/scopes/roadmaps',
   'ops/scopes/roadmaps/archived',
-  'ops/scopes/milestones',
-  'ops/scopes/milestones/archived',
-  'ops/cycles',
-  'ops/cycles/archived',
+  'ops/execution/campaigns',
+  'ops/execution/campaigns/archived',
+  'ops/execution/runs',
+  'ops/execution/runs/archived',
   'ops/evidence/logs',
   'ops/evidence/logs/archived',
   'ops/evidence/reviews',
@@ -418,6 +425,8 @@ const forbiddenPaths = [
   'ops/features',
   'ops/roadmaps',
   'ops/milestones/project-context/reviews',
+  'ops/scopes/milestones',
+  'ops/cycles',
   'ops/logs',
   'ops/reviews',
   'ops/decisions.md',
@@ -432,6 +441,8 @@ const forbiddenContent = [
   'ops/features/',
   'ops/roadmaps/',
   'ops/milestones/project-context/reviews',
+  'ops/scopes/milestones/',
+  'ops/cycles/',
   'ops/logs/',
   'ops/reviews/',
   'ops/decisions.md',
@@ -461,8 +472,8 @@ const archivedEvidenceCandidates = (ref) => {
   const archiveRules = [
     ['ops/scopes/features/', 'ops/scopes/features/archived/'],
     ['ops/scopes/roadmaps/', 'ops/scopes/roadmaps/archived/'],
-    ['ops/scopes/milestones/', 'ops/scopes/milestones/archived/'],
-    ['ops/cycles/', 'ops/cycles/archived/'],
+    ['ops/execution/campaigns/', 'ops/execution/campaigns/archived/'],
+    ['ops/execution/runs/', 'ops/execution/runs/archived/'],
     ['ops/evidence/logs/', 'ops/evidence/logs/archived/'],
     ['ops/evidence/reviews/', 'ops/evidence/reviews/archived/'],
     ['ops/evidence/reports/', 'ops/evidence/reports/archived/'],
@@ -537,7 +548,9 @@ const doctor = async (args) => {
       }
     }
 
-    await validateMilestoneLinks(root, issues);
+    await validateCampaignFiles(root, issues);
+    await validateRunFiles(root, issues);
+    await validateIdealFiles(root, issues);
     await validateFeatureFiles(root, issues);
     await validateRoadmapFiles(root, issues);
     await validateSpecFiles(root, issues);
@@ -632,10 +645,23 @@ const linkedPathCandidates = (kind, value, linkedSpec = '') => {
   }
 };
 
-const validateMilestoneLinks = async (root, issues) => {
-  const milestoneFiles = await listMarkdownFiles(root, 'ops/scopes/milestones');
-  for (const milestoneFile of milestoneFiles) {
-    const content = await readFile(path.join(root, milestoneFile), 'utf8');
+const validateCampaignFiles = async (root, issues) => {
+  const campaignDirs = await listDirectories(root, 'ops/execution/campaigns');
+  for (const campaignDir of campaignDirs) {
+    if (path.basename(campaignDir) === 'archived') continue;
+    const basename = path.basename(campaignDir);
+    if (!/^c[0-9]{3}-[a-z0-9][a-z0-9-]*$/.test(basename)) {
+      issues.push(`Invalid campaign directory name: ${campaignDir}`);
+    }
+
+    for (const fileName of ['plan.md', 'state.md', 'queue.md', 'aggregate-report.md']) {
+      const relPath = `${campaignDir}/${fileName}`;
+      if (!await exists(path.join(root, relPath))) {
+        issues.push(`Missing campaign file: ${relPath}`);
+      }
+    }
+
+    const content = await readOptionalText(root, `${campaignDir}/plan.md`);
     const linkedFeature = extractField(content, 'Linked Feature');
     const linkedRoadmap = extractField(content, 'Linked Roadmap');
     const linkedSpec = extractField(content, 'Linked Spec');
@@ -651,8 +677,36 @@ const validateMilestoneLinks = async (root, issues) => {
       if (isUnset(value)) continue;
       const resolved = await resolveExistingPath(root, linkedPathCandidates(kind, value, context));
       if (!resolved) {
-        issues.push(`Broken milestone link in ${milestoneFile}: ${label} ${value}`);
+        issues.push(`Broken campaign link in ${campaignDir}/plan.md: ${label} ${value}`);
       }
+    }
+  }
+};
+
+const validateRunFiles = async (root, issues) => {
+  const runDirs = await listDirectories(root, 'ops/execution/runs');
+  for (const runDir of runDirs) {
+    if (path.basename(runDir) === 'archived') continue;
+    const basename = path.basename(runDir);
+    if (!/^run_[0-9]{17}_[a-z0-9][a-z0-9-]*$/.test(basename)) {
+      issues.push(`Invalid run directory name: ${runDir}`);
+    }
+
+    for (const fileName of ['plan.md', 'handoff.md', 'state.md', 'open-items.md', 'knowledge.md']) {
+      const relPath = `${runDir}/${fileName}`;
+      if (!await exists(path.join(root, relPath))) {
+        issues.push(`Missing run file: ${relPath}`);
+      }
+    }
+  }
+};
+
+const validateIdealFiles = async (root, issues) => {
+  const files = await listMarkdownFiles(root, 'product/ideal');
+  for (const file of files) {
+    const basename = path.basename(file);
+    if (!/^i[0-9]{3}-[a-z0-9][a-z0-9-]*\.md$/.test(basename)) {
+      issues.push(`Invalid ideal file name: ${file}`);
     }
   }
 };
@@ -682,7 +736,7 @@ const validateRoadmapFiles = async (root, issues) => {
   const files = await listMarkdownFiles(root, 'ops/scopes/roadmaps');
   for (const file of files) {
     const basename = path.basename(file);
-    if (!/^[a-z0-9][a-z0-9-]*\.md$/.test(basename)) {
+    if (!/^r[0-9]{3}-[a-z0-9][a-z0-9-]*\.md$/.test(basename)) {
       issues.push(`Invalid roadmap file name: ${file}`);
     }
 
@@ -708,7 +762,7 @@ const validateSpecFiles = async (root, issues) => {
   for (const specDir of specDirs) {
     if (path.basename(specDir) === 'outdated') continue;
     const basename = path.basename(specDir);
-    if (!/^[a-z0-9][a-z0-9-]*$/.test(basename)) {
+    if (!/^s[0-9]{3}-[a-z0-9][a-z0-9-]*$/.test(basename)) {
       issues.push(`Invalid spec directory name: ${specDir}`);
     }
 
@@ -806,7 +860,7 @@ const featureIndexTemplate = () => [
 const featureBacklogTemplate = () => [
   '# Feature Backlog',
   '',
-  'Planning backlog for feature-scoped work candidates that have not yet been cut into roadmap, spec, milestone, or task artifacts.',
+  'Planning backlog for feature-scoped work candidates that have not yet been cut into roadmap, spec, or task artifacts.',
   '',
   '## Item Format',
   '',
@@ -861,7 +915,7 @@ const roadmapFileTemplate = ({ roadmapId, summary, goal, now }) => [
   '- Status: proposed',
   `- Created At: ${now}`,
   '',
-  '## Milestones',
+  '## Campaigns / Runs',
   '',
   '- TBD',
   '',
@@ -980,35 +1034,91 @@ const specTasksTemplate = ({ specId, summary, now }) => [
   '',
 ].join('\n');
 
-const milestoneScopeTemplate = ({ milestoneId, summary = 'TBD', now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
-  `# Milestone: ${milestoneId}`,
+const campaignPlanTemplate = ({ campaignId, summary = 'TBD', now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
+  `# Campaign Plan: ${campaignId}`,
   '',
-  `- Milestone ID: ${milestoneId}`,
+  `- Campaign ID: ${campaignId}`,
   `- Summary: ${summary}`,
-  '- Status: ready-for-cycle',
+  '- Status: planned',
   `- Linked Feature: ${linkedFeature || 'TBD'}`,
   `- Linked Roadmap: ${linkedRoadmap || 'TBD'}`,
   `- Linked Spec: ${linkedSpec || 'TBD'}`,
   `- Linked Tasks: ${linkedTasks || 'TBD'}`,
-  `- Last Update: ${now}`,
+  `- Created At: ${now}`,
   '',
-  '## Scope',
+  '## Task Selector',
   '',
-  '- Included: TBD',
-  '- Excluded: TBD',
+  '- TBD',
   '',
-  '## Current Decision State',
+  '## Stop Conditions',
   '',
-  '- Human Decisions Required: none recorded',
-  '- Autonomous Proceed Status: TBD',
+  '- TBD',
+  '',
+  '## Progression Conditions',
+  '',
+  '- TBD',
   '',
 ].join('\n');
 
-const cycleStateTemplate = ({ cycleId, milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
-  `# Cycle State: ${cycleId}`,
+const campaignStateTemplate = ({ campaignId, now }) => [
+  `# Campaign State: ${campaignId}`,
   '',
-  `- Cycle ID: ${cycleId}`,
-  `- Milestone ID: ${milestoneId}`,
+  `- Campaign ID: ${campaignId}`,
+  '- Result: in-progress',
+  '- Active Blocker: none recorded',
+  `- Started At: ${now}`,
+  `- Last Update: ${now}`,
+  '',
+].join('\n');
+
+const campaignQueueTemplate = ({ campaignId }) => [
+  `# Campaign Queue: ${campaignId}`,
+  '',
+  '| Order | Run Source | Selected Tasks | Status | Run |',
+  '| --- | --- | --- | --- | --- |',
+  '| 1 | TBD | TBD | pending | TBD |',
+  '',
+].join('\n');
+
+const campaignAggregateReportTemplate = ({ campaignId, now }) => [
+  `# Campaign Aggregate Report: ${campaignId}`,
+  '',
+  `- Campaign ID: ${campaignId}`,
+  `- Created At: ${now}`,
+  '',
+  '## Progression Summary',
+  '',
+  '- TBD',
+  '',
+  '## Remaining Decisions',
+  '',
+  '- TBD',
+  '',
+].join('\n');
+
+const runPlanTemplate = ({ runId, sourceId, now, linkedFeature, linkedRoadmap, linkedCampaign, linkedSpec, linkedTasks }) => [
+  `# Run Plan: ${runId}`,
+  '',
+  `- Run ID: ${runId}`,
+  `- Source ID: ${sourceId}`,
+  `- Linked Feature: ${linkStatus('Linked Feature', linkedFeature)}`,
+  `- Linked Roadmap: ${linkStatus('Linked Roadmap', linkedRoadmap)}`,
+  `- Linked Campaign: ${linkStatus('Linked Campaign', linkedCampaign)}`,
+  `- Linked Spec: ${linkStatus('Linked Spec', linkedSpec)}`,
+  `- Linked Tasks: ${linkStatus('Linked Tasks', linkedTasks)}`,
+  `- Created At: ${now}`,
+  '',
+  '## Selected Tasks',
+  '',
+  '- TBD',
+  '',
+].join('\n');
+
+const runStateTemplate = ({ runId, sourceId, now, linkedFeature, linkedRoadmap, linkedCampaign, linkedSpec, linkedTasks }) => [
+  `# Run State: ${runId}`,
+  '',
+  `- Run ID: ${runId}`,
+  `- Source ID: ${sourceId}`,
   '- Result: in-progress',
   '- Active Blocker: none recorded',
   `- Started At: ${now}`,
@@ -1018,15 +1128,9 @@ const cycleStateTemplate = ({ cycleId, milestoneId, now, linkedFeature, linkedRo
   '',
   `- Linked Feature: ${linkStatus('Linked Feature', linkedFeature)}`,
   `- Linked Roadmap: ${linkStatus('Linked Roadmap', linkedRoadmap)}`,
+  `- Linked Campaign: ${linkStatus('Linked Campaign', linkedCampaign)}`,
   `- Linked Spec: ${linkStatus('Linked Spec', linkedSpec)}`,
   `- Linked Tasks: ${linkStatus('Linked Tasks', linkedTasks)}`,
-  '',
-  '## Execution Evidence',
-  '',
-  '- Implementation Result: TBD',
-  '- Changed Files: TBD',
-  '- Commands Run: TBD',
-  '- Test / Lint / Build Result: TBD',
   '',
   '## Review Evidence',
   '',
@@ -1050,13 +1154,13 @@ const cycleStateTemplate = ({ cycleId, milestoneId, now, linkedFeature, linkedRo
   '',
 ].join('\n');
 
-const cycleHandoffTemplate = ({ cycleId, milestoneId, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }) => [
-  `# Cycle Handoff: ${cycleId}`,
+const runHandoffTemplate = ({ runId, sourceId, linkedFeature, linkedRoadmap, linkedCampaign, linkedSpec, linkedTasks }) => [
+  `# Run Handoff: ${runId}`,
   '',
   '## Scope',
   '',
-  `Cycle: ${cycleId}`,
-  `Milestone: ${milestoneId}`,
+  `Run: ${runId}`,
+  `Source: ${sourceId}`,
   '',
   '## Source Root',
   '',
@@ -1066,13 +1170,14 @@ const cycleHandoffTemplate = ({ cycleId, milestoneId, linkedFeature, linkedRoadm
   '',
   `- Feature: ${linkStatus('Linked Feature', linkedFeature)}`,
   `- Roadmap: ${linkStatus('Linked Roadmap', linkedRoadmap)}`,
+  `- Campaign: ${linkStatus('Linked Campaign', linkedCampaign)}`,
   `- Spec: ${linkStatus('Linked Spec', linkedSpec)}`,
   `- Tasks: ${linkStatus('Linked Tasks', linkedTasks)}`,
   '',
   '## Constraints',
   '',
-  '- Do not change roadmap, feature scope, or milestone purpose without human approval.',
-  '- Keep implementation changes inside `src/` unless the milestone explicitly requires project-context changes.',
+  '- Do not change roadmap, feature scope, campaign purpose, or selected tasks without human approval.',
+  '- Keep implementation changes inside `src/` unless the run explicitly requires project-context changes.',
   '',
   '## Expected Output',
   '',
@@ -1089,11 +1194,17 @@ const cycleHandoffTemplate = ({ cycleId, milestoneId, linkedFeature, linkedRoadm
   '',
 ].join('\n');
 
-const cycleKnowledgeTemplate = ({ cycleId, milestoneId, now }) => [
-  `# Cycle Knowledge: ${cycleId}`,
+const runOpenItemsTemplate = ({ runId }) => [
+  `# Run Open Items: ${runId}`,
   '',
-  `- Cycle ID: ${cycleId}`,
-  `- Milestone ID: ${milestoneId}`,
+  '- None',
+  '',
+].join('\n');
+
+const runKnowledgeTemplate = ({ runId, now }) => [
+  `# Run Knowledge: ${runId}`,
+  '',
+  `- Run ID: ${runId}`,
   `- Created At: ${now}`,
   '',
   '## Local Lessons',
@@ -1106,24 +1217,24 @@ const cycleKnowledgeTemplate = ({ cycleId, milestoneId, now }) => [
   '',
 ].join('\n');
 
-const completionReportTemplate = ({ scopeId, now, milestoneScope, cycleStates, reviewFiles }) => [
+const completionReportTemplate = ({ scopeId, now, scopeContent, runStates, reviewFiles }) => [
   `# Completion Report: ${scopeId}`,
   '',
   `- Scope ID: ${scopeId}`,
   `- Generated At: ${now}`,
   '',
-  '## Milestone Scope Summary',
+  '## Scope Summary',
   '',
-  milestoneScope.trim() || 'No milestone scope content found.',
+  scopeContent.trim() || 'No scope content found.',
   '',
-  '## Cycle State Summary',
+  '## Run State Summary',
   '',
-  ...(cycleStates.length ? cycleStates.flatMap((entry) => [
+  ...(runStates.length ? runStates.flatMap((entry) => [
     `### ${entry.path}`,
     '',
     entry.content.trim() || 'No state.md content found.',
     '',
-  ]) : ['No cycle state files found.', '']),
+  ]) : ['No run state files found.', '']),
   '',
   '## Review Evidence',
   '',
@@ -1180,7 +1291,7 @@ const reviewRecordTemplate = ({ scopeId, now, reviewType, summary, result }) => 
   '',
 ].join('\n');
 
-const escalationTemplate = ({ scopeId, now, milestoneScope, cycleStates, activeBlocker, linkedSpec, linkedTasks }) => [
+const escalationTemplate = ({ scopeId, now, scopeContent, runStates, activeBlocker, linkedSpec, linkedTasks }) => [
   `# Escalation Packet: ${scopeId}`,
   '',
   `- Scope ID: ${scopeId}`,
@@ -1195,16 +1306,16 @@ const escalationTemplate = ({ scopeId, now, milestoneScope, cycleStates, activeB
   '',
   '## Current State',
   '',
-  milestoneScope.trim() || 'No milestone scope content found.',
+  scopeContent.trim() || 'No scope content found.',
   '',
   '## Evidence So Far',
   '',
-  ...(cycleStates.length ? cycleStates.flatMap((entry) => [
+  ...(runStates.length ? runStates.flatMap((entry) => [
     `### ${entry.path}`,
     '',
     entry.content.trim() || 'No state.md content found.',
     '',
-  ]) : ['No cycle state files found.', '']),
+  ]) : ['No run state files found.', '']),
   '',
   '## Human Decision Required',
   '',
@@ -1245,9 +1356,9 @@ const evidenceViewTemplate = ({ now, entries }) => [
   ...(entries.length ? entries.flatMap((entry) => [
     `### ${entry.scopeId}`,
     '',
-    `- Milestone: ${entry.milestone || 'missing'}`,
-    '- Cycles:',
-    ...(entry.cycles.length ? entry.cycles.map((cycle) => `  - ${cycle}`) : ['  - none']),
+    `- Scope: ${entry.scope || 'missing'}`,
+    '- Runs:',
+    ...(entry.runs.length ? entry.runs.map((run) => `  - ${run}`) : ['  - none']),
     '- Reports:',
     ...(entry.reports.length ? entry.reports.map((report) => `  - ${report}`) : ['  - none']),
     '- Reviews:',
@@ -1256,7 +1367,7 @@ const evidenceViewTemplate = ({ now, entries }) => [
   ]) : ['- No evidence artifacts found.', '']),
 ].join('\n');
 
-const currentViewTemplate = ({ now, ideals, specs, features, roadmaps, milestones, cycles, logs, reviews, reports }) => [
+const currentViewTemplate = ({ now, ideals, specs, features, roadmaps, campaigns, runs, logs, reviews, reports }) => [
   '# Current View',
   '',
   `- Generated At: ${now}`,
@@ -1274,13 +1385,13 @@ const currentViewTemplate = ({ now, ideals, specs, features, roadmaps, milestone
   ...(features.length ? features.map((item) => `  - ${item}`) : ['  - none']),
   '- Roadmaps:',
   ...(roadmaps.length ? roadmaps.map((item) => `  - ${item}`) : ['  - none']),
-  '- Milestones:',
-  ...(milestones.length ? milestones.map((item) => `  - ${item}`) : ['  - none']),
   '',
-  '## Runtime And Evidence',
+  '## Execution And Evidence',
   '',
-  '- Cycles:',
-  ...(cycles.length ? cycles.map((item) => `  - ${item}`) : ['  - none']),
+  '- Campaigns:',
+  ...(campaigns.length ? campaigns.map((item) => `  - ${item}`) : ['  - none']),
+  '- Runs:',
+  ...(runs.length ? runs.map((item) => `  - ${item}`) : ['  - none']),
   '- Recent Logs:',
   ...(logs.length ? logs.map((item) => `  - ${item}`) : ['  - none']),
   '- Recent Reviews:',
@@ -1301,7 +1412,7 @@ const contentSection = (title, relPath, content) => [
   '',
 ];
 
-const scopeViewTemplate = ({ now, scopeId, sections, relatedCycles, relatedReviews, relatedReports }) => [
+const scopeViewTemplate = ({ now, scopeId, sections, relatedRuns, relatedReviews, relatedReports }) => [
   `# Scope View: ${scopeId}`,
   '',
   `- Generated At: ${now}`,
@@ -1309,8 +1420,8 @@ const scopeViewTemplate = ({ now, scopeId, sections, relatedCycles, relatedRevie
   ...(sections.length ? sections.flatMap((section) => contentSection(section.title, section.path, section.content)) : ['## Scope Artifacts', '', '- No matching scope artifacts found.', '']),
   '## Related Evidence',
   '',
-  '- Cycles:',
-  ...(relatedCycles.length ? relatedCycles.map((item) => `  - ${item}`) : ['  - none']),
+  '- Runs:',
+  ...(relatedRuns.length ? relatedRuns.map((item) => `  - ${item}`) : ['  - none']),
   '- Reviews:',
   ...(relatedReviews.length ? relatedReviews.map((item) => `  - ${item}`) : ['  - none']),
   '- Reports:',
@@ -1318,21 +1429,22 @@ const scopeViewTemplate = ({ now, scopeId, sections, relatedCycles, relatedRevie
   '',
 ].join('\n');
 
-const cycleViewTemplate = ({ now, cycleId, sections }) => [
-  `# Cycle View: ${cycleId}`,
+const runViewTemplate = ({ now, runId, sections }) => [
+  `# Run View: ${runId}`,
   '',
   `- Generated At: ${now}`,
   '',
-  ...(sections.length ? sections.flatMap((section) => contentSection(section.title, section.path, section.content)) : ['- No matching cycle artifact found.', '']),
+  ...(sections.length ? sections.flatMap((section) => contentSection(section.title, section.path, section.content)) : ['- No matching run artifact found.', '']),
 ].join('\n');
 
-const logEventTemplate = ({ now, eventType, summary, relatedMilestone, relatedEvidence }) => [
+const logEventTemplate = ({ now, eventType, summary, sourceCampaign, sourceRun, relatedEvidence }) => [
   '# Log Event',
   '',
   `- Date: ${now}`,
   `- Type: ${eventType}`,
   `- Summary: ${summary}`,
-  `- Related Milestone: ${relatedMilestone || 'none'}`,
+  `- Source Campaign: ${sourceCampaign || 'none'}`,
+  `- Source Run: ${sourceRun || 'none'}`,
   `- Related Evidence: ${relatedEvidence || 'none'}`,
   '',
   '## Notes',
@@ -1434,14 +1546,21 @@ const updateProfile = async (args) => {
   return { root, written: created.written, skipped: created.skipped };
 };
 
-const listCycleStateEntries = async (root, scopeId) => {
-  const cycleDirs = await listDirectories(root, 'ops/cycles');
+const listRunStateEntries = async (root, scopeId) => {
+  const runDirs = await listDirectories(root, 'ops/execution/runs');
   const entries = [];
-  for (const cycleDir of cycleDirs) {
-    const statePath = `${cycleDir}/state.md`;
+  for (const runDir of runDirs) {
+    if (path.basename(runDir) === 'archived') continue;
+    const statePath = `${runDir}/state.md`;
     const content = await readOptionalText(root, statePath);
     if (!content) continue;
-    if (extractField(content, 'Milestone ID') !== scopeId && !path.basename(cycleDir).endsWith(`_${scopeId}`)) {
+    if (
+      extractField(content, 'Run ID') !== scopeId
+      && extractField(content, 'Source ID') !== scopeId
+      && extractField(content, 'Linked Campaign') !== scopeId
+      && extractField(content, 'Linked Spec') !== scopeId
+      && !path.basename(runDir).endsWith(`_${scopeId}`)
+    ) {
       continue;
     }
     entries.push({ path: statePath, content });
@@ -1504,7 +1623,7 @@ const validateLinkedArgs = async (root, { linkedFeature, linkedRoadmap, linkedSp
   }
 };
 
-const writeLogEvent = async (root, { eventType, summary, relatedMilestone = '', relatedEvidence = '' }) => {
+const writeLogEvent = async (root, { eventType, summary, sourceCampaign = '', sourceRun = '', relatedEvidence = '' }) => {
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
   const relPath = `ops/evidence/logs/log_${timestampForFile(now)}_${slugify(eventType)}.md`;
@@ -1512,7 +1631,8 @@ const writeLogEvent = async (root, { eventType, summary, relatedMilestone = '', 
     now,
     eventType,
     summary,
-    relatedMilestone,
+    sourceCampaign,
+    sourceRun,
     relatedEvidence,
   }), { force: false, dryRun: false }, created);
   return { root, written: created.written, skipped: created.skipped };
@@ -1530,7 +1650,8 @@ const logEvent = async (args) => {
   return writeLogEvent(root, {
     eventType: args.eventType,
     summary: args.eventSummary,
-    relatedMilestone: args.relatedMilestone,
+    sourceCampaign: args.sourceCampaign,
+    sourceRun: args.sourceRun,
     relatedEvidence: args.relatedEvidence,
   });
 };
@@ -1580,8 +1701,8 @@ const addRoadmap = async (args) => {
   if (doctorResult.issues.length) {
     throw new Error(`Project-context is not ready for roadmap add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
-  if (slugify(args.roadmapId) !== args.roadmapId) {
-    throw new Error('Roadmap id must be lowercase kebab-case ASCII');
+  if (!/^r[0-9]{3}-[a-z0-9][a-z0-9-]*$/.test(args.roadmapId)) {
+    throw new Error('Roadmap id must match rNNN-lowercase-kebab-case');
   }
   if (!args.eventSummary) {
     throw new Error('Usage: cc-iasd roadmap add <id> --summary <text> --goal <text>');
@@ -1615,8 +1736,8 @@ const addSpec = async (args) => {
   if (doctorResult.issues.length) {
     throw new Error(`Project-context is not ready for spec add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
-  if (slugify(args.specId) !== args.specId) {
-    throw new Error('Spec id must be lowercase kebab-case ASCII');
+  if (!/^s[0-9]{3}-[a-z0-9][a-z0-9-]*$/.test(args.specId)) {
+    throw new Error('Spec id must match sNNN-lowercase-kebab-case');
   }
   if (!args.eventSummary) {
     throw new Error('Usage: cc-iasd spec add <id> --summary <text>');
@@ -1665,26 +1786,29 @@ const addSpec = async (args) => {
   return { root, specId: args.specId, specRoot, written: created.written, skipped: created.skipped };
 };
 
-const addMilestone = async (args) => {
+const addCampaign = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
   if (doctorResult.issues.length) {
-    throw new Error(`Project-context is not ready for milestone add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+    throw new Error(`Project-context is not ready for campaign add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
-  const milestoneId = args.milestoneId;
-  if (slugify(milestoneId) !== milestoneId) {
-    throw new Error('Milestone id must be lowercase kebab-case ASCII');
+  const campaignId = args.campaignId;
+  if (!/^c[0-9]{3}-[a-z0-9][a-z0-9-]*$/.test(campaignId)) {
+    throw new Error('Campaign id must match cNNN-lowercase-kebab-case');
   }
   if (!args.eventSummary) {
-    throw new Error('Usage: cc-iasd milestone add <id> --summary <text>');
+    throw new Error('Usage: cc-iasd campaign add <id> --summary <text> --roadmap <ref>');
+  }
+  if (!args.linkedRoadmap) {
+    throw new Error('Usage: cc-iasd campaign add <id> --summary <text> --roadmap <ref>');
   }
   await validateLinkedArgs(root, args);
 
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
-  const milestonePath = `ops/scopes/milestones/${milestoneId}.md`;
-  await writeText(root, milestonePath, milestoneScopeTemplate({
-    milestoneId,
+  const campaignRoot = `ops/execution/campaigns/${campaignId}`;
+  await writeText(root, `${campaignRoot}/plan.md`, campaignPlanTemplate({
+    campaignId,
     summary: args.eventSummary,
     now,
     linkedFeature: args.linkedFeature,
@@ -1692,15 +1816,18 @@ const addMilestone = async (args) => {
     linkedSpec: args.linkedSpec,
     linkedTasks: args.linkedTasks,
   }), { ...args, force: false }, created);
+  await writeText(root, `${campaignRoot}/state.md`, campaignStateTemplate({ campaignId, now }), { ...args, force: false }, created);
+  await writeText(root, `${campaignRoot}/queue.md`, campaignQueueTemplate({ campaignId }), { ...args, force: false }, created);
+  await writeText(root, `${campaignRoot}/aggregate-report.md`, campaignAggregateReportTemplate({ campaignId, now }), { ...args, force: false }, created);
 
   await writeLogEvent(root, {
-    eventType: 'milestone-add',
-    summary: `Added milestone ${milestoneId}`,
-    relatedMilestone: milestoneId,
-    relatedEvidence: milestonePath,
+    eventType: 'campaign-add',
+    summary: `Added campaign ${campaignId}`,
+    sourceCampaign: campaignId,
+    relatedEvidence: `${campaignRoot}/plan.md`,
   });
 
-  return { root, milestoneId, milestonePath, written: created.written, skipped: created.skipped };
+  return { root, campaignId, campaignRoot, written: created.written, skipped: created.skipped };
 };
 
 const addReview = async (args) => {
@@ -1716,9 +1843,9 @@ const addReview = async (args) => {
     throw new Error('Usage: cc-iasd review add <scope-id> --summary <text> --result <text>');
   }
 
-  const scopeId = args.milestoneId;
-  if (slugify(scopeId) !== scopeId) {
-    throw new Error('Scope id must be lowercase kebab-case ASCII');
+  const scopeId = args.scopeId;
+  if (!/^(run_[0-9]{17}_[a-z0-9][a-z0-9-]*|[a-z][0-9]{3}-[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$/.test(scopeId)) {
+    throw new Error('Scope id must be a run id, numbered artifact id, or lowercase kebab-case ASCII');
   }
 
   const now = new Date().toISOString();
@@ -1735,7 +1862,8 @@ const addReview = async (args) => {
   await writeLogEvent(root, {
     eventType: 'review-add',
     summary: `Added ${args.eventType} review for ${scopeId}`,
-    relatedMilestone: scopeId,
+    sourceRun: scopeId.startsWith('run_') ? scopeId : '',
+    sourceCampaign: scopeId.startsWith('c') ? scopeId : '',
     relatedEvidence: reviewPath,
   });
 
@@ -1749,17 +1877,17 @@ const viewEvidence = async (args) => {
     throw new Error(`Project-context is not ready for evidence view generation.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
 
-  const milestoneFiles = await listMarkdownFiles(root, 'ops/scopes/milestones');
+  const runDirs = (await listDirectories(root, 'ops/execution/runs')).filter((item) => path.basename(item) !== 'archived');
   const entries = [];
-  for (const milestone of milestoneFiles) {
-    const scopeId = path.basename(milestone, '.md');
-    const cycles = (await listCycleStateEntries(root, scopeId)).map((entry) => entry.path);
+  for (const runDir of runDirs) {
+    const scopeId = path.basename(runDir);
+    const runs = (await listRunStateEntries(root, scopeId)).map((entry) => entry.path);
     const reviews = await listReviewFilesForScope(root, scopeId);
     const reports = await listReportFilesForScope(root, scopeId);
     entries.push({
       scopeId,
-      milestone,
-      cycles,
+      scope: `${runDir}/state.md`,
+      runs,
       reports,
       reviews,
     });
@@ -1780,13 +1908,13 @@ const viewCurrent = async (args) => {
   const specs = (await listDirectories(root, 'product/specs')).filter((item) => path.basename(item) !== 'outdated');
   const features = await listMarkdownFiles(root, 'ops/scopes/features');
   const roadmaps = await listMarkdownFiles(root, 'ops/scopes/roadmaps');
-  const milestones = await listMarkdownFiles(root, 'ops/scopes/milestones');
-  const cycles = (await listDirectories(root, 'ops/cycles')).filter((item) => path.basename(item) !== 'archived');
+  const campaigns = (await listDirectories(root, 'ops/execution/campaigns')).filter((item) => path.basename(item) !== 'archived');
+  const runs = (await listDirectories(root, 'ops/execution/runs')).filter((item) => path.basename(item) !== 'archived');
   const logs = latest(await listMarkdownFiles(root, 'ops/evidence/logs'), 5);
   const reviews = latest(await listMarkdownFiles(root, 'ops/evidence/reviews'), 5);
   const reports = latest(await listMarkdownFiles(root, 'ops/evidence/reports'), 5);
   const now = new Date().toISOString();
-  return { root, view: currentViewTemplate({ now, ideals, specs, features, roadmaps, milestones, cycles, logs, reviews, reports }) };
+  return { root, view: currentViewTemplate({ now, ideals, specs, features, roadmaps, campaigns, runs, logs, reviews, reports }) };
 };
 
 const viewScope = async (args) => {
@@ -1801,152 +1929,179 @@ const viewScope = async (args) => {
   const sections = await readExistingSections(root, [
     ['Feature Scope', `ops/scopes/features/${scopeId}.md`],
     ['Roadmap Scope', `ops/scopes/roadmaps/${scopeId}.md`],
-    ['Milestone Scope', `ops/scopes/milestones/${scopeId}.md`],
+    ['Campaign', `ops/execution/campaigns/${scopeId}/plan.md`],
+    ['Run State', `ops/execution/runs/${scopeId}/state.md`],
     ['Spec', `product/specs/${scopeId}/spec.md`],
     ['Spec Plan', `product/specs/${scopeId}/plan.md`],
     ['Spec Tasks', `product/specs/${scopeId}/tasks.md`],
   ]);
-  const relatedCycles = (await listCycleStateEntries(root, scopeId)).map((entry) => entry.path);
+  const relatedRuns = (await listRunStateEntries(root, scopeId)).map((entry) => entry.path);
   const relatedReviews = await listReviewFilesForScope(root, scopeId);
   const relatedReports = await listReportFilesForScope(root, scopeId);
   const now = new Date().toISOString();
-  return { root, view: scopeViewTemplate({ now, scopeId, sections, relatedCycles, relatedReviews, relatedReports }) };
+  return { root, view: scopeViewTemplate({ now, scopeId, sections, relatedRuns, relatedReviews, relatedReports }) };
 };
 
-const viewCycle = async (args) => {
+const viewRun = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
   if (doctorResult.issues.length) {
-    throw new Error(`Project-context is not ready for cycle view generation.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+    throw new Error(`Project-context is not ready for run view generation.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
 
   assertArchiveId(args.viewId);
-  const cycleId = args.viewId;
-  const cycleRoot = `ops/cycles/${cycleId}`;
+  const runId = args.viewId;
+  const runRoot = `ops/execution/runs/${runId}`;
   const sections = await readExistingSections(root, [
-    ['State', `${cycleRoot}/state.md`],
-    ['Handoff', `${cycleRoot}/handoff.md`],
-    ['Knowledge', `${cycleRoot}/knowledge.md`],
+    ['Plan', `${runRoot}/plan.md`],
+    ['Handoff', `${runRoot}/handoff.md`],
+    ['State', `${runRoot}/state.md`],
+    ['Open Items', `${runRoot}/open-items.md`],
+    ['Knowledge', `${runRoot}/knowledge.md`],
   ]);
   const now = new Date().toISOString();
-  return { root, view: cycleViewTemplate({ now, cycleId, sections }) };
+  return { root, view: runViewTemplate({ now, runId, sections }) };
 };
 
 const viewContext = async (args) => {
   if (args.runTarget === 'evidence') return viewEvidence(args);
   if (args.runTarget === 'current') return viewCurrent(args);
   if (args.runTarget === 'scope') return viewScope(args);
-  if (args.runTarget === 'cycle') return viewCycle(args);
-  throw new Error('Usage: cc-iasd view evidence|current|scope|cycle');
+  if (args.runTarget === 'run') return viewRun(args);
+  throw new Error('Usage: cc-iasd view evidence|current|scope|run');
 };
 
-const runCycle = async (args) => {
+const runStart = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
   if (doctorResult.issues.length) {
-    throw new Error(`Project-context is not ready for cycle run.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+    throw new Error(`Project-context is not ready for run start.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
 
-  const milestoneId = args.milestoneId;
-  if (slugify(milestoneId) !== milestoneId) {
-    throw new Error('Milestone id must be lowercase kebab-case ASCII');
+  const sourceId = args.runSourceId;
+  if (slugify(sourceId) !== sourceId) {
+    throw new Error('Run source id must be lowercase kebab-case ASCII');
   }
-  const milestonePath = `ops/scopes/milestones/${milestoneId}.md`;
-  if (!await exists(path.join(root, milestonePath))) {
-    throw new Error(`Milestone does not exist: ${milestonePath}`);
+
+  const campaignPlanPath = `ops/execution/campaigns/${sourceId}/plan.md`;
+  const specPath = `product/specs/${sourceId}/spec.md`;
+  const roadmapPath = `ops/scopes/roadmaps/${sourceId}.md`;
+  const sourcePath = await resolveExistingPath(root, [campaignPlanPath, specPath, roadmapPath]);
+  if (!sourcePath) {
+    throw new Error(`Run source does not exist: ${sourceId}`);
   }
+
   const now = new Date().toISOString();
-  const cycleId = `cycle_${timestampForFile(now)}_${milestoneId}`;
-  const cycleRoot = `ops/cycles/${cycleId}`;
+  const runId = `run_${timestampForFile(now)}_${sourceId}`;
+  const runRoot = `ops/execution/runs/${runId}`;
   const created = { written: [], skipped: [] };
-  const existingMilestone = await readOptionalText(root, milestonePath);
-  const linkedFeature = args.linkedFeature || extractField(existingMilestone, 'Linked Feature');
-  const linkedRoadmap = args.linkedRoadmap || extractField(existingMilestone, 'Linked Roadmap');
-  const linkedSpec = args.linkedSpec || extractField(existingMilestone, 'Linked Spec');
-  const linkedTasks = args.linkedTasks || extractField(existingMilestone, 'Linked Tasks');
+  const sourceContent = await readOptionalText(root, sourcePath);
+  const linkedCampaign = sourcePath.startsWith('ops/execution/campaigns/') ? sourceId : args.sourceCampaign;
+  const linkedFeature = args.linkedFeature || extractField(sourceContent, 'Linked Feature');
+  const linkedRoadmap = args.linkedRoadmap || extractField(sourceContent, 'Linked Roadmap') || (sourcePath.startsWith('ops/scopes/roadmaps/') ? sourceId : '');
+  const linkedSpec = args.linkedSpec || extractField(sourceContent, 'Linked Spec') || (sourcePath.startsWith('product/specs/') ? sourceId : '');
+  const linkedTasks = args.linkedTasks || extractField(sourceContent, 'Linked Tasks') || linkedSpec;
 
-  await writeText(root, `${cycleRoot}/state.md`, cycleStateTemplate({ cycleId, milestoneId, now, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
+  await writeText(root, `${runRoot}/plan.md`, runPlanTemplate({ runId, sourceId, now, linkedFeature, linkedRoadmap, linkedCampaign, linkedSpec, linkedTasks }), { ...args, force: false }, created);
 
-  await writeText(root, `${cycleRoot}/handoff.md`, cycleHandoffTemplate({ cycleId, milestoneId, linkedFeature, linkedRoadmap, linkedSpec, linkedTasks }), { ...args, force: false }, created);
+  await writeText(root, `${runRoot}/handoff.md`, runHandoffTemplate({ runId, sourceId, linkedFeature, linkedRoadmap, linkedCampaign, linkedSpec, linkedTasks }), { ...args, force: false }, created);
 
-  await writeText(root, `${cycleRoot}/knowledge.md`, cycleKnowledgeTemplate({ cycleId, milestoneId, now }), { ...args, force: false }, created);
+  await writeText(root, `${runRoot}/state.md`, runStateTemplate({ runId, sourceId, now, linkedFeature, linkedRoadmap, linkedCampaign, linkedSpec, linkedTasks }), { ...args, force: false }, created);
+
+  await writeText(root, `${runRoot}/open-items.md`, runOpenItemsTemplate({ runId }), { ...args, force: false }, created);
+
+  await writeText(root, `${runRoot}/knowledge.md`, runKnowledgeTemplate({ runId, now }), { ...args, force: false }, created);
 
   await writeLogEvent(root, {
     eventType: 'run',
-    summary: `Prepared cycle ${cycleId} for milestone ${milestoneId}`,
-    relatedMilestone: milestoneId,
-    relatedEvidence: `${cycleRoot}/state.md`,
+    summary: `Prepared run ${runId} from ${sourceId}`,
+    sourceCampaign: linkedCampaign,
+    sourceRun: runId,
+    relatedEvidence: `${runRoot}/state.md`,
   });
 
-  return { root, milestoneId, cycleId, written: created.written, skipped: created.skipped };
+  return { root, sourceId, runId, written: created.written, skipped: created.skipped };
 };
 
-const reportMilestone = async (args) => {
+const reportScope = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
   if (doctorResult.issues.length) {
-    throw new Error(`Project-context is not ready for milestone report.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+    throw new Error(`Project-context is not ready for report.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
 
-  const scopeId = args.milestoneId;
-  const milestonePath = `ops/scopes/milestones/${scopeId}.md`;
-  if (!await exists(path.join(root, milestonePath))) {
-    throw new Error(`Milestone does not exist: ${milestonePath}`);
+  const scopeId = args.scopeId;
+  const scopePath = await resolveExistingPath(root, [
+    `ops/execution/runs/${scopeId}/state.md`,
+    `ops/execution/campaigns/${scopeId}/state.md`,
+    `ops/scopes/roadmaps/${scopeId}.md`,
+    `ops/scopes/features/${scopeId}.md`,
+    `product/specs/${scopeId}/spec.md`,
+  ]);
+  if (!scopePath) {
+    throw new Error(`Scope does not exist: ${scopeId}`);
   }
 
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
-  const milestoneScope = await readOptionalText(root, milestonePath);
-  const cycleStates = await listCycleStateEntries(root, scopeId);
+  const scopeContent = await readOptionalText(root, scopePath);
+  const runStates = await listRunStateEntries(root, scopeId);
   const reviewFiles = await listReviewFilesForScope(root, scopeId);
   const reportPath = `ops/evidence/reports/report_${timestampForFile(now)}_${scopeId}.md`;
 
   await writeText(root, reportPath, completionReportTemplate({
     scopeId,
     now,
-    milestoneScope,
-    cycleStates,
+    scopeContent,
+    runStates,
     reviewFiles,
   }), { ...args, force: false }, created);
 
   await writeLogEvent(root, {
     eventType: 'report',
     summary: `Prepared completion report for ${scopeId}`,
-    relatedMilestone: scopeId,
+    sourceRun: scopePath.startsWith('ops/execution/runs/') ? scopeId : '',
+    sourceCampaign: scopePath.startsWith('ops/execution/campaigns/') ? scopeId : '',
     relatedEvidence: reportPath,
   });
 
   return { root, scopeId, reportPath, written: created.written, skipped: created.skipped };
 };
 
-const escalateMilestone = async (args) => {
+const escalateScope = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
   if (doctorResult.issues.length) {
     throw new Error(`Project-context is not ready for escalation.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
   }
 
-  const scopeId = args.milestoneId;
-  const milestonePath = `ops/scopes/milestones/${scopeId}.md`;
-  if (!await exists(path.join(root, milestonePath))) {
-    throw new Error(`Milestone does not exist: ${milestonePath}`);
+  const scopeId = args.scopeId;
+  const scopePath = await resolveExistingPath(root, [
+    `ops/execution/runs/${scopeId}/state.md`,
+    `ops/execution/campaigns/${scopeId}/state.md`,
+    `ops/scopes/roadmaps/${scopeId}.md`,
+    `ops/scopes/features/${scopeId}.md`,
+    `product/specs/${scopeId}/spec.md`,
+  ]);
+  if (!scopePath) {
+    throw new Error(`Scope does not exist: ${scopeId}`);
   }
 
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
-  const milestoneScope = await readOptionalText(root, milestonePath);
-  const cycleStates = await listCycleStateEntries(root, scopeId);
-  const latestCycleState = cycleStates.at(-1)?.content || '';
-  const activeBlocker = extractField(latestCycleState, 'Active Blocker');
-  const linkedSpec = extractField(milestoneScope, 'Linked Spec') || extractField(latestCycleState, 'Linked Spec');
-  const linkedTasks = extractField(milestoneScope, 'Linked Tasks') || extractField(latestCycleState, 'Linked Tasks');
+  const scopeContent = await readOptionalText(root, scopePath);
+  const runStates = await listRunStateEntries(root, scopeId);
+  const latestRunState = runStates.at(-1)?.content || scopeContent;
+  const activeBlocker = extractField(latestRunState, 'Active Blocker');
+  const linkedSpec = extractField(scopeContent, 'Linked Spec') || extractField(latestRunState, 'Linked Spec');
+  const linkedTasks = extractField(scopeContent, 'Linked Tasks') || extractField(latestRunState, 'Linked Tasks');
   const reportPath = `ops/evidence/reports/escalation_${timestampForFile(now)}_${scopeId}.md`;
 
   await writeText(root, reportPath, escalationTemplate({
     scopeId,
     now,
-    milestoneScope,
-    cycleStates,
+    scopeContent,
+    runStates,
     activeBlocker,
     linkedSpec,
     linkedTasks,
@@ -1955,7 +2110,8 @@ const escalateMilestone = async (args) => {
   await writeLogEvent(root, {
     eventType: 'escalate',
     summary: `Prepared escalation packet for ${scopeId}`,
-    relatedMilestone: scopeId,
+    sourceRun: scopePath.startsWith('ops/execution/runs/') ? scopeId : '',
+    sourceCampaign: scopePath.startsWith('ops/execution/campaigns/') ? scopeId : '',
     relatedEvidence: reportPath,
   });
 
@@ -2004,8 +2160,8 @@ const archiveOps = async (args) => {
   const mappings = {
     feature: [`ops/scopes/features/${fileId}`, `ops/scopes/features/archived/${fileId}`],
     roadmap: [`ops/scopes/roadmaps/${fileId}`, `ops/scopes/roadmaps/archived/${fileId}`],
-    milestone: [`ops/scopes/milestones/${fileId}`, `ops/scopes/milestones/archived/${fileId}`],
-    cycle: [`ops/cycles/${args.archiveId}`, `ops/cycles/archived/${args.archiveId}`],
+    campaign: [`ops/execution/campaigns/${args.archiveId}`, `ops/execution/campaigns/archived/${args.archiveId}`],
+    run: [`ops/execution/runs/${args.archiveId}`, `ops/execution/runs/archived/${args.archiveId}`],
     log: [`ops/evidence/logs/${fileId}`, `ops/evidence/logs/archived/${fileId}`],
     review: [`ops/evidence/reviews/${fileId}`, `ops/evidence/reviews/archived/${fileId}`],
     report: [`ops/evidence/reports/${fileId}`, `ops/evidence/reports/archived/${fileId}`],
@@ -2049,7 +2205,9 @@ const init = async (args) => {
     'ops_root: ops',
     'specs_root: product/specs',
     'scopes_root: ops/scopes',
-    'cycles_root: ops/cycles',
+    'execution_root: ops/execution',
+    'campaigns_root: ops/execution/campaigns',
+    'runs_root: ops/execution/runs',
     'evidence_root: ops/evidence',
     'reference_root: reference',
     '',
@@ -2064,7 +2222,9 @@ const init = async (args) => {
     product_root: 'product',
     specs_root: 'product/specs',
     scopes_root: 'ops/scopes',
-    cycles_root: 'ops/cycles',
+    execution_root: 'ops/execution',
+    campaigns_root: 'ops/execution/campaigns',
+    runs_root: 'ops/execution/runs',
     evidence_root: 'ops/evidence',
     profile: 'default',
   }, null, 2)}\n`, args, created);
@@ -2104,7 +2264,7 @@ const init = async (args) => {
     '- Build Command: TBD',
     '- Notes: TBD',
     '',
-    'Do not place cc-iasd-managed specs, runtime state, cycles, evidence, reports, or policies inside these source projects.',
+    'Do not place cc-iasd-managed specs, runtime state, runs, evidence, reports, or policies inside these source projects.',
     '',
   ].join('\n'), args, created);
 
@@ -2117,13 +2277,13 @@ const init = async (args) => {
   await writeText(root, 'product/ideal/README.md', [
     '# Ideal',
     '',
-    'Product canon for normalized ideal artifacts. Files in `outdated/` are no longer current product canon.',
+    'Product canon for normalized ideal artifacts. Active ideal files use `iNNN-kebab-case.md`. Files in `outdated/` are no longer current product canon.',
     '',
   ].join('\n'), args, created);
   await writeText(root, 'product/ideal/outdated/README.md', [
     '# Outdated Ideal',
     '',
-    'Ideal artifacts that no longer hold product canon status.',
+    'Ideal artifacts that no longer hold product canon status. Preserve the original `iNNN-kebab-case.md` file name when moving an ideal here.',
     '',
   ].join('\n'), args, created);
   await writeText(root, 'product/specs/README.md', [
@@ -2155,21 +2315,21 @@ const init = async (args) => {
     '',
   ].join('\n'), args, created);
   await writeText(root, 'ops/scopes/roadmaps/archived/README.md', '# Archived Roadmap Scopes\n', args, created);
-  await writeText(root, 'ops/scopes/milestones/README.md', [
-    '# Milestones',
+  await writeText(root, 'ops/execution/campaigns/README.md', [
+    '# Campaigns',
     '',
-    'Milestones are roadmap endpoints or planning boundaries. Execution state lives in `ops/cycles/`.',
+    'Campaign artifacts coordinate multiple runs through task selectors, stop conditions, and progression conditions.',
     '',
   ].join('\n'), args, created);
-  await writeText(root, 'ops/scopes/milestones/archived/README.md', '# Archived Milestones\n', args, created);
+  await writeText(root, 'ops/execution/campaigns/archived/README.md', '# Archived Campaigns\n', args, created);
 
-  await writeText(root, 'ops/cycles/README.md', [
-    '# Cycles',
+  await writeText(root, 'ops/execution/runs/README.md', [
+    '# Runs',
     '',
-    'Cycle artifacts track autonomous execution state, handoff, and cycle-local knowledge.',
+    'Run artifacts track autonomous execution task selection, runtime context, handoff, state, open items, and run-local knowledge.',
     '',
   ].join('\n'), args, created);
-  await writeText(root, 'ops/cycles/archived/README.md', '# Archived Cycles\n', args, created);
+  await writeText(root, 'ops/execution/runs/archived/README.md', '# Archived Runs\n', args, created);
 
   await writeText(root, 'ops/evidence/logs/README.md', [
     '# Logs',
@@ -2181,7 +2341,7 @@ const init = async (args) => {
   await writeText(root, 'ops/evidence/reviews/README.md', [
     '# Reviews',
     '',
-    'Scope-crossing review evidence. Product, scope, and cycle artifacts refer to review IDs or paths.',
+    'Scope-crossing review evidence. Product, scope, and execution artifacts refer to review IDs or paths.',
     '',
   ].join('\n'), args, created);
   await writeText(root, 'ops/evidence/reviews/archived/README.md', '# Archived Reviews\n', args, created);
@@ -2211,7 +2371,7 @@ const init = async (args) => {
     '',
     'For multiple repositories, clone them side by side under `src/`.',
     '',
-    'Do not place cc-iasd-managed specs, runtime files, cycle state, evidence, reports, or policies under `src/`.',
+    'Do not place cc-iasd-managed specs, runtime files, run state, evidence, reports, or policies under `src/`.',
     '',
     '```text',
     'src/',
@@ -2232,7 +2392,7 @@ const init = async (args) => {
     '- `rules/`: stable constraints, roles, templates, and checklists',
     '- `user/`: human-authored intent, constraints, decisions, and preferences',
     '- `product/`: product canon such as ideal and specs',
-    '- `ops/`: scopes, cycles, and evidence',
+    '- `ops/`: scopes, execution, and evidence',
     '- `reference/`: non-canonical reference material',
     '- `runtime/`: cc-iasd runtime configuration and generated adapters',
     '- `src/`: source project root',
@@ -2264,21 +2424,21 @@ try {
     }
     console.log(`cc-iasd doctor passed for ${result.root}`);
   } else if (args.command === 'run') {
-    const result = await runCycle(args);
-    console.log(`Prepared cycle ${result.cycleId} for milestone ${result.milestoneId} in ${result.root}.`);
+    const result = await runStart(args);
+    console.log(`Prepared run ${result.runId} from ${result.sourceId} in ${result.root}.`);
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
-      console.log(`Skipped ${result.skipped.length} existing file(s). Run does not overwrite existing cycle records.`);
+      console.log(`Skipped ${result.skipped.length} existing file(s). Run start does not overwrite existing run records.`);
     }
   } else if (args.command === 'escalate') {
-    const result = await escalateMilestone(args);
+    const result = await escalateScope(args);
     console.log(`Prepared escalation packet for scope ${result.scopeId} in ${result.root}.`);
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Escalate does not overwrite report records.`);
     }
   } else if (args.command === 'report') {
-    const result = await reportMilestone(args);
+    const result = await reportScope(args);
     console.log(`Prepared completion report for scope ${result.scopeId} in ${result.root}.`);
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
@@ -2311,12 +2471,12 @@ try {
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} existing file(s). Roadmap add does not overwrite roadmap records.`);
     }
-  } else if (args.command === 'milestone') {
-    const result = await addMilestone(args);
-    console.log(`Prepared milestone ${result.milestoneId} in ${result.root}.`);
+  } else if (args.command === 'campaign') {
+    const result = await addCampaign(args);
+    console.log(`Prepared campaign ${result.campaignId} in ${result.root}.`);
     console.log(`Created ${result.written.length} file(s).`);
     if (result.skipped.length) {
-      console.log(`Skipped ${result.skipped.length} existing file(s). Milestone add does not overwrite milestone records.`);
+      console.log(`Skipped ${result.skipped.length} existing file(s). Campaign add does not overwrite campaign records.`);
     }
   } else if (args.command === 'spec') {
     const result = await addSpec(args);

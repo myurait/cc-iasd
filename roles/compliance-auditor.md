@@ -18,7 +18,7 @@ Before reviewing any changes, read the following files in full. Do not rely on m
 
 1. `rules/policies/language-policy.md` (language rules — the canonical source, ~214 lines)
 2. `rules/templates/review_template.md` (review format — the canonical source, ~111 lines)
-3. Related `ops/cycles/<cycle-id>/knowledge.md` files when the change updates cycle-local knowledge
+3. Related `ops/execution/runs/<run-id>/knowledge.md` files when the change updates run-local knowledge
 4. Related `ops/scopes/features/<feature-id>.md` files when the change updates feature scopes
 5. The project root `AGENTS.md` (line count audit target)
 
@@ -31,7 +31,7 @@ Check every changed file against all of the following.
 Determine the file category and verify the correct language is used:
 
 - **Master rule files** (`rules/policies/`, `rules/roles/`, `rules/templates/`): Must be written in English.
-- **Project progress files** (`product/ideal/`, `product/specs/`, `ops/scopes/`, `ops/cycles/`, `ops/evidence/`, `reference/`): Must be written in the Documentation Language defined in `rules/policies/language-policy.md`.
+- **Project progress files** (`product/ideal/`, `product/specs/`, `ops/scopes/`, `ops/execution/`, `ops/evidence/`, `reference/`): Must be written in the Documentation Language defined in `rules/policies/language-policy.md`.
 - **Code** (identifiers and comments): Must be in English per coding conventions.
 
 ### Format Compliance
@@ -44,10 +44,10 @@ Determine the file category and verify the correct language is used:
 - **Broken links**: Local links in changed Markdown files must resolve to existing files.
 - **View output**: Output from `cc-iasd view ...` is temporary context, not a canonical project file.
 
-### Cycle Knowledge Management
+### Run Knowledge Management
 
-- **Line count check**: If a cycle-local `knowledge.md` exceeds 100 lines, report a warning.
-- **Rule promotion check**: If any lesson in cycle-local knowledge should be promoted to a master rule file (`rules/policies/*.md` or similar), report it as a "Rule Promotion Proposal" finding.
+- **Line count check**: If a run-local `knowledge.md` exceeds 100 lines, report a warning.
+- **Rule promotion check**: If any lesson in run-local knowledge should be promoted to a master rule file (`rules/policies/*.md` or similar), report it as a "Rule Promotion Proposal" finding.
 
 ## Trigger Conditions
 

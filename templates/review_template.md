@@ -46,7 +46,7 @@ Fill only the criteria that match the review type and roles above.
 
 ### Full Review — Planning Lead
 
-- Roadmap alignment and milestone progress are evaluated.
+- Roadmap alignment and campaign/run progress are evaluated.
 - Ideal experience impact is assessed.
 - Backlog priority reflects current state.
 
@@ -134,4 +134,4 @@ Fill only the dimensions that match the review type and roles above.
   - accepted residual risk with monitoring or next-review trigger
   - deferred planned work with tracked destination document or phase
   - explicit user decision required
-  - unresolved finding requiring another fix-and-review cycle
+  - unresolved finding requiring another fix-and-review run

@@ -21,7 +21,7 @@ cc-iasd は、単なるログ収集機構ではない。一方で、すべての
 - User-authored artifacts
 - Product canon artifacts
 - Scope artifacts
-- Cycle artifacts
+- Run artifacts
 - Evidence artifacts
 - Reference artifacts
 - Source project artifacts

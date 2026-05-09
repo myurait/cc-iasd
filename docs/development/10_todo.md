@@ -18,7 +18,7 @@
 ```text
 TODO:
 - product/specs/ で plan.md 名を維持するか別名にするかを決める
-- cycle / campaign の名称を維持するかリネームするかを決める
+- feature と debt の artifact 境界を最終確認する
 ```
 
 ---
@@ -29,5 +29,5 @@ TODO:
 TODO:
 - evidence の粒度が粗すぎるか細かすぎるか確認する
 - completion report が人間の後続判断に足りるか確認する
-- tasks 起点の implementation loop が cycle / evidence と過不足なく接続できるか確認する
+- tasks 起点の implementation loop が run / evidence と過不足なく接続できるか確認する
 ```

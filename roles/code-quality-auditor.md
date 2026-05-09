@@ -18,7 +18,7 @@ Before reviewing any changes, read the following files in full. Do not rely on m
 
 1. `rules/policies/coding-conventions.md` (coding rules, ~197 lines)
 2. `rules/policies/testing.md` (testing rules, ~64 lines)
-3. Any related `product/specs/<spec-id>/*.md` or `ops/cycles/<cycle-id>/*.md` files (variable — read only those relevant to the changes under review)
+3. Any related `product/specs/<spec-id>/*.md` or `ops/execution/runs/<run-id>/*.md` files (variable — read only those relevant to the changes under review)
 
 ## Review Criteria
 

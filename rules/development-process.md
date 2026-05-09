@@ -59,14 +59,14 @@ Worker spawns review roles after completing Steps 1-4.
 
 **Trigger D — Full review (Devil's Advocate):**
 
-- When: Trigger B conditions, rule changes (`rules/policies/` or CLAUDE.md rule sections), feature completion, milestone achievement, explicit user request
+- When: Trigger B conditions, rule changes (`rules/policies/` or CLAUDE.md rule sections), feature completion, campaign or run completion, explicit user request
 - Additional steps:
   1. Spawn Devil's Advocate
   2. Create a review evidence file in `ops/evidence/reviews/` (see Section 2.4)
 
 **Trigger E — Planning Lead:**
 
-- When: feature implementation completed, milestone achieved, roadmap creation or update needed, user asks about project plans
+- When: feature implementation completed, campaign or run completed, roadmap creation or update needed, user asks about project plans
 - Additional steps:
   1. Spawn Planning Lead
   2. Planning Lead applies the roadmap consultation template or roadmap share template
@@ -158,7 +158,7 @@ Post-fix re-review is mandatory after every review round that produced findings.
   - accepted residual risk with monitoring or next-review trigger
   - deferred planned work with tracked destination document or phase
   - explicit user decision required
-  - unresolved finding that requires another fix-and-review cycle
+  - unresolved finding that requires another fix-and-review run
 - A follow-up review is not complete until each remaining risk has a recorded disposition and next handling path.
 - Reject inadequate fixes and request re-work. After re-work, repeat until all findings are resolved.
 
@@ -194,8 +194,8 @@ Post-fix re-review is mandatory after every review round that produced findings.
 ## 4. Documentation Rules
 
 - Treat the project repository as the canonical source for development-facing documentation.
-- Log human decisions in `user/decisions.md`; log cycle-local decisions in `ops/cycles/<cycle-id>/state.md`.
-- Extract reusable lessons into cycle-local `ops/cycles/<cycle-id>/knowledge.md` before promoting stable lessons to `rules/policies/`.
+- Log human decisions in `user/decisions.md`; log run-local decisions in `ops/execution/runs/<run-id>/state.md`.
+- Extract reusable lessons into run-local `ops/execution/runs/<run-id>/knowledge.md` before promoting stable lessons to `rules/policies/`.
 - Keep current roadmap scopes outside `archived/` under `ops/scopes/roadmaps/`.
 - Name roadmap files `roadmap_{YYYYMMDDhhmmss}_{scope}.md`.
 - Move replaced, completed, cancelled, or superseded ops artifacts with `cc-iasd ops archive`.
@@ -220,8 +220,8 @@ Master rule files are always written in English and are reusable across projects
 
 - `product/ideal/` — product ideal canon
 - `product/specs/` — requirements, plan, and tasks
-- `ops/scopes/` — features, roadmaps, and milestones
-- `ops/cycles/` — cycle state, handoff, and local knowledge
+- `ops/scopes/` — features and roadmaps
+- `ops/execution/` — campaigns, runs, run state, handoff, and local knowledge
 - `ops/evidence/` — logs, reviews, and reports
 - `reference/` — non-canonical reference material
 
@@ -249,12 +249,12 @@ Feature and debt items are managed in a single backlog file using tag-based inte
 - `type: feature` requires Experience Tie (link to an ideal experience pillar)
 - `type: debt` requires Impact Scope (affected files or directories)
 
-## 7. Cycle Knowledge Management
+## 7. Run Knowledge Management
 
-- Worker may append cycle-local lessons to `ops/cycles/<cycle-id>/knowledge.md`.
-- Compliance Auditor reviews cycle-local knowledge and proposes rule promotion when a lesson should be elevated to a master rule file (`rules/policies/*.md`).
+- Worker may append run-local lessons to `ops/execution/runs/<run-id>/knowledge.md`.
+- Compliance Auditor reviews run-local knowledge and proposes rule promotion when a lesson should be elevated to a master rule file (`rules/policies/*.md`).
 - When a promotion proposal is approved, move the lesson to the appropriate master rule file.
-- Worker's required reading does not include global knowledge files. Lessons reach Worker context through cycle handoff or promotion to master rules.
+- Worker's required reading does not include global knowledge files. Lessons reach Worker context through run handoff or promotion to master rules.
 
 ## 8. Testing Rules
 

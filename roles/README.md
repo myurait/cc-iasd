@@ -16,5 +16,5 @@ A role is a set of instructions that an AI agent adopts when performing a specif
 - `worker.md` — minimal-context implementer that focuses on coding, testing, and spawning review roles. Entry point for all implementation tasks.
 - `compliance-auditor.md` — audits language policy compliance and document format quality across all changed files. Spawned for every commit (Light review).
 - `code-quality-auditor.md` — audits coding conventions, naming patterns, test design quality, and design document drift. Spawned when code files are changed (Light review).
-- `devils-advocate.md` — adversarial reviewer that enforces project rules as a strict guardian. Spawned during Full review (feature completion, milestone, architecture changes).
-- `planning-lead.md` — senior engineer role for roadmap planning, milestone evaluation, and user-facing plan communication. Spawned on feature completion, milestone achievement, and planning inquiries.
+- `devils-advocate.md` — adversarial reviewer that enforces project rules as a strict guardian. Spawned during Full review (feature completion, campaign/run completion, architecture changes).
+- `planning-lead.md` — senior engineer role for roadmap planning, campaign/run evaluation, and user-facing plan communication. Spawned on feature completion, campaign/run completion, and planning inquiries.

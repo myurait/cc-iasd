@@ -21,7 +21,7 @@ cc-iasd が扱うもの:
 - project-context
 - product canon
 - spec / plan / tasks
-- scope / cycle
+- scope / execution
 - role operating model
 - autonomy protocol
 - implementation delegation
@@ -48,13 +48,13 @@ project-context/
 
 `src/` は成果物 project の root である。cc-iasd は `src/` の外側から開発文脈を管理する。
 
-`src/` 配下を cc-iasd 管理 artifact で汚染しないことは絶対制約である。spec、runtime、cycle state、evidence、report、policy は `src/` の外側に置く。cc-iasd は `src/` 配下の成果物 project に対して command を実行してよいが、成果物 project の中に cc-iasd 管理の仕様領域や runtime 領域を持ち込んではならない。
+`src/` 配下を cc-iasd 管理 artifact で汚染しないことは絶対制約である。spec、runtime、run state、evidence、report、policy は `src/` の外側に置く。cc-iasd は `src/` 配下の成果物 project に対して command を実行してよいが、成果物 project の中に cc-iasd 管理の仕様領域や runtime 領域を持ち込んではならない。
 
 この構造により、次を分ける。
 
 ```text
 project-context:
-  制約、ユーザー入力、product 正本、scope、cycle、証跡、escalation、completion report
+  制約、ユーザー入力、product 正本、scope、execution、証跡、escalation、completion report
 
 src/:
   成果物 project のコード、設定、テスト、ビルド構成
@@ -72,8 +72,9 @@ cc-iasd は、すべてを独自形式で再実装しない。
 - spec / plan / tasks: product/specs/（Spec Kit 互換 dialect）
 - task implementation loop: Claude Code / Codex などの実行 runtime
 - role / SOP: cc-iasd が最小定義し、BMAD / MetaGPT を参照
-- features / roadmap / milestone: ops/scopes/
-- cycle autonomy: cc-iasd 固有
+- features / roadmap: ops/scopes/
+- campaign / run: ops/execution/
+- run autonomy: cc-iasd 固有
 - escalation: cc-iasd 固有
 - evidence: ops/evidence/
 - 成果物 project: src/
@@ -98,32 +99,33 @@ Spec:
 
 cc-iasd は Spec Kit の成果物正本性を採用しない。Spec Kit が標準化した artifact vocabulary と workflow は参照するが、cc-iasd の spec 正本は `product/specs/` に置く。
 
-### 4.2 Milestone
+### 4.2 Campaign
 
-Milestone は、roadmap 上の到達点または計画境界である。
+Campaign は、複数の task set や run を段階的に処理するための計画境界である。
 
 ```text
-Milestone:
-- spec の一部または複数 tasks を束ねる
-- Planning Lead が安全と判断した bounded scope
-- completion report の単位になり得る
+Campaign:
+- task selector を持つ
+- stop condition を持つ
+- progression condition を持つ
+- aggregate report の単位になり得る
 ```
 
-Milestone は実行証跡の入れ物ではない。自走実行の状態、handoff、局所知識は cycle に置く。
+Campaign は巨大な実行単位ではない。実行 transaction の状態、handoff、局所知識は run に置く。
 
-### 4.3 Cycle
+### 4.3 Run
 
-Cycle は、AI 自走の実行単位である。
+Run は、AI 自走の実行単位である。
 
 ```text
-Cycle:
-- spec / task / milestone などの bounded scope を入力にする
+Run:
+- spec / task / campaign などの bounded scope を入力にする
 - Worker / runtime に渡す handoff を持つ
-- state と cycle-local knowledge を持つ
+- state と run-local knowledge を持つ
 - logs / reviews / reports を参照する
 ```
 
-Spec-driven development 的な実装進行の中心は spec / task である。Cycle は、それを cc-iasd の project-context と evidence layer に接続する transaction artifact である。
+Spec-driven development 的な実装進行の中心は spec / task である。Run は、それを cc-iasd の project-context と evidence layer に接続する transaction artifact である。
 
 ### 4.4 Task
 
@@ -150,7 +152,7 @@ Evidence:
 - completion report
 ```
 
-cc-iasd の evidence は、全情報の複製ではなく、scope / cycle / product artifact への参照でつながる証跡である。
+cc-iasd の evidence は、全情報の複製ではなく、scope / run / product artifact への参照でつながる証跡である。
 
 ### 4.6 Escalation
 
@@ -160,7 +162,7 @@ Escalation は、AI が判断できない事項を人間へ戻すための構造
 
 ### 4.7 Completion Report
 
-Completion Report は、scope または cycle 完了時に人間が確認するまとめである。
+Completion Report は、scope または run 完了時に人間が確認するまとめである。
 
 実装内容だけでなく、軽微判断、review 結果、残リスク、未完了事項を含む。
 
@@ -194,10 +196,10 @@ Planning Lead は project-context 内の開発チームリーダーである。
 
 ```text
 Planning Lead の責務:
-- scope / cycle の開発進行管理
+- scope / run の開発進行管理
 - task breakdown の調整
 - Worker / Reviewer への作業割当
-- cycle 内の軽微判断
+- run 内の軽微判断
 - 停止・エスカレーション判断
 - completion report の整理
 ```
