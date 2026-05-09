@@ -501,6 +501,37 @@ Role Context Packet:
 
 role は、使える tool も分ける。
 
+command visibility は、role に渡す CLI surface を制限するための定義である。
+
+ここでの visibility は、role runtime に見せる command を意味する。bootstrap 用 command や人間判断を前提にする command は、role-visible command として扱わない。
+
+| Command | Role-visible to | Generated or updated artifact |
+| --- | --- | --- |
+| `cc-iasd init` | none | project-context scaffold: `product/`, `ops/`, `rules/`, `runtime/`, `user/`, `reference/`, `src/` |
+| `cc-iasd profile update` | none | `runtime/profile.md`, `runtime/plugins.yaml`, `runtime/adapters/README.md`, `runtime/adapters/role-runtime.md` |
+| `cc-iasd doctor` | Ideal Interviewer, Planning Lead, Compliance Auditor | no artifact; readiness check only |
+| `cc-iasd view current` | Ideal Interviewer, Planning Lead | stdout only; no canonical artifact |
+| `cc-iasd view scope <id>` | Planning Lead, Devil's Advocate | stdout only; scope boundary review view |
+| `cc-iasd view run <id>` | Planning Lead, Worker, Compliance Auditor, Code Quality Auditor, Devil's Advocate | stdout only; run-local context view |
+| `cc-iasd view evidence` | Planning Lead, Compliance Auditor | stdout only; evidence overview view |
+| `cc-iasd ideal add <id>` | Ideal Interviewer | `product/ideal/<ideal-id>.md`, `ops/evidence/logs/log_<timestamp>_ideal-add.md` |
+| `cc-iasd product outdate ideal <id>` | Ideal Interviewer | move `product/ideal/<ideal-id>.md` to `product/ideal/outdated/<ideal-id>.md`, create log |
+| `cc-iasd feature add <id>` | Planning Lead | `ops/scopes/features/<feature-id>.md`, create log |
+| `cc-iasd roadmap add <id>` | Planning Lead | `ops/scopes/roadmaps/<roadmap-id>.md`, create log |
+| `cc-iasd spec add <id>` | Planning Lead | `product/specs/<spec-id>/spec.md`, `plan.md`, `research.md`, `data-model.md`, `contracts/README.md`, `tasks.md`, create log |
+| `cc-iasd product outdate spec <id>` | Planning Lead | move `product/specs/<spec-id>/` to `product/specs/outdated/<spec-id>/`, create log |
+| `cc-iasd campaign add <id>` | Planning Lead | `ops/execution/campaigns/<campaign-id>/plan.md`, `state.md`, `queue.md`, `aggregate-report.md`, create log |
+| `cc-iasd run start <id>` | Planning Lead | `ops/execution/runs/<run-id>/plan.md`, `handoff.md`, `state.md`, `open-items.md`, `knowledge.md`; update campaign queue; create log |
+| `cc-iasd open-item add <run-id>` | Worker | update `ops/execution/runs/<run-id>/open-items.md`, create log |
+| `cc-iasd open-item resolve <run-id> <item-id>` | Planning Lead | update `ops/execution/runs/<run-id>/open-items.md`, create log |
+| `cc-iasd review add <scope-id>` | Compliance Auditor, Code Quality Auditor, Devil's Advocate | `ops/evidence/reviews/review_<timestamp>_<summary>.md`, create log |
+| `cc-iasd report <scope-ref>` | Planning Lead | `ops/evidence/reports/report_<timestamp>_<scope-id>.md`, create log |
+| `cc-iasd escalate <scope-ref>` | Planning Lead | `ops/evidence/reports/escalation_<timestamp>_<scope-id>.md`, create log |
+| `cc-iasd campaign mark-run <campaign-id> <run-id>` | Planning Lead | update campaign queue, campaign state, run state, create log |
+| `cc-iasd log event` | Planning Lead | `ops/evidence/logs/log_<timestamp>_<type>.md` |
+| `cc-iasd reference add historical\|external\|note <id>` | Planning Lead | `reference/historical-documents/<id>.md`, `reference/external/<id>.md`, or `reference/notes/<id>.md`; update `reference/INDEX.md`; create log |
+| `cc-iasd ops archive <layer> <id>` | Planning Lead | move ops artifact to the target layer's `archived/` directory, create log |
+
 ```text
 例:
 Planning Lead:
@@ -985,6 +1016,126 @@ BMAD-style target:
 6. role が output contract に従って結果を返す
 7. Planning Lead が結果を Evidence Bridge に接続する
 8. 継続 / remediation / escalation / completion を判断する
+```
+
+command visibility を前提にした role / command / artifact の標準シーケンスは次である。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant II as Ideal Interviewer
+  participant PL as Planning Lead
+  participant W as Worker
+  participant CA as Compliance Auditor
+  participant QA as Code Quality Auditor
+  participant DA as Devils Advocate
+  participant CLI as cc-iasd CLI
+  participant Product as product/
+  participant Ops as ops/
+  participant Evidence as ops/evidence/
+  participant Reference as reference/
+  participant Runtime as runtime/
+  participant Src as src/
+
+  Note over CLI,Runtime: Bootstrap commands are not role-visible: cc-iasd init, cc-iasd profile update
+  CLI-->>Product: init creates product/ scaffold
+  CLI-->>Ops: init creates ops/ scaffold
+  CLI-->>Runtime: profile update creates runtime/profile.md, plugins.yaml, adapters/*
+
+  II->>CLI: cc-iasd doctor
+  CLI-->>II: readiness result
+  II->>CLI: cc-iasd view current
+  CLI-->>II: stdout current view
+  II->>CLI: cc-iasd ideal add iNNN-ideal-id
+  CLI-->>Product: product/ideal/iNNN-ideal-id.md
+  CLI-->>Evidence: logs/log_timestamp_ideal-add.md
+  II->>CLI: cc-iasd product outdate ideal iNNN-ideal-id
+  CLI-->>Product: product/ideal/outdated/iNNN-ideal-id.md
+  CLI-->>Evidence: logs/log_timestamp_product-outdate.md
+
+  PL->>CLI: cc-iasd doctor
+  CLI-->>PL: readiness result
+  PL->>CLI: cc-iasd view current
+  CLI-->>PL: stdout current view
+  PL->>CLI: cc-iasd feature add fNNN-feature-id
+  CLI-->>Ops: scopes/features/fNNN-feature-id.md
+  CLI-->>Evidence: logs/log_timestamp_feature-add.md
+  PL->>CLI: cc-iasd roadmap add rNNN-roadmap-id
+  CLI-->>Ops: scopes/roadmaps/rNNN-roadmap-id.md
+  CLI-->>Evidence: logs/log_timestamp_roadmap-add.md
+  PL->>CLI: cc-iasd spec add sNNN-spec-id
+  CLI-->>Product: specs/sNNN-spec-id/{spec,plan,research,data-model,tasks}.md
+  CLI-->>Product: specs/sNNN-spec-id/contracts/README.md
+  CLI-->>Evidence: logs/log_timestamp_spec-add.md
+  PL->>CLI: cc-iasd product outdate spec sNNN-spec-id
+  CLI-->>Product: specs/outdated/sNNN-spec-id/
+  CLI-->>Evidence: logs/log_timestamp_product-outdate.md
+
+  PL->>CLI: cc-iasd campaign add cNNN-campaign-id
+  CLI-->>Ops: execution/campaigns/cNNN-campaign-id/{plan,state,queue,aggregate-report}.md
+  CLI-->>Evidence: logs/log_timestamp_campaign-add.md
+  PL->>CLI: cc-iasd run start cNNN-campaign-id
+  CLI-->>Ops: execution/runs/run_timestamp_cNNN-campaign-id/{plan,handoff,state,open-items,knowledge}.md
+  CLI-->>Ops: update execution/campaigns/cNNN-campaign-id/queue.md
+  CLI-->>Evidence: logs/log_timestamp_run.md
+
+  W->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
+  CLI-->>W: stdout run-local context
+  W->>Src: implement task in src/
+  W->>CLI: cc-iasd open-item add run_timestamp_cNNN-campaign-id
+  CLI-->>Ops: update execution/runs/run_timestamp_cNNN-campaign-id/open-items.md
+  CLI-->>Evidence: logs/log_timestamp_open-item-add.md
+
+  PL->>CLI: cc-iasd view scope fNNN-feature-id
+  CLI-->>PL: stdout scope boundary view
+  PL->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
+  CLI-->>PL: stdout run-local context
+  PL->>CLI: cc-iasd open-item resolve run_timestamp_cNNN-campaign-id oi-NNN
+  CLI-->>Ops: update execution/runs/run_timestamp_cNNN-campaign-id/open-items.md
+  CLI-->>Evidence: logs/log_timestamp_open-item-resolve.md
+
+  CA->>CLI: cc-iasd doctor
+  CLI-->>CA: readiness result
+  CA->>CLI: cc-iasd view evidence
+  CLI-->>CA: stdout evidence overview
+  CA->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
+  CLI-->>CA: stdout run-local context
+  CA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id
+  CLI-->>Evidence: reviews/review_timestamp_summary.md
+  CLI-->>Evidence: logs/log_timestamp_review-add.md
+
+  QA->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
+  CLI-->>QA: stdout run-local context
+  QA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id
+  CLI-->>Evidence: reviews/review_timestamp_summary.md
+  CLI-->>Evidence: logs/log_timestamp_review-add.md
+
+  DA->>CLI: cc-iasd view scope fNNN-feature-id
+  CLI-->>DA: stdout scope boundary view
+  DA->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
+  CLI-->>DA: stdout run-local context
+  DA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id
+  CLI-->>Evidence: reviews/review_timestamp_summary.md
+  CLI-->>Evidence: logs/log_timestamp_review-add.md
+
+  PL->>CLI: cc-iasd report run_timestamp_cNNN-campaign-id
+  CLI-->>Evidence: reports/report_timestamp_run_timestamp_cNNN-campaign-id.md
+  CLI-->>Evidence: logs/log_timestamp_report.md
+  PL->>CLI: cc-iasd escalate run_timestamp_cNNN-campaign-id
+  CLI-->>Evidence: reports/escalation_timestamp_run_timestamp_cNNN-campaign-id.md
+  CLI-->>Evidence: logs/log_timestamp_escalate.md
+  PL->>CLI: cc-iasd campaign mark-run cNNN-campaign-id run_timestamp_cNNN-campaign-id
+  CLI-->>Ops: update campaign queue, campaign state, run state
+  CLI-->>Evidence: logs/log_timestamp_campaign-mark-run.md
+  PL->>CLI: cc-iasd log event
+  CLI-->>Evidence: logs/log_timestamp_type.md
+  PL->>CLI: cc-iasd reference add historical|external|note reference-id
+  CLI-->>Reference: historical-documents|external|notes/reference-id.md
+  CLI-->>Reference: update INDEX.md
+  CLI-->>Evidence: logs/log_timestamp_reference-add.md
+  PL->>CLI: cc-iasd ops archive layer artifact-id
+  CLI-->>Ops: move artifact to archived/
+  CLI-->>Evidence: logs/log_timestamp_ops-archive.md
 ```
 
 重要なのは、role が勝手に次の role を呼び続ける構成にしないことである。
