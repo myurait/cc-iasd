@@ -49,8 +49,8 @@ WYSIWYG を持つリッチなメモ Web アプリ。
 ### 2.3 実行環境
 
 ```text
-作業ディレクトリ:
-  /tmp/cc-iasd-rich-memo-sim
+Scratch project-context:
+  <scratch-project-context>
 
 前提:
   cc-iasd の現行 CLI を使う
@@ -75,8 +75,8 @@ WYSIWYG を持つリッチなメモ Web アプリ。
 初期化する。
 
 ```bash
-node bin/cc-iasd.js init /tmp/cc-iasd-rich-memo-sim --doc-lang Japanese --dev-lang TypeScript --force
-node bin/cc-iasd.js doctor /tmp/cc-iasd-rich-memo-sim
+cc-iasd init <scratch-project-context> --doc-lang Japanese --dev-lang TypeScript --force
+cc-iasd doctor <scratch-project-context>
 ```
 
 product 入力を作成する。
@@ -88,37 +88,37 @@ product 入力を作成する。
 scope / progression / spec を作成する。
 
 ```bash
-node bin/cc-iasd.js feature add <feature-id> --kind <kind> --summary <summary> --pillar <pillar> --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js roadmap add <roadmap-id> --summary <summary> --goal <goal> --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js spec add <spec-id> --summary <summary> --root /tmp/cc-iasd-rich-memo-sim
+cc-iasd feature add <feature-id> --kind <kind> --summary <summary> --pillar <pillar> --root <scratch-project-context>
+cc-iasd roadmap add <roadmap-id> --summary <summary> --goal <goal> --root <scratch-project-context>
+cc-iasd spec add <spec-id> --summary <summary> --root <scratch-project-context>
 ```
 
 execution boundary を作成する。
 
 ```bash
-node bin/cc-iasd.js milestone add <milestone-id> \
+cc-iasd milestone add <milestone-id> \
   --summary <summary> \
   --feature <feature-id> \
   --roadmap <roadmap-id> \
   --spec <spec-id> \
   --tasks <spec-id> \
-  --root /tmp/cc-iasd-rich-memo-sim
+  --root <scratch-project-context>
 ```
 
 execution cycle、review、report を実行する。
 
 ```bash
-node bin/cc-iasd.js run cycle <milestone-id> --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js review add <milestone-id> --type <type> --summary <summary> --result <result> --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js report <milestone-id> --root /tmp/cc-iasd-rich-memo-sim
+cc-iasd run cycle <milestone-id> --root <scratch-project-context>
+cc-iasd review add <milestone-id> --type <type> --summary <summary> --result <result> --root <scratch-project-context>
+cc-iasd report <milestone-id> --root <scratch-project-context>
 ```
 
 検査する。
 
 ```bash
-node bin/cc-iasd.js doctor /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js view current --root /tmp/cc-iasd-rich-memo-sim
-node bin/cc-iasd.js view evidence --root /tmp/cc-iasd-rich-memo-sim
+cc-iasd doctor <scratch-project-context>
+cc-iasd view current --root <scratch-project-context>
+cc-iasd view evidence --root <scratch-project-context>
 ```
 
 ---
@@ -295,12 +295,12 @@ owner の分類観点:
 
 ---
 
-## 7. 保存済み実行例
+## 7. 実行結果の保存
 
-このシナリオの初回実行結果は、作業時点では次に保存した。
+このテストを実行した場合は、実行者が選んだ scratch project-context の外に依存しない形で overview を保存する。
 
 ```text
-/tmp/cc-iasd-rich-memo-sim/SIMULATION_OVERVIEW.md
+<scratch-project-context>/SIMULATION_OVERVIEW.md
 ```
 
-ただし `/tmp` は永続保存先ではない。再利用する場合は、この文書の手順に従って新しい project-context を作成する。
+保存する overview は、作成された artifact 一覧、実行したコマンド、未実装 artifact の扱い、feedback / debt routing の観察結果を記録する。特定のローカル絶対パスは正本化しない。
