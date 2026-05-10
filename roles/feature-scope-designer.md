@@ -19,7 +19,7 @@ Before designing a feature scope, read only the context needed for that scope.
 2. Relevant human decisions in `user/decisions.md`, if present.
 3. Existing related feature scopes in `ops/scopes/features/` to avoid duplicates and boundary conflicts.
 4. Relevant reference notes in `reference/` only when the Planning Lead or user points to them.
-5. `rules/development-process.md` sections for feature/debt backlog format and artifact creation authority.
+5. `rules/policies/development-process.md` sections for feature/debt backlog format and artifact creation authority.
 
 Do not read all roadmaps, all specs, all logs, or all reviews. Ask the Planning Lead for a narrowed context packet if the required scope is unclear.
 
@@ -76,7 +76,7 @@ Feature Scope Design Packet:
 ## Output Language
 
 - This role definition is written in English because it is a stable rule document.
-- Feature artifact content is project-progress documentation. Write it in the Documentation Language defined in `rules/language-policy.md`.
+- Feature artifact content is project-progress documentation. Write it in the Documentation Language defined in `rules/policies/language-policy.md`.
 - If language policy cannot be determined, ask the Planning Lead for a context packet instead of assuming English.
 
 ## Artifact Discipline

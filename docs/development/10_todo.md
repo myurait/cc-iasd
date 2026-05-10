@@ -17,8 +17,6 @@
 
 ```text
 TODO:
-- Ideal Interviewer の role source、runtime wrapper、allowed commands、output contract を定義する。
-- ideal interview packet の template、必須 section、Planning Lead への handoff summary 形式を定義する。
 - product/specs/ で plan.md 名を維持するか別名にするかを決める
 - feature と debt の artifact 境界を最終確認する
 ```
@@ -54,12 +52,8 @@ TODO:
 
 6. open item kind の語彙を実運用に合わせて再検討する。`spec-gap` のような自然発生語彙を許可値へ追加するか、既存語彙への mapping rule を明確にする。
 
-7. review artifact の充足条件を強化する。Reviewer、Base Commit、Review Notes、Implementation Response Plan が `TBD` のまま evidence として成立しないようにする。
+7. completion report から campaign / roadmap / feature へ進捗や残課題を戻す workflow を定義する。report 作成で止めず、planning layer へ反映する接続を明確にする。
 
-8. completion report から campaign / roadmap / feature へ進捗や残課題を戻す workflow を定義する。report 作成で止めず、planning layer へ反映する接続を明確にする。
+8. reference artifact の Canonical Successor 管理を強化する。reference が product / ops / rules に昇格した場合の追跡方法を定義する。
 
-9. reference artifact の Canonical Successor 管理を強化する。reference が product / ops / rules に昇格した場合の追跡方法を定義する。
-
-10. AI に渡す command surface を role 単位で最小化する。`cc-iasd --help` 相当の全 command set を各 role が読む必要のない runtime adapter または role-specific guide を検討する。
-
-11. 自走開始前の readiness check を定義する。ideal、roadmap、feature、spec、tasks、campaign plan、run selected tasks のどこが薄いかを判定し、interview / planning / implementation のどこへ戻るかを決められるようにする。
+9. 自走開始前の readiness check を定義する。ideal、roadmap、feature、spec、tasks、campaign plan、run selected tasks のどこが薄いかを判定し、interview / planning / implementation のどこへ戻るかを決められるようにする。

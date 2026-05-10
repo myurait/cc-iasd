@@ -80,7 +80,7 @@ Spec Design Packet:
 ## Output Language
 
 - This role definition is written in English because it is a stable rule document.
-- Spec artifact content is product and implementation documentation. Write it in the Documentation Language defined in `rules/language-policy.md`, except code identifiers and technical contract names that must remain in English.
+- Spec artifact content is product and implementation documentation. Write it in the Documentation Language defined in `rules/policies/language-policy.md`, except code identifiers and technical contract names that must remain in English.
 - If language policy cannot be determined, ask the Planning Lead for a context packet instead of assuming English.
 
 ## Artifact Discipline

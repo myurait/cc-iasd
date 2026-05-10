@@ -22,7 +22,7 @@ Usage:
   cc-iasd view scope <id> [--root <project-context-path>]
   cc-iasd view run <id> [--root <project-context-path>]
   cc-iasd log event --summary <text> [--type <type>] [--source-campaign <id>] [--source-run <id>] [--evidence <path>] [--root <project-context-path>]
-  cc-iasd review add <scope-id> --summary <text> --result <text> [--type light|full] [--root <project-context-path>]
+  cc-iasd review add <scope-id> --summary <text> --result <text> [--type light|full] [--reviewer <name>] [--base-commit <ref>] [--root <project-context-path>]
   cc-iasd open-item add <run-id> --kind <kind> --summary <text> [--target <ref>] [--root <project-context-path>]
   cc-iasd open-item resolve <run-id> <item-id> --resolution resolved|escalated|promoted|deferred [--target <ref>] [--summary <text>] [--root <project-context-path>]
   cc-iasd ideal add <id> --summary <text> [--root <project-context-path>]
@@ -44,6 +44,8 @@ Options:
   --type <type>           Log event type, or review type for review add
   --summary <text>        Log event or review summary
   --result <text>         Review result summary
+  --reviewer <name>       Reviewer name for review add. Default: cc-iasd review command
+  --base-commit <ref>     Base commit for review add. Default: not-recorded
   --resolution <status>   Open item resolution
   --status <status>       Campaign run status
   --target <ref>          Target artifact reference
@@ -78,6 +80,8 @@ const parseArgs = (argv) => {
     eventType: 'manual',
     eventSummary: '',
     reviewResult: '',
+    reviewer: '',
+    baseCommit: '',
     resolution: '',
     status: '',
     targetRef: '',
@@ -291,6 +295,12 @@ const parseArgs = (argv) => {
         break;
       case '--result':
         parsed.reviewResult = readValue(token);
+        break;
+      case '--reviewer':
+        parsed.reviewer = readValue(token);
+        break;
+      case '--base-commit':
+        parsed.baseCommit = readValue(token);
         break;
       case '--resolution':
         parsed.resolution = readValue(token);
@@ -916,14 +926,28 @@ const validateReviewFiles = async (root, issues) => {
     }
 
     const content = await readFile(path.join(root, file), 'utf8');
+    const reviewer = extractField(content, 'Reviewer');
+    const baseCommit = extractField(content, 'Base Commit');
     const reviewType = extractField(content, 'Review Type');
     const result = extractField(content, 'Result');
 
+    if (isUnset(reviewer)) {
+      issues.push(`Missing review reviewer in ${file}`);
+    }
+    if (isUnset(baseCommit)) {
+      issues.push(`Missing review base commit in ${file}`);
+    }
     if (!['light', 'full'].includes(reviewType)) {
       issues.push(`Invalid review type in ${file}: ${reviewType || 'missing'}`);
     }
     if (isUnset(result)) {
       issues.push(`Missing review result in ${file}`);
+    }
+    if (!hasAuthoredContent(extractMarkdownSection(content, 'Review Notes'))) {
+      issues.push(`Missing review notes in ${file}`);
+    }
+    if (!hasAuthoredContent(extractMarkdownSection(content, 'Implementation Response Plan'))) {
+      issues.push(`Missing review implementation response plan in ${file}`);
     }
   }
 };
@@ -1485,12 +1509,12 @@ const completionReportTemplate = ({ scopeId, scopePath, now, runStates, reviewFi
   '',
 ].join('\n');
 
-const reviewRecordTemplate = ({ scopeId, now, reviewType, summary, result }) => [
+const reviewRecordTemplate = ({ scopeId, now, reviewType, summary, result, reviewer, baseCommit }) => [
   `# Review: ${scopeId}`,
   '',
   `- Date: ${now}`,
-  '- Reviewer: TBD',
-  '- Base Commit: TBD',
+  `- Reviewer: ${reviewer || 'cc-iasd review command'}`,
+  `- Base Commit: ${baseCommit || 'not-recorded'}`,
   `- Scope: ${summary}`,
   `- Scope ID: ${scopeId}`,
   `- Review Type: ${reviewType}`,
@@ -1517,12 +1541,12 @@ const reviewRecordTemplate = ({ scopeId, now, reviewType, summary, result }) => 
   '',
   '## Review Notes',
   '',
-  '- TBD',
+  '- No additional review notes recorded by command.',
   '',
   '## Implementation Response Plan',
   '',
-  '- Planned Fixes: TBD',
-  '- Deferred Items: TBD',
+  '- Planned Fixes: none recorded.',
+  '- Deferred Items: none recorded.',
   '',
 ].join('\n');
 
@@ -1753,7 +1777,17 @@ const runtimeAdaptersReadmeTemplate = () => [
   '',
 ].join('\n');
 
-const roleRuntimeTemplate = ({ now, roleFiles }) => [
+const extractRoleCommandVisibility = (content) => {
+  const section = extractMarkdownSection(content, 'Command Visibility');
+  if (!section) return ['- No explicit command visibility section found.'];
+  const commands = section
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('- `cc-iasd '));
+  return commands.length ? commands : ['- No role-visible cc-iasd commands declared.'];
+};
+
+const roleRuntimeTemplate = ({ now, roleEntries }) => [
   '# Role Runtime Manifest',
   '',
   `- Generated At: ${now}`,
@@ -1762,11 +1796,22 @@ const roleRuntimeTemplate = ({ now, roleFiles }) => [
   '',
   '## Roles',
   '',
-  ...(roleFiles.length ? roleFiles.map((file) => `- ${path.basename(file, '.md')}: ${file}`) : ['- None']),
+  ...(roleEntries.length ? roleEntries.map((entry) => `- ${path.basename(entry.file, '.md')}: ${entry.file}`) : ['- None']),
+  '',
+  '## Command Visibility By Role',
+  '',
+  ...(roleEntries.length ? roleEntries.flatMap((entry) => [
+    `### ${path.basename(entry.file, '.md')}`,
+    '',
+    ...entry.commands,
+    '',
+  ]) : ['- None', '']),
   '',
   '## Generation Rule',
   '',
   'Role runtime metadata is generated from canonical role files under `rules/roles/`. Tool-specific wrappers may refer to these files, but the canonical role text remains under `rules/roles/`.',
+  '',
+  'Only expose the commands listed for the active role when preparing role-specific runtime context.',
   '',
 ].join('\n');
 
@@ -1780,10 +1825,15 @@ const writableRoleFiles = async (root) => {
 const writeRuntimeProfileFiles = async (root, args, created) => {
   const now = new Date().toISOString();
   const roleFiles = await writableRoleFiles(root);
+  const roleEntries = [];
+  for (const file of roleFiles) {
+    const content = await readOptionalText(root, file);
+    roleEntries.push({ file, commands: extractRoleCommandVisibility(content) });
+  }
   await writeText(root, 'runtime/profile.md', runtimeProfileTemplate({ now }), args, created);
   await writeText(root, 'runtime/plugins.yaml', runtimePluginsTemplate({ now }), args, created);
   await writeText(root, 'runtime/adapters/README.md', runtimeAdaptersReadmeTemplate(), args, created);
-  await writeText(root, 'runtime/adapters/role-runtime.md', roleRuntimeTemplate({ now, roleFiles }), args, created);
+  await writeText(root, 'runtime/adapters/role-runtime.md', roleRuntimeTemplate({ now, roleEntries }), args, created);
 };
 
 const updateProfile = async (args) => {
@@ -2525,6 +2575,8 @@ const addReview = async (args) => {
     reviewType: args.eventType,
     summary: args.eventSummary,
     result: args.reviewResult,
+    reviewer: args.reviewer,
+    baseCommit: args.baseCommit,
   }), { ...args, force: false }, created);
 
   await writeLogEvent(root, {

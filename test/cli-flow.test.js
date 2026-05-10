@@ -51,6 +51,8 @@ test('init creates the product ops reference structure', async () => {
     assert.equal(existsSync(path.join(root, 'reference/INDEX.md')), true);
     assert.equal(existsSync(path.join(root, 'rules/templates/open_item_template.md')), true);
     assert.equal(existsSync(path.join(root, 'rules/templates/campaign_queue_template.md')), true);
+    assert.equal(existsSync(path.join(root, 'rules/templates/ideal_interview_packet_template.md')), true);
+    assert.equal(existsSync(path.join(root, 'rules/roles/ideal-interviewer.md')), true);
 
     const projectPolicies = await readFile(path.join(root, 'rules/project-policies.md'), 'utf8');
     assert.match(projectPolicies, /## Source Projects/);
@@ -63,8 +65,14 @@ test('init creates the product ops reference structure', async () => {
     assert.match(agents, /Use `cc-iasd` commands/);
 
     const roleRuntime = await readFile(path.join(root, 'runtime/adapters/role-runtime.md'), 'utf8');
+    assert.match(roleRuntime, /rules\/roles\/ideal-interviewer\.md/);
     assert.match(roleRuntime, /rules\/roles\/worker\.md/);
     assert.match(roleRuntime, /rules\/roles\/planning-lead\.md/);
+    assert.match(roleRuntime, /## Command Visibility By Role/);
+    assert.match(roleRuntime, /### ideal-interviewer/);
+    assert.match(roleRuntime, /`cc-iasd ideal add <id>`/);
+    assert.match(roleRuntime, /### worker/);
+    assert.match(roleRuntime, /No explicit command visibility section found/);
 
     assert.equal(existsSync(path.join(root, 'ops/evidence-index.md')), false);
     assert.equal(existsSync(path.join(root, 'ops/milestones')), false);
@@ -157,6 +165,15 @@ test('artifact commands write to the new structure and keep doctor green', async
     const referenceIndex = await readFile(path.join(root, 'reference/INDEX.md'), 'utf8');
     assert.match(referenceIndex, /reference\/notes\/planning-note\.md: Planning note/);
 
+    const reviewId = readdirSync(path.join(root, 'ops/evidence/reviews')).find((name) => name.startsWith('review_'));
+    const review = await readFile(path.join(root, 'ops/evidence/reviews', reviewId), 'utf8');
+    assert.match(review, /- Reviewer: cc-iasd review command/);
+    assert.match(review, /- Base Commit: not-recorded/);
+    assert.doesNotMatch(review, /Reviewer: TBD/);
+    assert.doesNotMatch(review, /Base Commit: TBD/);
+    assert.doesNotMatch(review, /Review Notes\n\n- TBD/);
+    assert.doesNotMatch(review, /Planned Fixes: TBD/);
+
     runCli(['doctor', root]);
   } finally {
     await cleanup(root);
@@ -196,6 +213,44 @@ test('doctor rejects forbidden paths', async () => {
     assert.throws(
       () => runCli(['doctor', root]),
       /Forbidden path exists: ops\/logs/,
+    );
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('doctor rejects incomplete review evidence', async () => {
+  const root = await createContext();
+  try {
+    await writeFile(path.join(root, 'ops/evidence/reviews/review_20260510000000000_incomplete.md'), [
+      '# Review: incomplete',
+      '',
+      '- Date: 2026-05-10T00:00:00.000Z',
+      '- Reviewer: TBD',
+      '- Base Commit: TBD',
+      '- Scope: Incomplete review',
+      '- Scope ID: incomplete',
+      '- Review Type: light',
+      '- Result: passed',
+      '- Trigger: manual',
+      '',
+      '## Findings',
+      '',
+      '- None',
+      '',
+      '## Review Notes',
+      '',
+      '- TBD',
+      '',
+      '## Implementation Response Plan',
+      '',
+      '- Planned Fixes: TBD',
+      '- Deferred Items: TBD',
+      '',
+    ].join('\n'), 'utf8');
+    assert.throws(
+      () => runCli(['doctor', root]),
+      /Missing review reviewer in ops\/evidence\/reviews\/review_20260510000000000_incomplete\.md/,
     );
   } finally {
     await cleanup(root);

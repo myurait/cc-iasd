@@ -13,6 +13,7 @@ A role is a set of instructions that an AI agent adopts when performing a specif
 
 ## Available Roles
 
+- `ideal-interviewer.md` — elicits and maintains product ideal artifacts through direct human-facing interview. Owns ideal clarification before feature scope design.
 - `worker.md` — minimal-context implementer that focuses on coding, testing, and spawning review roles. Entry point for all implementation tasks.
 - `feature-scope-designer.md` — designs feature scopes and structured feature backlogs from product ideals and user decisions. Owns ideal-to-feature scope design.
 - `spec-designer.md` — designs Spec Kit-compatible spec packages from feature scopes and roadmap direction. Owns feature-to-spec package design.

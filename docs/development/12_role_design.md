@@ -726,6 +726,7 @@ runtime_targets:
 ```text
 初期 role set:
 - Planning Lead
+- Ideal Interviewer
 - Feature Scope Designer
 - Spec Designer
 - Worker
@@ -755,7 +756,26 @@ runtime_targets:
 - 人間判断が必要な事項を軽微判断として処理する
 ```
 
-### 7.2 Feature Scope Designer
+### 7.2 Ideal Interviewer
+
+```text
+責務:
+- ideal が欠落、薄い、矛盾、outdated の場合に Human と直接対話する
+- ideal interview packet を作成し、質問、回答、未決定事項を整理する
+- product/ideal/<ideal-id>.md の Product Ideal / Experience Principles / Boundaries を執筆する
+- Planning Lead 向け handoff summary を返す
+```
+
+```text
+禁止:
+- feature scope を設計する
+- roadmap の進行順序を決める
+- spec / plan / tasks を設計する
+- campaign / run の実行判断を行う
+- Human の未回答事項を product canon として確定する
+```
+
+### 7.3 Feature Scope Designer
 
 ```text
 責務:
@@ -773,7 +793,7 @@ runtime_targets:
 - product ideal を変更する
 ```
 
-### 7.3 Spec Designer
+### 7.4 Spec Designer
 
 ```text
 責務:
@@ -791,7 +811,7 @@ runtime_targets:
 - src/ を実装する
 ```
 
-### 7.4 Worker
+### 7.5 Worker
 
 ```text
 責務:
@@ -809,7 +829,7 @@ runtime_targets:
 - evidence を残さない実装完了宣言
 ```
 
-### 7.5 Reviewer
+### 7.6 Reviewer
 
 ```text
 責務:
@@ -826,7 +846,7 @@ runtime_targets:
 - unresolved risk を黙って許容する
 ```
 
-### 7.6 Auditor
+### 7.7 Auditor
 
 ```text
 責務:
@@ -1041,6 +1061,8 @@ model: sonnet
 ```
 
 必要なものは、呼び出し時の Role Context Packet で渡す。
+
+初期 runtime manifest は、各 role の `Command Visibility` section を抽出し、role-specific guide として提示する。これにより、各 role が `cc-iasd --help` 相当の全 command set を読む必要を減らす。これは command enforcement ではなく、runtime context を狭めるための adapter metadata である。
 
 ### 10.2 Codex / AGENTS.md target
 
@@ -1351,8 +1373,9 @@ role output は template に従わせる。
 ```text
 初期実装で作るもの:
 - role source schema
-- 6 role source
+- 7 role source
   - planning-lead
+  - ideal-interviewer
   - feature-scope-designer
   - spec-designer
   - worker
@@ -1464,8 +1487,8 @@ cc-iasd の role は、次の一点に集約される。
 ```text
 cc-iasd role
   = campaign/run 自走を安全に進めるために、
-    Planning Lead / Feature Scope Designer / Spec Designer / Worker / Reviewer / Auditor などの責務、権限、入力文脈、出力成果物、証跡要件を分離する、
+    Planning Lead / Ideal Interviewer / Feature Scope Designer / Spec Designer / Worker / Reviewer / Auditor などの責務、権限、入力文脈、出力成果物、証跡要件を分離する、
     source-defined な operation unit
 ```
 
-初期実装では、Planning Lead / Feature Scope Designer / Spec Designer / Worker / Reviewer / Auditor の6 role で、context 分離、authority 分離、output contract、Evidence Bridge 接続を成立させる。
+初期実装では、Planning Lead / Ideal Interviewer / Feature Scope Designer / Spec Designer / Worker / Reviewer / Auditor の7 role で、context 分離、authority 分離、output contract、Evidence Bridge 接続を成立させる。
