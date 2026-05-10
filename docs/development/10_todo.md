@@ -18,6 +18,8 @@
 ```text
 TODO:
 - Planning Lead が project progression、設計 task、role orchestration、人間向け communication を全て統括しており、責務過多になっていないか検討する。必要なら Planning Lead の責務を分割する。
+- Ideal Interviewer の role source、runtime wrapper、allowed commands、output contract を定義する。
+- ideal interview packet の template、必須 section、Planning Lead への handoff summary 形式を定義する。
 - product/specs/ で plan.md 名を維持するか別名にするかを決める
 - feature と debt の artifact 境界を最終確認する
 ```
@@ -32,6 +34,7 @@ TODO:
 - completion report が人間の後続判断に足りるか確認する
 - tasks 起点の implementation loop が run / evidence と過不足なく接続できるか確認する
 - 開発用資料を project-context doctor から切り離し、release 前の削除または別管理方針への委譲を扱う検査を別系統にする
+- Feature Scope Designer / Spec Designer の role prompt を強化するため、著名な agent / spec-driven development / planning assistant repository の designer・planner・architect 系 prompt を調査し、cc-iasd の role boundary、command visibility、artifact discipline に適合する要素だけを抽出する
 ```
 
 ---
