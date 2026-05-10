@@ -17,6 +17,7 @@
 
 ```text
 TODO:
+- Planning Lead が project progression、設計 task、role orchestration、人間向け communication を全て統括しており、責務過多になっていないか検討する。必要なら Planning Lead の責務を分割する。
 - product/specs/ で plan.md 名を維持するか別名にするかを決める
 - feature と debt の artifact 境界を最終確認する
 ```

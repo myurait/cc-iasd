@@ -513,7 +513,7 @@ command visibility は、role に渡す CLI surface を制限するための定�
 | `cc-iasd view current` | Ideal Interviewer, Planning Lead | stdout only; no canonical artifact |
 | `cc-iasd view scope <id>` | Planning Lead, Devil's Advocate | stdout only; scope boundary review view |
 | `cc-iasd view run <id>` | Planning Lead, Worker, Compliance Auditor, Code Quality Auditor, Devil's Advocate | stdout only; run-local context view |
-| `cc-iasd view evidence` | Planning Lead, Compliance Auditor | stdout only; evidence overview view |
+| `cc-iasd view evidence` | Planning Lead, Compliance Auditor, Devil's Advocate | stdout only; evidence overview view |
 | `cc-iasd ideal add <id>` | Ideal Interviewer | `product/ideal/<ideal-id>.md`, `ops/evidence/logs/log_<timestamp>_ideal-add.md` |
 | `cc-iasd product outdate ideal <id>` | Ideal Interviewer | move `product/ideal/<ideal-id>.md` to `product/ideal/outdated/<ideal-id>.md`, create log |
 | `cc-iasd feature add <id>` | Planning Lead | `ops/scopes/features/<feature-id>.md`, create log |
@@ -1020,9 +1020,14 @@ BMAD-style target:
 
 command visibility を前提にした role / command / artifact の標準シーケンスは次である。
 
+標準シーケンスでは `roadmap add` を `feature add` より前に置く。Roadmap は進行順序と判断単位を与える artifact であり、Feature はその中で扱う scope inventory である。Feature が先に発見されることはあり得るが、cc-iasd の標準フローでは、Human との roadmap consultation によって進行枠を定めてから feature を作成する。
+
+Human との対話は communication packet として表現する。ここには ideal interview packet、roadmap consultation packet、completion report packet、escalation packet を含む。Human decision は `user/decisions.md` に記録する。
+
 ```mermaid
 sequenceDiagram
   autonumber
+  participant H as Human
   participant II as Ideal Interviewer
   participant PL as Planning Lead
   participant W as Worker
@@ -1030,6 +1035,7 @@ sequenceDiagram
   participant QA as Code Quality Auditor
   participant DA as Devils Advocate
   participant CLI as cc-iasd CLI
+  participant UserDocs as user/
   participant Product as product/
   participant Ops as ops/
   participant Evidence as ops/evidence/
@@ -1042,27 +1048,45 @@ sequenceDiagram
   CLI-->>Ops: init creates ops/ scaffold
   CLI-->>Runtime: profile update creates runtime/profile.md, plugins.yaml, adapters/*
 
+  H->>PL: request governed development
+  PL->>CLI: cc-iasd doctor
+  CLI-->>PL: readiness result
+  PL->>CLI: cc-iasd view current
+  CLI-->>PL: stdout current view
+
+  alt Human initiates ideal definition
+    H->>II: invoke Ideal Interviewer
+  else Planning detects thin or missing ideal
+    PL->>II: invoke Ideal Interviewer for ideal refinement
+  end
   II->>CLI: cc-iasd doctor
   CLI-->>II: readiness result
   II->>CLI: cc-iasd view current
   CLI-->>II: stdout current view
+  II->>H: ideal interview packet
+  H-->>II: product intent response
   II->>CLI: cc-iasd ideal add iNNN-ideal-id
   CLI-->>Product: product/ideal/iNNN-ideal-id.md
   CLI-->>Evidence: logs/log_timestamp_ideal-add.md
+  II-->>Product: authored ideal content
   II->>CLI: cc-iasd product outdate ideal iNNN-ideal-id
   CLI-->>Product: product/ideal/outdated/iNNN-ideal-id.md
   CLI-->>Evidence: logs/log_timestamp_product-outdate.md
+  II-->>PL: ideal readiness result
 
   PL->>CLI: cc-iasd doctor
   CLI-->>PL: readiness result
   PL->>CLI: cc-iasd view current
   CLI-->>PL: stdout current view
-  PL->>CLI: cc-iasd feature add fNNN-feature-id
-  CLI-->>Ops: scopes/features/fNNN-feature-id.md
-  CLI-->>Evidence: logs/log_timestamp_feature-add.md
+  PL->>H: roadmap consultation packet
+  H-->>PL: roadmap decision
+  PL-->>UserDocs: record user/decisions.md
   PL->>CLI: cc-iasd roadmap add rNNN-roadmap-id
   CLI-->>Ops: scopes/roadmaps/rNNN-roadmap-id.md
   CLI-->>Evidence: logs/log_timestamp_roadmap-add.md
+  PL->>CLI: cc-iasd feature add fNNN-feature-id
+  CLI-->>Ops: scopes/features/fNNN-feature-id.md
+  CLI-->>Evidence: logs/log_timestamp_feature-add.md
   PL->>CLI: cc-iasd spec add sNNN-spec-id
   CLI-->>Product: specs/sNNN-spec-id/{spec,plan,research,data-model,tasks}.md
   CLI-->>Product: specs/sNNN-spec-id/contracts/README.md
@@ -1079,12 +1103,21 @@ sequenceDiagram
   CLI-->>Ops: update execution/campaigns/cNNN-campaign-id/queue.md
   CLI-->>Evidence: logs/log_timestamp_run.md
 
+  PL->>W: invoke Worker with run handoff
   W->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
   CLI-->>W: stdout run-local context
   W->>Src: implement task in src/
   W->>CLI: cc-iasd open-item add run_timestamp_cNNN-campaign-id
   CLI-->>Ops: update execution/runs/run_timestamp_cNNN-campaign-id/open-items.md
   CLI-->>Evidence: logs/log_timestamp_open-item-add.md
+  W->>QA: invoke Code Quality Auditor for task unit review
+  QA->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
+  CLI-->>QA: stdout run-local context
+  QA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id
+  CLI-->>Evidence: reviews/review_timestamp_summary.md
+  CLI-->>Evidence: logs/log_timestamp_review-add.md
+  QA-->>W: code quality findings
+  W-->>PL: implementation result with code quality review evidence
 
   PL->>CLI: cc-iasd view scope fNNN-feature-id
   CLI-->>PL: stdout scope boundary view
@@ -1094,6 +1127,7 @@ sequenceDiagram
   CLI-->>Ops: update execution/runs/run_timestamp_cNNN-campaign-id/open-items.md
   CLI-->>Evidence: logs/log_timestamp_open-item-resolve.md
 
+  PL->>CA: invoke Compliance Auditor for evidence and rule compliance
   CA->>CLI: cc-iasd doctor
   CLI-->>CA: readiness result
   CA->>CLI: cc-iasd view evidence
@@ -1103,34 +1137,41 @@ sequenceDiagram
   CA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id
   CLI-->>Evidence: reviews/review_timestamp_summary.md
   CLI-->>Evidence: logs/log_timestamp_review-add.md
+  CA-->>PL: compliance findings
 
-  QA->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
-  CLI-->>QA: stdout run-local context
-  QA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id
-  CLI-->>Evidence: reviews/review_timestamp_summary.md
-  CLI-->>Evidence: logs/log_timestamp_review-add.md
+  PL->>CLI: cc-iasd campaign mark-run cNNN-campaign-id run_timestamp_cNNN-campaign-id
+  CLI-->>Ops: update campaign queue, campaign state, run state
+  CLI-->>Evidence: logs/log_timestamp_campaign-mark-run.md
 
+  Note over PL,DA: Devil's Advocate review is a campaign completion condition
+  PL->>DA: invoke Devils Advocate for campaign completion review
   DA->>CLI: cc-iasd view scope fNNN-feature-id
   CLI-->>DA: stdout scope boundary view
   DA->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
   CLI-->>DA: stdout run-local context
+  DA->>CLI: cc-iasd view evidence
+  CLI-->>DA: stdout evidence overview
   DA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id
   CLI-->>Evidence: reviews/review_timestamp_summary.md
   CLI-->>Evidence: logs/log_timestamp_review-add.md
+  DA-->>PL: campaign completion findings
 
   PL->>CLI: cc-iasd report run_timestamp_cNNN-campaign-id
   CLI-->>Evidence: reports/report_timestamp_run_timestamp_cNNN-campaign-id.md
   CLI-->>Evidence: logs/log_timestamp_report.md
+  PL->>H: completion report packet
+  H-->>PL: confirmation or follow-up direction
+  PL-->>UserDocs: record user/decisions.md
   PL->>CLI: cc-iasd escalate run_timestamp_cNNN-campaign-id
   CLI-->>Evidence: reports/escalation_timestamp_run_timestamp_cNNN-campaign-id.md
   CLI-->>Evidence: logs/log_timestamp_escalate.md
-  PL->>CLI: cc-iasd campaign mark-run cNNN-campaign-id run_timestamp_cNNN-campaign-id
-  CLI-->>Ops: update campaign queue, campaign state, run state
-  CLI-->>Evidence: logs/log_timestamp_campaign-mark-run.md
+  PL->>H: escalation packet
+  H-->>PL: human decision
+  PL-->>UserDocs: record user/decisions.md
   PL->>CLI: cc-iasd log event
   CLI-->>Evidence: logs/log_timestamp_type.md
-  PL->>CLI: cc-iasd reference add historical|external|note reference-id
-  CLI-->>Reference: historical-documents|external|notes/reference-id.md
+  PL->>CLI: cc-iasd reference add historical/external/note reference-id
+  CLI-->>Reference: historical-documents/external/notes reference-id.md
   CLI-->>Reference: update INDEX.md
   CLI-->>Evidence: logs/log_timestamp_reference-add.md
   PL->>CLI: cc-iasd ops archive layer artifact-id
@@ -1144,8 +1185,10 @@ sequenceDiagram
 制御原則:
 - Planning Lead が role orchestration の中心
 - Worker は Reviewer を自己承認に使わない
+- Worker は task unit の完了前に Code Quality Auditor を呼び、review evidence と一緒に Planning Lead へ戻す
 - Reviewer は Auditor を代替しない
 - Auditor は Planning Lead を代替しない
+- Devil's Advocate review は campaign completion condition として扱い、campaign 完了扱いの前に Planning Lead が呼び出す
 ```
 
 ---
