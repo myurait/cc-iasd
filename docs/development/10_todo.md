@@ -22,6 +22,7 @@ TODO:
 - user/decisions.md がユーザー指摘や決定の蓄積先として肥大化しないよう、decisions を仕様正本や scope / execution 文書へ展開する flow を定義する
 - user/product-intent.md に置かれた内容を、適切なタイミングで product/ideal/ に吸収する flow を定義する
 - user/ 配下に保持すべき情報の種類、寿命、正本への展開先、残すべき一時情報の境界を整理する
+- 既存リポジトリに後から cc-iasd を導入する際の ideal と feature の初期定義方法を整理する
 ```
 
 ---
