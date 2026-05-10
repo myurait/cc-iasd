@@ -1151,22 +1151,25 @@ command visibility を前提にした role / command / artifact の標準シー�
 4. roadmap consultation and roadmap creation
 5. spec package authoring and spec design review
 6. campaign / run creation
-7. worker implementation and code quality review
-8. planning lead run reconciliation and compliance review
+7. worker implementation and Planning Lead-launched code quality review
+8. planning lead run reconciliation
 9. Devil's Advocate campaign completion review
-10. completion report or escalation
-11. lifecycle maintenance: log / reference / archive / outdate
+10. compliance review after Devil's Advocate
+11. completion report or escalation
+12. lifecycle maintenance: log / reference / archive / outdate
 ```
 
 標準フローでは `feature add` を `roadmap add` より前に置く。Feature は ideal に紐づく scope inventory / backlog であり、Roadmap はその feature scope から進行対象、順序、到達点を選択する artifact である。したがって、roadmap consultation は、既存または新規の feature scope を前提に「どの範囲をどの順序で進めるか」を Human と確認する。
 
-Design Reviewer は、Ideal Interviewer、Feature Scope Designer、Spec Designer が artifact を執筆した直後にだけ起動する。Planning Lead は設計本文を直接レビューしない。Planning Lead が受け取るのは、authoring role の handoff packet、Design Review Packet の要約、created artifact refs、unresolved decisions である。
+Design Reviewer は、Ideal Interviewer、Feature Scope Designer、Spec Designer が artifact を執筆した直後にだけ起動する。ただし nested subagent runtime は定義できないため、Design Reviewer を起動するのは常に Planning Lead である。Planning Lead は設計本文を直接レビューしない。Planning Lead が受け取るのは、authoring role の handoff packet、Design Review Packet の要約、created artifact refs、unresolved decisions である。
 
 Human との対話は communication packet として表現する。ここには ideal interview packet、roadmap consultation packet、completion report packet、escalation packet を含む。Human decision は `user/decisions.md` に記録する。
 
 ideal interview は、subagent の裏側作業ではなく Human と直接対話する user-facing phase として扱う。Planning Lead が ideal の欠落または薄さを検出した場合、Ideal Interviewer を配下 subagent として継続会話させるのではなく、対話権限を Ideal Interviewer role に handoff する。Ideal Interviewer は main role として Human に質問し、回答を ideal interview packet、ideal draft、unresolved decision、Planning Lead 向け handoff summary に整理して返す。
 
 この分離の目的は、Human との往復を Planning Lead の campaign / roadmap 文脈へ混在させないことである。context 分離は nested subagent ではなく、role handoff、communication packet、artifact boundary によって実現する。subagent を使う場合も、質問案の検査、不足観点の抽出、矛盾確認などの補助作業に限定し、Human に質問する責任は常に main role の Ideal Interviewer に置く。
+
+ランタイム制約として、subagent から別の subagent を起動する標準フローは定義しない。理想的な責務関係としては Designer から Design Reviewer、Worker から Code Quality Auditor を呼びたいが、実行ランタイム上は Planning Lead が各専門 role を起動し、context packet と handoff packet によって前段 role の成果を渡す。
 
 `product outdate` と `ops archive` は標準進行の中心ではなく lifecycle maintenance である。新規作成直後に outdate するのではなく、artifact が superseded / completed / retired になった時点で Planning Lead または該当 role が明示的に実行する。
 
@@ -1187,9 +1190,9 @@ sequenceDiagram
   participant DR as Design Reviewer
   participant PL as Planning Lead
   participant W as Worker
-  participant CA as Compliance Auditor
   participant QA as Code Quality Auditor
   participant DA as Devils Advocate
+  participant CA as Compliance Auditor
   participant CLI as cc-iasd CLI
   participant UserDocs as user/
   participant Product as product/
@@ -1209,6 +1212,7 @@ sequenceDiagram
   CLI-->>PL: readiness result
   PL->>CLI: cc-iasd view current
   CLI-->>PL: stdout current view
+  Note over PL,DA: Nested subagent runtime is not allowed. Planning Lead launches each specialist subagent.
 
   alt Human initiates ideal definition
     H->>II: invoke Ideal Interviewer
@@ -1225,14 +1229,15 @@ sequenceDiagram
   CLI-->>Product: product/ideal/iNNN-ideal-id.md
   CLI-->>Evidence: logs/log_timestamp_ideal-add.md
   II-->>Product: authored ideal content
-  II->>DR: invoke Design Reviewer with ideal context packet
+  II-->>PL: ideal handoff packet
+  PL->>DR: invoke Design Reviewer with ideal context packet
   DR->>CLI: cc-iasd doctor
   CLI-->>DR: readiness result
   DR->>CLI: cc-iasd review add iNNN-ideal-id
   CLI-->>Evidence: reviews/review_timestamp_summary.md
   CLI-->>Evidence: logs/log_timestamp_review-add.md
-  DR-->>II: Design Review Packet
-  II-->>PL: ideal readiness result with design review
+  DR-->>PL: Design Review Packet
+  Note over PL: merge ideal handoff and Design Review Packet
 
   PL->>CLI: cc-iasd doctor
   CLI-->>PL: readiness result
@@ -1247,7 +1252,8 @@ sequenceDiagram
   CLI-->>Ops: scopes/features/fNNN-feature-id.md
   CLI-->>Evidence: logs/log_timestamp_feature-add.md
   FSD-->>Ops: authored feature scope and backlog
-  FSD->>DR: invoke Design Reviewer with feature context packet
+  FSD-->>PL: Feature Scope Design Packet
+  PL->>DR: invoke Design Reviewer with feature context packet
   DR->>CLI: cc-iasd doctor
   CLI-->>DR: readiness result
   DR->>CLI: cc-iasd view scope fNNN-feature-id
@@ -1255,8 +1261,7 @@ sequenceDiagram
   DR->>CLI: cc-iasd review add fNNN-feature-id
   CLI-->>Evidence: reviews/review_timestamp_summary.md
   CLI-->>Evidence: logs/log_timestamp_review-add.md
-  DR-->>FSD: Design Review Packet
-  FSD-->>PL: Feature Scope Design Packet with design review
+  DR-->>PL: Design Review Packet
   PL->>H: roadmap consultation packet
   H-->>PL: roadmap decision
   PL-->>UserDocs: record user/decisions.md
@@ -1273,7 +1278,8 @@ sequenceDiagram
   CLI-->>Product: specs/sNNN-spec-id/contracts/README.md
   CLI-->>Evidence: logs/log_timestamp_spec-add.md
   SD-->>Product: authored spec package
-  SD->>DR: invoke Design Reviewer with spec context packet
+  SD-->>PL: Spec Design Packet
+  PL->>DR: invoke Design Reviewer with spec context packet
   DR->>CLI: cc-iasd doctor
   CLI-->>DR: readiness result
   DR->>CLI: cc-iasd view scope sNNN-spec-id
@@ -1281,8 +1287,7 @@ sequenceDiagram
   DR->>CLI: cc-iasd review add sNNN-spec-id
   CLI-->>Evidence: reviews/review_timestamp_summary.md
   CLI-->>Evidence: logs/log_timestamp_review-add.md
-  DR-->>SD: Design Review Packet
-  SD-->>PL: Spec Design Packet with design review
+  DR-->>PL: Design Review Packet
 
   PL->>CLI: cc-iasd campaign add cNNN-campaign-id
   CLI-->>Ops: execution/campaigns/cNNN-campaign-id/{plan,state,queue,aggregate-report}.md
@@ -1299,14 +1304,14 @@ sequenceDiagram
   W->>CLI: cc-iasd open-item add run_timestamp_cNNN-campaign-id
   CLI-->>Ops: update execution/runs/run_timestamp_cNNN-campaign-id/open-items.md
   CLI-->>Evidence: logs/log_timestamp_open-item-add.md
-  W->>QA: invoke Code Quality Auditor for task unit review
+  W-->>PL: implementation result
+  PL->>QA: invoke Code Quality Auditor for task unit review
   QA->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
   CLI-->>QA: stdout run-local context
   QA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id
   CLI-->>Evidence: reviews/review_timestamp_summary.md
   CLI-->>Evidence: logs/log_timestamp_review-add.md
-  QA-->>W: code quality findings
-  W-->>PL: implementation result with code quality review evidence
+  QA-->>PL: code quality findings
 
   PL->>CLI: cc-iasd view scope fNNN-feature-id
   CLI-->>PL: stdout scope boundary view
@@ -1315,18 +1320,6 @@ sequenceDiagram
   PL->>CLI: cc-iasd open-item resolve run_timestamp_cNNN-campaign-id oi-NNN
   CLI-->>Ops: update execution/runs/run_timestamp_cNNN-campaign-id/open-items.md
   CLI-->>Evidence: logs/log_timestamp_open-item-resolve.md
-
-  PL->>CA: invoke Compliance Auditor for evidence and rule compliance
-  CA->>CLI: cc-iasd doctor
-  CLI-->>CA: readiness result
-  CA->>CLI: cc-iasd view evidence
-  CLI-->>CA: stdout evidence overview
-  CA->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
-  CLI-->>CA: stdout run-local context
-  CA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id
-  CLI-->>Evidence: reviews/review_timestamp_summary.md
-  CLI-->>Evidence: logs/log_timestamp_review-add.md
-  CA-->>PL: compliance findings
 
   Note over PL,DA: Devil's Advocate review is a campaign completion condition
   PL->>DA: invoke Devils Advocate for campaign completion review
@@ -1340,6 +1333,18 @@ sequenceDiagram
   CLI-->>Evidence: reviews/review_timestamp_summary.md
   CLI-->>Evidence: logs/log_timestamp_review-add.md
   DA-->>PL: campaign completion findings
+
+  PL->>CA: invoke Compliance Auditor after Devil's Advocate
+  CA->>CLI: cc-iasd doctor
+  CLI-->>CA: readiness result
+  CA->>CLI: cc-iasd view evidence
+  CLI-->>CA: stdout evidence overview
+  CA->>CLI: cc-iasd view run run_timestamp_cNNN-campaign-id
+  CLI-->>CA: stdout run-local context
+  CA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id
+  CLI-->>Evidence: reviews/review_timestamp_summary.md
+  CLI-->>Evidence: logs/log_timestamp_review-add.md
+  CA-->>PL: compliance findings
 
   alt campaign completion accepted
     PL->>CLI: cc-iasd campaign mark-run cNNN-campaign-id run_timestamp_cNNN-campaign-id
@@ -1378,12 +1383,16 @@ sequenceDiagram
 ```text
 制御原則:
 - Planning Lead が role orchestration の中心
-- Ideal Interviewer / Feature Scope Designer / Spec Designer は、artifact authoring 直後の Design Reviewer だけを bounded post-authoring review として起動できる
+- Ideal Interviewer / Feature Scope Designer / Spec Designer は artifact authoring 後に handoff packet を Planning Lead へ返す
+- Design Reviewer は artifact authoring 直後の bounded post-authoring review として Planning Lead が起動する
 - Worker は Reviewer を自己承認に使わない
-- Worker は task unit の完了前に Code Quality Auditor を呼び、review evidence と一緒に Planning Lead へ戻す
+- Worker は task unit の実装結果を Planning Lead へ返す
+- Code Quality Auditor は Worker 完了直後の task-unit review として Planning Lead が起動する
 - Reviewer は Auditor を代替しない
 - Auditor は Planning Lead を代替しない
 - Devil's Advocate review は campaign completion condition として扱い、campaign 完了扱いの前に Planning Lead が呼び出す
+- Compliance Auditor は Devil's Advocate review の後に Planning Lead が呼び出す
+- subagent から別の subagent を起動する nested subagent runtime は標準フローとして定義しない
 ```
 
 ---

@@ -42,7 +42,7 @@ You must not use feature, roadmap, spec, campaign, run, report, escalation, arch
 - **Ideal artifact authoring** — Edit authored sections in `product/ideal/<ideal-id>.md`, especially Product Ideal, Experience Principles, and Boundaries.
 - **Outdate routing** — Use `cc-iasd product outdate ideal <id>` when a prior ideal is explicitly superseded.
 - **Decision capture** — Separate confirmed human decisions from unresolved questions.
-- **Design review routing** — Invoke Design Reviewer after authoring the ideal artifact and before returning the handoff to Planning Lead.
+- **Design review packet preparation** — Prepare a narrow Design Reviewer Context Packet for Planning Lead after authoring the ideal artifact.
 - **Handoff** — Return an Ideal Interview Handoff Packet to Planning Lead with only the information needed for downstream feature, roadmap, or spec work.
 
 ## Cannot Do
@@ -55,7 +55,8 @@ You must not use feature, roadmap, spec, campaign, run, report, escalation, arch
 - Do not archive or delete ops artifacts.
 - Do not infer product direction from implementation convenience.
 - Do not treat unanswered questions as confirmed ideal canon.
-- Do not skip Design Reviewer when an ideal artifact was created or materially changed.
+- Do not invoke Design Reviewer directly. Nested subagent runtime is not allowed; Planning Lead must launch Design Reviewer.
+- Do not claim design review is complete when an ideal artifact was created or materially changed. Return the review context packet to Planning Lead.
 
 ## Output Contract
 
@@ -74,13 +75,14 @@ Ideal Interview Handoff Packet:
 - Outdated Ideal Candidates:
 - Downstream Feature Inputs:
 - Risks If Planning Continues:
-- Design Review Result:
+- Design Review Required:
+- Design Reviewer Context Packet:
 - Recommended Next Role:
 ```
 
 ## Design Reviewer Context Packet
 
-When invoking Design Reviewer, pass only:
+For Planning Lead to invoke Design Reviewer, return only:
 
 - target ideal ID and path
 - interview trigger

@@ -44,7 +44,7 @@ You must not use ideal, feature, roadmap, campaign, run, report, escalation, arc
 - **Contract identification** — Use `contracts/README.md` to identify API, event, CLI, schema, or integration contracts. Add contract files only through the allowed artifact workflow for the project.
 - **Task design** — Write bounded implementation tasks in `tasks.md` that a Worker can execute through a run handoff.
 - **Gap reporting** — Return feature gaps, roadmap ambiguity, product decision gaps, and unresolved implementation choices to the Planning Lead.
-- **Design review routing** — Invoke Design Reviewer after authoring the spec package and before returning the handoff to Planning Lead.
+- **Design review packet preparation** — Prepare a narrow Design Reviewer Context Packet for Planning Lead after authoring the spec package.
 
 ## Cannot Do
 
@@ -55,7 +55,8 @@ You must not use ideal, feature, roadmap, campaign, run, report, escalation, arc
 - Do not archive, outdate, or delete managed artifacts.
 - Do not convert speculative ideas into tasks without a feature scope and roadmap direction.
 - Do not make product direction changes or human value judgments without returning them to the Planning Lead.
-- Do not skip Design Reviewer when a spec package was created or materially changed.
+- Do not invoke Design Reviewer directly. Nested subagent runtime is not allowed; Planning Lead must launch Design Reviewer.
+- Do not claim design review is complete when a spec package was created or materially changed. Return the review context packet to Planning Lead.
 
 ## Output Contract
 
@@ -76,13 +77,14 @@ Spec Design Packet:
 - Feature Scope Gaps:
 - Roadmap Ambiguities:
 - Boundary Risks:
-- Design Review Result:
+- Design Review Required:
+- Design Reviewer Context Packet:
 - Recommended Next Role:
 ```
 
 ## Design Reviewer Context Packet
 
-When invoking Design Reviewer, pass only:
+For Planning Lead to invoke Design Reviewer, return only:
 
 - target spec ID and paths
 - source feature excerpt

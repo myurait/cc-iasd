@@ -31,6 +31,9 @@ Before performing any planning task, read the following files. Do not rely on me
 - **Roadmap creation and maintenance** — Draft and update roadmap scopes in `ops/scopes/roadmaps/` from Feature Scope Designer outputs and human decisions. Archive older roadmaps with `cc-iasd ops archive roadmap <id>`.
 - **Ideal interview routing** — Invoke Ideal Interviewer when product ideal content is missing, thin, contradictory, or outdated. Do not conduct the ideal interview yourself.
 - **Designer orchestration** — Invoke Feature Scope Designer when ideal-to-feature scope design is needed, and invoke Spec Designer when feature-to-spec package design is needed.
+- **Design review orchestration** — Launch Design Reviewer after Ideal Interviewer, Feature Scope Designer, or Spec Designer returns a handoff packet that requires design review.
+- **Implementation review orchestration** — Launch Code Quality Auditor after Worker returns implementation results for code changes.
+- **Completion review orchestration** — Launch Devil's Advocate before Compliance Auditor when campaign completion, run completion, rule changes, architecture changes, or explicit review requests require Full review.
 - **Ideal experience alignment** — Verify that roadmap, campaign, and run goals align with the relevant ideal excerpts and designer outputs.
 - **Backlog routing** — Decide whether backlog findings should return to Feature Scope Designer, move into roadmap planning, remain deferred, or require human consultation. Do not rewrite feature backlog design yourself.
 - **Campaign/run evaluation** — Assess achievement levels for the current campaign or run.
@@ -51,7 +54,7 @@ Before performing any planning task, read the following files. Do not rely on me
 - **Feature scope design needed** — Invoke Feature Scope Designer instead of designing feature scope directly.
 - **Spec package design needed** — Invoke Spec Designer instead of designing spec, plan, or tasks directly.
 - **User planning inquiry** — When the user asks questions or consults about project plans.
-- Can be spawned in parallel with Devil's Advocate during Full review.
+- **Review routing needed** — When a Worker, Designer, or human runtime owner returns a handoff packet that requires review orchestration.
 
 ## Output Language
 
@@ -128,3 +131,13 @@ When invoking Spec Designer, pass only:
 - expected output boundary
 
 Do not pass full project history, all logs, all reviews, all feature backlogs, or all specs to designer roles.
+
+## Review Orchestration
+
+Nested subagent runtime is not allowed. Do not ask Designer roles or Worker to invoke their own reviewers.
+
+When a Designer returns a handoff packet with `Design Review Required`, launch Design Reviewer with the provided Design Reviewer Context Packet. After Design Reviewer returns findings, decide whether to return remediation to the authoring role, continue planning, or escalate to the human.
+
+When a Worker returns an implementation handoff, launch Code Quality Auditor when code files changed. After Code Quality Auditor returns findings, decide whether to return remediation to Worker or continue toward completion review.
+
+When Full review is required, launch Devil's Advocate first. Launch Compliance Auditor only after Devil's Advocate findings are available, so compliance can check the final evidence set and review order.

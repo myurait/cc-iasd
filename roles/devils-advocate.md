@@ -81,7 +81,8 @@ Check every changed file against all of the following.
 - **Feature or function completion** — When a feature (epic or supporting feature) is fully implemented.
 - **Campaign or run completion** — When a campaign or run is completed.
 - **Explicit user request** — When the user explicitly requests a review.
-- This role is spawned only during Full review. It is never spawned for Light review.
+- This role is launched only during Full review. It is never launched for Light review.
+- Planning Lead or the human runtime owner launches this role before Compliance Auditor.
 
 ## Output Language
 

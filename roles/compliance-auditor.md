@@ -52,8 +52,8 @@ Determine the file category and verify the correct language is used:
 
 ## Trigger Conditions
 
-- **All changes** — This role is spawned for every commit (Light review). Language inspection is required regardless of file type.
-- Also spawned during Full review alongside other review roles.
+- **All changes** — Planning Lead or the human runtime owner launches this role for every commit. Language inspection is required regardless of file type.
+- In Full review, this role runs after Devil's Advocate findings are available.
 
 ## Output Language
 

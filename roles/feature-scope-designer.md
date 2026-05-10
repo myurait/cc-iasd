@@ -41,7 +41,7 @@ You must not use roadmap, spec, campaign, run, report, escalation, archive, outd
 - **Backlog structuring** — Classify backlog items as feature, debt, or request, and include priority, experience tie, impact scope, blockers, design constraints, target destination, and source.
 - **Boundary control** — State what is included, excluded, deferred, or blocked so that later roadmap and spec work does not inherit ambiguity.
 - **Gap reporting** — Return ideal gaps, human decision gaps, duplicate-scope risks, and unresolved scope questions to the Planning Lead.
-- **Design review routing** — Invoke Design Reviewer after authoring the feature artifact and before returning the handoff to Planning Lead.
+- **Design review packet preparation** — Prepare a narrow Design Reviewer Context Packet for Planning Lead after authoring the feature artifact.
 
 ## Cannot Do
 
@@ -52,7 +52,8 @@ You must not use roadmap, spec, campaign, run, report, escalation, archive, outd
 - Do not edit `src/`.
 - Do not archive, outdate, or delete managed artifacts.
 - Do not make product direction changes or human value judgments without returning them to the Planning Lead.
-- Do not skip Design Reviewer when a feature artifact was created or materially changed.
+- Do not invoke Design Reviewer directly. Nested subagent runtime is not allowed; Planning Lead must launch Design Reviewer.
+- Do not claim design review is complete when a feature artifact was created or materially changed. Return the review context packet to Planning Lead.
 
 ## Output Contract
 
@@ -72,13 +73,14 @@ Feature Scope Design Packet:
 - Human Decisions Needed:
 - Ideal Gaps:
 - Boundary Risks:
-- Design Review Result:
+- Design Review Required:
+- Design Reviewer Context Packet:
 - Recommended Next Role:
 ```
 
 ## Design Reviewer Context Packet
 
-When invoking Design Reviewer, pass only:
+For Planning Lead to invoke Design Reviewer, return only:
 
 - target feature ID and path
 - relevant ideal excerpt

@@ -75,11 +75,11 @@
   <text x="1085" y="132" class="psub">subagent runtime</text>
 
   <rect x="1170" y="92" width="120" height="54" class="participant special"/>
-  <text x="1230" y="114" class="ptext">Compliance</text>
+  <text x="1230" y="114" class="ptext">Devil's Advocate</text>
   <text x="1230" y="132" class="psub">subagent runtime</text>
 
   <rect x="1315" y="92" width="120" height="54" class="participant special"/>
-  <text x="1375" y="114" class="ptext">Devil's Advocate</text>
+  <text x="1375" y="114" class="ptext">Compliance</text>
   <text x="1375" y="132" class="psub">subagent runtime</text>
 
   <rect x="1460" y="92" width="120" height="54" class="participant cli"/>
@@ -164,16 +164,16 @@
   <text x="940" y="537" class="mlabel">ideal add</text>
   <line x1="1528" y1="575" x2="1819" y2="575" class="message"/>
   <text x="1673" y="567" class="mlabel">ideal artifact + log</text>
-  <line x1="368" y1="610" x2="787" y2="610" class="message"/>
-  <text x="578" y="602" class="mlabel">request ideal review</text>
+  <line x1="220" y1="610" x2="787" y2="610" class="message"/>
+  <text x="504" y="602" class="mlabel">launch ideal design review</text>
   <line x1="803" y1="645" x2="1512" y2="645" class="message"/>
   <text x="1158" y="637" class="mlabel">review add</text>
   <line x1="1528" y1="675" x2="1819" y2="675" class="message"/>
   <text x="1673" y="667" class="mlabel">ideal review evidence</text>
-  <line x1="787" y1="710" x2="368" y2="710" class="return"/>
-  <text x="578" y="732" class="mlabel">Design Review Packet</text>
+  <line x1="787" y1="710" x2="220" y2="710" class="return"/>
+  <text x="504" y="732" class="mlabel">Design Review Packet</text>
   <line x1="352" y1="745" x2="220" y2="745" class="return"/>
-  <text x="286" y="767" class="mlabel">reviewed ideal handoff</text>
+  <text x="286" y="767" class="mlabel">ideal handoff packet</text>
 
   <!-- feature -->
   <line x1="220" y1="815" x2="497" y2="815" class="message"/>
@@ -182,16 +182,16 @@
   <text x="1012" y="842" class="mlabel">feature add</text>
   <line x1="1528" y1="880" x2="1819" y2="880" class="message"/>
   <text x="1673" y="872" class="mlabel">feature scope + backlog + log</text>
-  <line x1="513" y1="915" x2="787" y2="915" class="message"/>
-  <text x="650" y="907" class="mlabel">request feature boundary review</text>
+  <line x1="220" y1="915" x2="787" y2="915" class="message"/>
+  <text x="504" y="907" class="mlabel">launch feature boundary review</text>
   <line x1="803" y1="950" x2="1512" y2="950" class="message"/>
   <text x="1158" y="942" class="mlabel">view scope + review add</text>
   <line x1="1528" y1="980" x2="1819" y2="980" class="message"/>
   <text x="1673" y="972" class="mlabel">feature review evidence</text>
-  <line x1="787" y1="1015" x2="513" y2="1015" class="return"/>
-  <text x="650" y="1037" class="mlabel">Design Review Packet</text>
+  <line x1="787" y1="1015" x2="220" y2="1015" class="return"/>
+  <text x="504" y="1037" class="mlabel">Design Review Packet</text>
   <line x1="497" y1="1050" x2="220" y2="1050" class="return"/>
-  <text x="358" y="1072" class="mlabel">reviewed feature handoff</text>
+  <text x="358" y="1072" class="mlabel">feature handoff packet</text>
 
   <!-- roadmap and spec -->
   <line x1="220" y1="1105" x2="77" y2="1105" class="message"/>
@@ -209,16 +209,16 @@
   <text x="1085" y="1282" class="mlabel">spec add</text>
   <line x1="1528" y1="1320" x2="1819" y2="1320" class="message"/>
   <text x="1673" y="1312" class="mlabel">spec package + task list + log</text>
-  <line x1="658" y1="1355" x2="787" y2="1355" class="message"/>
-  <text x="722" y="1347" class="mlabel">request spec review</text>
+  <line x1="220" y1="1355" x2="787" y2="1355" class="message"/>
+  <text x="504" y="1347" class="mlabel">launch spec review</text>
   <line x1="803" y1="1390" x2="1512" y2="1390" class="message"/>
   <text x="1158" y="1382" class="mlabel">view scope + review add</text>
   <line x1="1528" y1="1420" x2="1819" y2="1420" class="message"/>
   <text x="1673" y="1412" class="mlabel">spec review evidence</text>
-  <line x1="787" y1="1455" x2="658" y2="1455" class="return"/>
-  <text x="722" y="1477" class="mlabel">Design Review Packet</text>
+  <line x1="787" y1="1455" x2="220" y2="1455" class="return"/>
+  <text x="504" y="1477" class="mlabel">Design Review Packet</text>
   <line x1="642" y1="1490" x2="220" y2="1490" class="return"/>
-  <text x="431" y="1512" class="mlabel">reviewed spec handoff</text>
+  <text x="431" y="1512" class="mlabel">spec handoff packet</text>
 
   <!-- execution and completion overview -->
   <rect x="894" y="1510" width="585" height="28" class="stage"/>
@@ -231,8 +231,8 @@
   <text x="576" y="1557" class="mlabel">launch implementation run</text>
   <line x1="948" y1="1595" x2="1644" y2="1595" class="message"/>
   <text x="1296" y="1587" class="mlabel">implement selected tasks in src/</text>
-  <line x1="948" y1="1625" x2="1077" y2="1625" class="message"/>
-  <text x="1012" y="1617" class="mlabel">task-unit review</text>
+  <line x1="220" y1="1625" x2="1077" y2="1625" class="message"/>
+  <text x="648" y="1617" class="mlabel">launch task-unit code quality review</text>
   <line x1="1093" y1="1660" x2="1512" y2="1660" class="message"/>
   <text x="1302" y="1652" class="mlabel">view run + review add</text>
   <line x1="1528" y1="1690" x2="1819" y2="1690" class="message"/>
@@ -240,25 +240,25 @@
   <line x1="1077" y1="1720" x2="948" y2="1720" class="return"/>
   <text x="1012" y="1742" class="mlabel">review findings</text>
   <line x1="932" y1="1755" x2="220" y2="1755" class="return"/>
-  <text x="576" y="1777" class="mlabel">implementation result with review evidence</text>
+  <text x="576" y="1777" class="mlabel">implementation result and review evidence</text>
 
   <line x1="220" y1="1810" x2="1222" y2="1810" class="message"/>
-  <text x="721" y="1802" class="mlabel">launch compliance review</text>
+  <text x="721" y="1802" class="mlabel">launch campaign completion review</text>
   <line x1="1238" y1="1845" x2="1512" y2="1845" class="message"/>
-  <text x="1375" y="1837" class="mlabel">doctor + view evidence + review add</text>
+  <text x="1375" y="1837" class="mlabel">view scope + run + evidence + review add</text>
   <line x1="1528" y1="1875" x2="1819" y2="1875" class="message"/>
-  <text x="1673" y="1867" class="mlabel">compliance review evidence</text>
+  <text x="1673" y="1867" class="mlabel">Devil's Advocate evidence</text>
   <line x1="1222" y1="1905" x2="220" y2="1905" class="return"/>
-  <text x="721" y="1927" class="mlabel">compliance findings</text>
+  <text x="721" y="1927" class="mlabel">completion findings</text>
 
   <line x1="220" y1="1940" x2="1367" y2="1940" class="message"/>
-  <text x="793" y="1932" class="mlabel">launch campaign completion review</text>
+  <text x="793" y="1932" class="mlabel">launch compliance review after Devil's Advocate</text>
   <line x1="1383" y1="1975" x2="1512" y2="1975" class="message"/>
-  <text x="1447" y="1967" class="mlabel">view scope + run + evidence + review add</text>
+  <text x="1447" y="1967" class="mlabel">doctor + view evidence + review add</text>
   <line x1="1528" y1="2005" x2="1819" y2="2005" class="message"/>
-  <text x="1673" y="1997" class="mlabel">Devil's Advocate evidence</text>
+  <text x="1673" y="1997" class="mlabel">compliance review evidence</text>
   <line x1="1367" y1="2035" x2="220" y2="2035" class="return"/>
-  <text x="793" y="2057" class="mlabel">completion findings</text>
+  <text x="793" y="2057" class="mlabel">compliance findings</text>
 
   <rect x="42" y="2065" width="230" height="28" class="stage"/>
   <text x="58" y="2084" class="stageText">alt: report or escalation</text>

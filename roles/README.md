@@ -14,11 +14,11 @@ A role is a set of instructions that an AI agent adopts when performing a specif
 ## Available Roles
 
 - `ideal-interviewer.md` — elicits and maintains product ideal artifacts through direct human-facing interview. Owns ideal clarification before feature scope design.
-- `worker.md` — minimal-context implementer that focuses on coding, testing, and spawning review roles. Entry point for all implementation tasks.
+- `worker.md` — minimal-context implementer that focuses on coding, testing, and returning implementation handoff packets. Entry point for implementation tasks.
 - `feature-scope-designer.md` — designs feature scopes and structured feature backlogs from product ideals and user decisions. Owns ideal-to-feature scope design.
 - `spec-designer.md` — designs Spec Kit-compatible spec packages from feature scopes and roadmap direction. Owns feature-to-spec package design.
 - `design-reviewer.md` — reviews newly authored ideal, feature, and spec artifacts with narrow context before Planning Lead receives them.
-- `compliance-auditor.md` — audits language policy compliance and document format quality across all changed files. Spawned for every commit (Light review).
-- `code-quality-auditor.md` — audits coding conventions, naming patterns, test design quality, and design document drift. Spawned when code files are changed (Light review).
-- `devils-advocate.md` — adversarial reviewer that enforces project rules as a strict guardian. Spawned during Full review (feature completion, campaign/run completion, architecture changes).
-- `planning-lead.md` — orchestration role for roadmap progression, campaign/run evaluation, designer handoff, and user-facing plan communication. Spawned on feature completion, campaign/run completion, and planning inquiries.
+- `compliance-auditor.md` — audits language policy compliance and document format quality across all changed files. Launched after required quality or Devil's Advocate review evidence is available.
+- `code-quality-auditor.md` — audits coding conventions, naming patterns, test design quality, and design document drift. Launched by Planning Lead or the human runtime owner when code files are changed.
+- `devils-advocate.md` — adversarial reviewer that enforces project rules as a strict guardian. Launched during Full review before Compliance Auditor.
+- `planning-lead.md` — orchestration role for roadmap progression, campaign/run evaluation, designer handoff, review routing, and user-facing plan communication.

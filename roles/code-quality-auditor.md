@@ -53,8 +53,8 @@ Check every changed code file against all of the following.
 
 ## Trigger Conditions
 
-- **Code changes** — This role is spawned when code files (`.ts`, `.tsx`, `.js`, `.jsx`, `.py`) are changed (Light review).
-- Also spawned during Full review alongside other review roles when code changes are in scope.
+- **Code changes** — Planning Lead or the human runtime owner launches this role when code files (`.ts`, `.tsx`, `.js`, `.jsx`, `.py`) are changed.
+- Also launched during Full review when code changes are in scope.
 
 ## Output Language
 

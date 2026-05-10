@@ -11,27 +11,29 @@ Step 1: Read       — Read existing code and related documents before making ch
 Step 2: Implement  — Write code following rules/policies/coding-conventions.md, pass the linter
 Step 3: Test       — Follow rules/policies/testing.md, new code requires tests, all tests must pass
 Step 4: Log        — Record a development log entry in ops/evidence/logs/
-Step 5: Review     — Spawn review roles (see Section 1.2)
+Step 5: Review     — Planning Lead or the human runtime owner launches review roles (see Section 1.2)
 Step 6: Commit     — Stage files explicitly by name (git add -A is prohibited),
                      do not commit runtime or generated files
 ```
 
 Missing documentation, review evidence, or log entries means the task is not complete.
 
-### 1.2 Review Spawn Rules
+### 1.2 Review Launch Rules
 
-Worker spawns review roles after completing Steps 1-4.
+Worker does not spawn review roles. Nested subagent runtime is not allowed.
 
-**Light review (every commit, 2 spawns):**
+After Worker completes Steps 1-4, the Worker returns an implementation handoff packet to the Planning Lead or human runtime owner. The Planning Lead or human runtime owner launches review roles from the parent runtime.
 
-- Compliance Auditor: always spawned for all changes
-- Code Quality Auditor: spawned when code files are changed
+**Light review (every commit):**
 
-**Full review (trigger conditions, up to 4 simultaneous spawns):**
+- Code Quality Auditor: launched when code files are changed
+- Compliance Auditor: launched after the required code quality or document review step
+
+**Full review (trigger conditions):**
 
 - Light review roles (as above)
-- Devil's Advocate: spawned under Trigger D conditions
-- Planning Lead: spawned under Trigger E conditions
+- Devil's Advocate: launched under Trigger D conditions before Compliance Auditor
+- Planning Lead: parent runtime owner for orchestration, or launched under Trigger E when the parent runtime is human-owned
 
 ### 1.3 Trigger Steps (conditional, only when triggered)
 
@@ -61,16 +63,17 @@ Worker spawns review roles after completing Steps 1-4.
 
 - When: Trigger B conditions, rule changes (`rules/policies/` or CLAUDE.md rule sections), feature completion, campaign or run completion, explicit user request
 - Additional steps:
-  1. Spawn Devil's Advocate
+  1. Planning Lead or the human runtime owner launches Devil's Advocate
   2. Create a review evidence file in `ops/evidence/reviews/` (see Section 2.4)
+  3. Launch Compliance Auditor after Devil's Advocate findings are available
 
 **Trigger E — Planning Lead:**
 
 - When: feature implementation completed, campaign or run completed, roadmap creation or update needed, user asks about project plans
 - Additional steps:
-  1. Spawn Planning Lead
+  1. Launch Planning Lead when the parent runtime is not already Planning Lead
   2. Planning Lead applies the roadmap consultation template or roadmap share template
-- May run in parallel with Trigger D
+- Coordinates Trigger D and compliance review ordering
 
 ### 1.4 Development Log Entry
 
@@ -91,13 +94,15 @@ Worker spawns review roles after completing Steps 1-4.
 - Scope: formal correctness (language policy, document format, naming, test design, design document divergence)
 - Evidence: results are recorded in the development log entry (no separate review evidence file)
 - Trigger: every change
+- Runtime order: Code Quality Auditor runs first when code files changed; Compliance Auditor runs after the relevant quality review evidence or document-only handoff is available
 
 **Full review:**
 
-- Roles: Devil's Advocate (+ Planning Lead when Trigger E applies)
+- Roles: Devil's Advocate + Compliance Auditor (+ Planning Lead when Trigger E applies and is not already parent runtime)
 - Scope: architecture judgment, design quality, cross-cutting consistency
 - Evidence: review evidence file in `ops/evidence/reviews/`
 - Trigger: Trigger D and/or Trigger E conditions only
+- Runtime order: Devil's Advocate runs before Compliance Auditor
 
 Full review does not re-check items covered by Light review. Responsibilities are separated, not duplicated.
 
@@ -275,13 +280,14 @@ Feature and debt items are managed in a single backlog file using tag-based inte
 
 These principles apply to all roles when communicating with the user or with other roles.
 
-### 9.0 Spawn-Origin Principle
+### 9.0 Runtime-Origin Principle
 
-All roles return their results to their spawn origin — the entity (user or role) that invoked them.
+All roles return their results to their runtime origin — the entity (user, Planning Lead, or human runtime owner) that invoked them.
 
-- If the spawn origin is the user, follow the message structure and reporting rules below.
-- If the spawn origin is another role (e.g., review roles spawned by Worker), return results in the format that role expects (e.g., findings with severity).
-- Critical findings that require user attention must be flagged, even if the spawn origin is another role.
+- If the runtime origin is the user, follow the message structure and reporting rules below.
+- If the runtime origin is Planning Lead, return results in the format that Planning Lead expects, such as handoff packets or findings with severity.
+- Worker and Designer roles must not invoke review roles directly. Planning Lead or the human runtime owner performs review routing.
+- Critical findings that require user attention must be flagged, even if the runtime origin is Planning Lead.
 
 ### 9.1 Message Structure
 
