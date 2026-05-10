@@ -1142,13 +1142,40 @@ BMAD-style target:
 
 command visibility を前提にした role / command / artifact の標準シーケンスは次である。
 
+標準フローは、次の順序を持つ。
+
+```text
+1. Bootstrap / readiness
+2. ideal interview and ideal design review
+3. feature scope authoring and feature design review
+4. roadmap consultation and roadmap creation
+5. spec package authoring and spec design review
+6. campaign / run creation
+7. worker implementation and code quality review
+8. planning lead run reconciliation and compliance review
+9. Devil's Advocate campaign completion review
+10. completion report or escalation
+11. lifecycle maintenance: log / reference / archive / outdate
+```
+
 標準フローでは `feature add` を `roadmap add` より前に置く。Feature は ideal に紐づく scope inventory / backlog であり、Roadmap はその feature scope から進行対象、順序、到達点を選択する artifact である。したがって、roadmap consultation は、既存または新規の feature scope を前提に「どの範囲をどの順序で進めるか」を Human と確認する。
+
+Design Reviewer は、Ideal Interviewer、Feature Scope Designer、Spec Designer が artifact を執筆した直後にだけ起動する。Planning Lead は設計本文を直接レビューしない。Planning Lead が受け取るのは、authoring role の handoff packet、Design Review Packet の要約、created artifact refs、unresolved decisions である。
 
 Human との対話は communication packet として表現する。ここには ideal interview packet、roadmap consultation packet、completion report packet、escalation packet を含む。Human decision は `user/decisions.md` に記録する。
 
 ideal interview は、subagent の裏側作業ではなく Human と直接対話する user-facing phase として扱う。Planning Lead が ideal の欠落または薄さを検出した場合、Ideal Interviewer を配下 subagent として継続会話させるのではなく、対話権限を Ideal Interviewer role に handoff する。Ideal Interviewer は main role として Human に質問し、回答を ideal interview packet、ideal draft、unresolved decision、Planning Lead 向け handoff summary に整理して返す。
 
 この分離の目的は、Human との往復を Planning Lead の campaign / roadmap 文脈へ混在させないことである。context 分離は nested subagent ではなく、role handoff、communication packet、artifact boundary によって実現する。subagent を使う場合も、質問案の検査、不足観点の抽出、矛盾確認などの補助作業に限定し、Human に質問する責任は常に main role の Ideal Interviewer に置く。
+
+`product outdate` と `ops archive` は標準進行の中心ではなく lifecycle maintenance である。新規作成直後に outdate するのではなく、artifact が superseded / completed / retired になった時点で Planning Lead または該当 role が明示的に実行する。
+
+標準フローの概要図は次にも置く。
+
+```text
+Mermaid source: docs/development/standard_flow_overview.mmd
+SVG: docs/development/standard_flow_overview.svg
+```
 
 ```mermaid
 sequenceDiagram
@@ -1205,9 +1232,6 @@ sequenceDiagram
   CLI-->>Evidence: reviews/review_timestamp_summary.md
   CLI-->>Evidence: logs/log_timestamp_review-add.md
   DR-->>II: Design Review Packet
-  II->>CLI: cc-iasd product outdate ideal iNNN-ideal-id
-  CLI-->>Product: product/ideal/outdated/iNNN-ideal-id.md
-  CLI-->>Evidence: logs/log_timestamp_product-outdate.md
   II-->>PL: ideal readiness result with design review
 
   PL->>CLI: cc-iasd doctor
@@ -1259,9 +1283,6 @@ sequenceDiagram
   CLI-->>Evidence: logs/log_timestamp_review-add.md
   DR-->>SD: Design Review Packet
   SD-->>PL: Spec Design Packet with design review
-  PL->>CLI: cc-iasd product outdate spec sNNN-spec-id
-  CLI-->>Product: specs/outdated/sNNN-spec-id/
-  CLI-->>Evidence: logs/log_timestamp_product-outdate.md
 
   PL->>CLI: cc-iasd campaign add cNNN-campaign-id
   CLI-->>Ops: execution/campaigns/cNNN-campaign-id/{plan,state,queue,aggregate-report}.md
@@ -1307,10 +1328,6 @@ sequenceDiagram
   CLI-->>Evidence: logs/log_timestamp_review-add.md
   CA-->>PL: compliance findings
 
-  PL->>CLI: cc-iasd campaign mark-run cNNN-campaign-id run_timestamp_cNNN-campaign-id
-  CLI-->>Ops: update campaign queue, campaign state, run state
-  CLI-->>Evidence: logs/log_timestamp_campaign-mark-run.md
-
   Note over PL,DA: Devil's Advocate review is a campaign completion condition
   PL->>DA: invoke Devils Advocate for campaign completion review
   DA->>CLI: cc-iasd view scope fNNN-feature-id
@@ -1324,18 +1341,24 @@ sequenceDiagram
   CLI-->>Evidence: logs/log_timestamp_review-add.md
   DA-->>PL: campaign completion findings
 
-  PL->>CLI: cc-iasd report run_timestamp_cNNN-campaign-id
-  CLI-->>Evidence: reports/report_timestamp_run_timestamp_cNNN-campaign-id.md
-  CLI-->>Evidence: logs/log_timestamp_report.md
-  PL->>H: completion report packet
-  H-->>PL: confirmation or follow-up direction
-  PL-->>UserDocs: record user/decisions.md
-  PL->>CLI: cc-iasd escalate run_timestamp_cNNN-campaign-id
-  CLI-->>Evidence: reports/escalation_timestamp_run_timestamp_cNNN-campaign-id.md
-  CLI-->>Evidence: logs/log_timestamp_escalate.md
-  PL->>H: escalation packet
-  H-->>PL: human decision
-  PL-->>UserDocs: record user/decisions.md
+  alt campaign completion accepted
+    PL->>CLI: cc-iasd campaign mark-run cNNN-campaign-id run_timestamp_cNNN-campaign-id
+    CLI-->>Ops: update campaign queue, campaign state, run state
+    CLI-->>Evidence: logs/log_timestamp_campaign-mark-run.md
+    PL->>CLI: cc-iasd report run_timestamp_cNNN-campaign-id
+    CLI-->>Evidence: reports/report_timestamp_run_timestamp_cNNN-campaign-id.md
+    CLI-->>Evidence: logs/log_timestamp_report.md
+    PL->>H: completion report packet
+    H-->>PL: confirmation or follow-up direction
+    PL-->>UserDocs: record user/decisions.md
+  else escalation required
+    PL->>CLI: cc-iasd escalate run_timestamp_cNNN-campaign-id
+    CLI-->>Evidence: reports/escalation_timestamp_run_timestamp_cNNN-campaign-id.md
+    CLI-->>Evidence: logs/log_timestamp_escalate.md
+    PL->>H: escalation packet
+    H-->>PL: human decision
+    PL-->>UserDocs: record user/decisions.md
+  end
   PL->>CLI: cc-iasd log event
   CLI-->>Evidence: logs/log_timestamp_type.md
   PL->>CLI: cc-iasd reference add historical/external/note reference-id
@@ -1345,6 +1368,9 @@ sequenceDiagram
   PL->>CLI: cc-iasd ops archive layer artifact-id
   CLI-->>Ops: move artifact to archived/
   CLI-->>Evidence: logs/log_timestamp_ops-archive.md
+  PL->>CLI: cc-iasd product outdate ideal/spec artifact-id
+  CLI-->>Product: move artifact to outdated/
+  CLI-->>Evidence: logs/log_timestamp_product-outdate.md
 ```
 
 重要なのは、role が勝手に次の role を呼び続ける構成にしないことである。

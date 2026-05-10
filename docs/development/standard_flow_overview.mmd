@@ -1,0 +1,30 @@
+flowchart TD
+  B["Bootstrap / profile update<br/>not role-visible"] --> R["Planning Lead<br/>doctor + view current"]
+  R --> I{"Ideal sufficient?"}
+  I -- "No" --> II["Ideal Interviewer<br/>human interview + ideal artifact"]
+  II --> DRI["Design Reviewer<br/>ideal review evidence"]
+  DRI --> R
+  I -- "Yes" --> FSD["Feature Scope Designer<br/>feature scope + backlog"]
+  FSD --> DRF["Design Reviewer<br/>feature review evidence"]
+  DRF --> ROAD["Planning Lead<br/>roadmap consultation + roadmap"]
+  ROAD --> SD["Spec Designer<br/>spec package + tasks"]
+  SD --> DRS["Design Reviewer<br/>spec review evidence"]
+  DRS --> CAMP["Planning Lead<br/>campaign + run"]
+  CAMP --> W["Worker<br/>implementation in src/"]
+  W --> QA["Code Quality Auditor<br/>task-unit review evidence"]
+  QA --> REC["Planning Lead<br/>run reconciliation + open-item routing"]
+  REC --> CA["Compliance Auditor<br/>evidence / rule compliance"]
+  CA --> DA["Devil's Advocate<br/>campaign completion condition"]
+  DA --> DEC{"Completion accepted?"}
+  DEC -- "Yes" --> REP["Completion Report<br/>human confirmation"]
+  DEC -- "No" --> ESC["Escalation Packet<br/>human decision"]
+  REP --> MAINT["Lifecycle maintenance<br/>log / reference / archive / outdate"]
+  ESC --> MAINT
+
+  Product[("product/<br/>ideal / specs")] -. "canon artifacts" .- II
+  Product -. "canon artifacts" .- SD
+  Ops[("ops/<br/>scopes / execution")] -. "scope and run artifacts" .- FSD
+  Ops -. "scope and run artifacts" .- CAMP
+  Evidence[("ops/evidence/<br/>logs / reviews / reports")] -. "evidence bridge" .- DRI
+  Evidence -. "evidence bridge" .- QA
+  Evidence -. "evidence bridge" .- CA

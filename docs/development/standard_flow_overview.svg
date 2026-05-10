@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1220" viewBox="0 0 1500 1220" role="img" aria-labelledby="title desc">
+  <title id="title">cc-iasd Standard Flow Overview</title>
+  <desc id="desc">Overview of the cc-iasd standard role flow from bootstrap through lifecycle maintenance.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#2f3a4a"/>
+    </marker>
+    <marker id="dashArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#7a8699"/>
+    </marker>
+    <style>
+      .bg { fill: #f7f8fb; }
+      .box { fill: #ffffff; stroke: #2f3a4a; stroke-width: 2; rx: 8; }
+      .decision { fill: #fff7df; stroke: #a66a00; stroke-width: 2; }
+      .store { fill: #eef5ff; stroke: #2d5f9a; stroke-width: 2; rx: 8; }
+      .line { stroke: #2f3a4a; stroke-width: 2.2; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #7a8699; stroke-width: 2; stroke-dasharray: 7 6; fill: none; marker-end: url(#dashArrow); }
+      .label { font: 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1f2937; text-anchor: middle; }
+      .small { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; text-anchor: middle; }
+      .edge { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; text-anchor: middle; }
+      .title { font: 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: 700; fill: #111827; text-anchor: middle; }
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1500" height="1220"/>
+  <text class="title" x="750" y="42">cc-iasd Standard Flow Overview</text>
+
+  <rect class="box" x="560" y="75" width="380" height="66"/>
+  <text class="label" x="750" y="101">Bootstrap / profile update</text>
+  <text class="small" x="750" y="124">not role-visible</text>
+
+  <rect class="box" x="560" y="175" width="380" height="66"/>
+  <text class="label" x="750" y="201">Planning Lead</text>
+  <text class="small" x="750" y="224">doctor + view current</text>
+
+  <polygon class="decision" points="750,282 910,337 750,392 590,337"/>
+  <text class="label" x="750" y="333">Ideal sufficient?</text>
+  <text class="small" x="750" y="354">readiness gate</text>
+
+  <rect class="box" x="110" y="440" width="360" height="72"/>
+  <text class="label" x="290" y="467">Ideal Interviewer</text>
+  <text class="small" x="290" y="490">human interview + ideal artifact</text>
+
+  <rect class="box" x="110" y="560" width="360" height="72"/>
+  <text class="label" x="290" y="587">Design Reviewer</text>
+  <text class="small" x="290" y="610">ideal review evidence</text>
+
+  <rect class="box" x="560" y="440" width="380" height="72"/>
+  <text class="label" x="750" y="467">Feature Scope Designer</text>
+  <text class="small" x="750" y="490">feature scope + backlog</text>
+
+  <rect class="box" x="560" y="560" width="380" height="72"/>
+  <text class="label" x="750" y="587">Design Reviewer</text>
+  <text class="small" x="750" y="610">feature review evidence</text>
+
+  <rect class="box" x="560" y="680" width="380" height="72"/>
+  <text class="label" x="750" y="707">Planning Lead</text>
+  <text class="small" x="750" y="730">roadmap consultation + roadmap</text>
+
+  <rect class="box" x="560" y="800" width="380" height="72"/>
+  <text class="label" x="750" y="827">Spec Designer</text>
+  <text class="small" x="750" y="850">spec package + tasks</text>
+
+  <rect class="box" x="560" y="920" width="380" height="72"/>
+  <text class="label" x="750" y="947">Design Reviewer</text>
+  <text class="small" x="750" y="970">spec review evidence</text>
+
+  <rect class="box" x="1010" y="440" width="360" height="72"/>
+  <text class="label" x="1190" y="467">Planning Lead</text>
+  <text class="small" x="1190" y="490">campaign + run</text>
+
+  <rect class="box" x="1010" y="560" width="360" height="72"/>
+  <text class="label" x="1190" y="587">Worker</text>
+  <text class="small" x="1190" y="610">implementation in src/</text>
+
+  <rect class="box" x="1010" y="680" width="360" height="72"/>
+  <text class="label" x="1190" y="707">Code Quality Auditor</text>
+  <text class="small" x="1190" y="730">task-unit review evidence</text>
+
+  <rect class="box" x="1010" y="800" width="360" height="72"/>
+  <text class="label" x="1190" y="827">Planning Lead</text>
+  <text class="small" x="1190" y="850">run reconciliation + open-item routing</text>
+
+  <rect class="box" x="1010" y="920" width="360" height="72"/>
+  <text class="label" x="1190" y="947">Compliance Auditor</text>
+  <text class="small" x="1190" y="970">evidence / rule compliance</text>
+
+  <rect class="box" x="1010" y="1040" width="360" height="72"/>
+  <text class="label" x="1190" y="1067">Devil's Advocate</text>
+  <text class="small" x="1190" y="1090">campaign completion condition</text>
+
+  <polygon class="decision" points="750,1040 930,1095 750,1150 570,1095"/>
+  <text class="label" x="750" y="1091">Completion accepted?</text>
+  <text class="small" x="750" y="1112">report or escalation</text>
+
+  <rect class="box" x="275" y="1045" width="250" height="64"/>
+  <text class="label" x="400" y="1071">Completion Report</text>
+  <text class="small" x="400" y="1094">human confirmation</text>
+
+  <rect class="box" x="275" y="1140" width="250" height="64"/>
+  <text class="label" x="400" y="1166">Escalation Packet</text>
+  <text class="small" x="400" y="1189">human decision</text>
+
+  <rect class="box" x="985" y="1140" width="385" height="64"/>
+  <text class="label" x="1177" y="1166">Lifecycle maintenance</text>
+  <text class="small" x="1177" y="1189">log / reference / archive / outdate</text>
+
+  <rect class="store" x="110" y="760" width="250" height="70"/>
+  <text class="label" x="235" y="787">product/</text>
+  <text class="small" x="235" y="810">ideal / specs</text>
+
+  <rect class="store" x="110" y="855" width="250" height="70"/>
+  <text class="label" x="235" y="882">ops/</text>
+  <text class="small" x="235" y="905">scopes / execution</text>
+
+  <rect class="store" x="110" y="950" width="250" height="70"/>
+  <text class="label" x="235" y="977">ops/evidence/</text>
+  <text class="small" x="235" y="1000">logs / reviews / reports</text>
+
+  <path class="line" d="M750 141 L750 175"/>
+  <path class="line" d="M750 241 L750 282"/>
+  <path class="line" d="M590 337 C430 337 290 360 290 440"/>
+  <text class="edge" x="435" y="327">No</text>
+  <path class="line" d="M290 512 L290 560"/>
+  <path class="line" d="M470 596 C540 596 540 230 750 241"/>
+  <path class="line" d="M750 392 L750 440"/>
+  <text class="edge" x="795" y="422">Yes</text>
+  <path class="line" d="M750 512 L750 560"/>
+  <path class="line" d="M750 632 L750 680"/>
+  <path class="line" d="M750 752 L750 800"/>
+  <path class="line" d="M750 872 L750 920"/>
+  <path class="line" d="M940 956 C1000 956 1000 476 1010 476"/>
+  <path class="line" d="M1190 512 L1190 560"/>
+  <path class="line" d="M1190 632 L1190 680"/>
+  <path class="line" d="M1190 752 L1190 800"/>
+  <path class="line" d="M1190 872 L1190 920"/>
+  <path class="line" d="M1190 992 L1190 1040"/>
+  <path class="line" d="M1010 1076 C950 1076 930 1095 930 1095"/>
+  <path class="line" d="M570 1095 L525 1077"/>
+  <text class="edge" x="535" y="1080">Yes</text>
+  <path class="line" d="M570 1095 C485 1095 420 1110 400 1140"/>
+  <text class="edge" x="505" y="1133">No</text>
+  <path class="line" d="M525 1077 C720 1077 870 1165 985 1172"/>
+  <path class="line" d="M525 1172 L985 1172"/>
+
+  <path class="dash" d="M360 795 C440 780 495 485 560 476"/>
+  <path class="dash" d="M360 795 C465 805 520 835 560 836"/>
+  <path class="dash" d="M360 890 C460 885 505 610 560 596"/>
+  <path class="dash" d="M360 890 C650 900 915 485 1010 476"/>
+  <path class="dash" d="M360 985 C520 1000 530 610 560 596"/>
+  <path class="dash" d="M360 985 C840 1010 960 705 1010 716"/>
+  <path class="dash" d="M360 985 C825 1085 970 950 1010 956"/>
+</svg>
