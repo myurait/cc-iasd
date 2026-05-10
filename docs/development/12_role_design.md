@@ -1020,7 +1020,7 @@ BMAD-style target:
 
 command visibility を前提にした role / command / artifact の標準シーケンスは次である。
 
-標準シーケンスでは `roadmap add` を `feature add` より前に置く。Roadmap は進行順序と判断単位を与える artifact であり、Feature はその中で扱う scope inventory である。Feature が先に発見されることはあり得るが、cc-iasd の標準フローでは、Human との roadmap consultation によって進行枠を定めてから feature を作成する。
+標準フローでは `feature add` を `roadmap add` より前に置く。Feature は ideal に紐づく scope inventory / backlog であり、Roadmap はその feature scope から進行対象、順序、到達点を選択する artifact である。したがって、roadmap consultation は、既存または新規の feature scope を前提に「どの範囲をどの順序で進めるか」を Human と確認する。
 
 Human との対話は communication packet として表現する。ここには ideal interview packet、roadmap consultation packet、completion report packet、escalation packet を含む。Human decision は `user/decisions.md` に記録する。
 
