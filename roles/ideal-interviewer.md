@@ -42,6 +42,7 @@ You must not use feature, roadmap, spec, campaign, run, report, escalation, arch
 - **Ideal artifact authoring** — Edit authored sections in `product/ideal/<ideal-id>.md`, especially Product Ideal, Experience Principles, and Boundaries.
 - **Outdate routing** — Use `cc-iasd product outdate ideal <id>` when a prior ideal is explicitly superseded.
 - **Decision capture** — Separate confirmed human decisions from unresolved questions.
+- **Design review routing** — Invoke Design Reviewer after authoring the ideal artifact and before returning the handoff to Planning Lead.
 - **Handoff** — Return an Ideal Interview Handoff Packet to Planning Lead with only the information needed for downstream feature, roadmap, or spec work.
 
 ## Cannot Do
@@ -54,6 +55,7 @@ You must not use feature, roadmap, spec, campaign, run, report, escalation, arch
 - Do not archive or delete ops artifacts.
 - Do not infer product direction from implementation convenience.
 - Do not treat unanswered questions as confirmed ideal canon.
+- Do not skip Design Reviewer when an ideal artifact was created or materially changed.
 
 ## Output Contract
 
@@ -72,8 +74,19 @@ Ideal Interview Handoff Packet:
 - Outdated Ideal Candidates:
 - Downstream Feature Inputs:
 - Risks If Planning Continues:
+- Design Review Result:
 - Recommended Next Role:
 ```
+
+## Design Reviewer Context Packet
+
+When invoking Design Reviewer, pass only:
+
+- target ideal ID and path
+- interview trigger
+- human answers or decision excerpts used to author the ideal
+- unresolved human decisions
+- specific risk that prompted ideal clarification
 
 ## Output Language
 

@@ -53,6 +53,7 @@ test('init creates the product ops reference structure', async () => {
     assert.equal(existsSync(path.join(root, 'rules/templates/campaign_queue_template.md')), true);
     assert.equal(existsSync(path.join(root, 'rules/templates/ideal_interview_packet_template.md')), true);
     assert.equal(existsSync(path.join(root, 'rules/roles/ideal-interviewer.md')), true);
+    assert.equal(existsSync(path.join(root, 'rules/roles/design-reviewer.md')), true);
 
     const projectPolicies = await readFile(path.join(root, 'rules/project-policies.md'), 'utf8');
     assert.match(projectPolicies, /## Source Projects/);
@@ -65,10 +66,13 @@ test('init creates the product ops reference structure', async () => {
     assert.match(agents, /Use `cc-iasd` commands/);
 
     const roleRuntime = await readFile(path.join(root, 'runtime/adapters/role-runtime.md'), 'utf8');
+    assert.match(roleRuntime, /rules\/roles\/design-reviewer\.md/);
     assert.match(roleRuntime, /rules\/roles\/ideal-interviewer\.md/);
     assert.match(roleRuntime, /rules\/roles\/worker\.md/);
     assert.match(roleRuntime, /rules\/roles\/planning-lead\.md/);
     assert.match(roleRuntime, /## Command Visibility By Role/);
+    assert.match(roleRuntime, /### design-reviewer/);
+    assert.match(roleRuntime, /`cc-iasd review add <scope-id>`/);
     assert.match(roleRuntime, /### ideal-interviewer/);
     assert.match(roleRuntime, /`cc-iasd ideal add <id>`/);
     assert.match(roleRuntime, /### worker/);
