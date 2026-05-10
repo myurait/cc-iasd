@@ -1,152 +1,271 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1220" viewBox="0 0 1500 1220" role="img" aria-labelledby="title desc">
-  <title id="title">cc-iasd Standard Flow Overview</title>
-  <desc id="desc">Overview of the cc-iasd standard role flow from bootstrap through lifecycle maintenance.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="2220" viewBox="0 0 2000 2220" role="img" aria-labelledby="title desc">
+  <title id="title">cc-iasd standard role flow sequence overview</title>
+  <desc id="desc">A sequence diagram showing parent runtime, human-facing runtime, subagent runtime roles, CLI artifact operations, src output, and managed artifacts.</desc>
   <defs>
-    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
-      <path d="M2,2 L10,6 L2,10 Z" fill="#2f3a4a"/>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f2937"/>
     </marker>
-    <marker id="dashArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
-      <path d="M2,2 L10,6 L2,10 Z" fill="#7a8699"/>
+    <marker id="returnArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
     </marker>
     <style>
-      .bg { fill: #f7f8fb; }
-      .box { fill: #ffffff; stroke: #2f3a4a; stroke-width: 2; rx: 8; }
-      .decision { fill: #fff7df; stroke: #a66a00; stroke-width: 2; }
-      .store { fill: #eef5ff; stroke: #2d5f9a; stroke-width: 2; rx: 8; }
-      .line { stroke: #2f3a4a; stroke-width: 2.2; fill: none; marker-end: url(#arrow); }
-      .dash { stroke: #7a8699; stroke-width: 2; stroke-dasharray: 7 6; fill: none; marker-end: url(#dashArrow); }
-      .label { font: 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1f2937; text-anchor: middle; }
-      .small { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; text-anchor: middle; }
-      .edge { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; text-anchor: middle; }
-      .title { font: 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: 700; fill: #111827; text-anchor: middle; }
+      .bg { fill: #ffffff; }
+      .title { font: 700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
+      .subtitle { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .participant { fill: #f8fafc; stroke: #334155; stroke-width: 1.4; rx: 8; }
+      .human { fill: #fefce8; stroke: #a16207; }
+      .main { fill: #eff6ff; stroke: #1d4ed8; }
+      .special { fill: #f0fdf4; stroke: #15803d; }
+      .cli { fill: #f5f3ff; stroke: #6d28d9; }
+      .src { fill: #ecfeff; stroke: #0e7490; }
+      .artifact { fill: #fff7ed; stroke: #c2410c; }
+      .ptext { font: 700 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; text-anchor: middle; }
+      .psub { font: 10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; text-anchor: middle; }
+      .lifeline { stroke: #94a3b8; stroke-width: 1.2; stroke-dasharray: 6 6; }
+      .act-main { fill: #dbeafe; stroke: #1d4ed8; stroke-width: 1.1; }
+      .act-human { fill: #fef9c3; stroke: #a16207; stroke-width: 1.1; }
+      .act-sub { fill: #dcfce7; stroke: #15803d; stroke-width: 1.1; }
+      .act-cli { fill: #ede9fe; stroke: #6d28d9; stroke-width: 1.1; }
+      .act-src { fill: #cffafe; stroke: #0e7490; stroke-width: 1.1; }
+      .act-art { fill: #ffedd5; stroke: #c2410c; stroke-width: 1.1; }
+      .message { stroke: #1f2937; stroke-width: 1.45; marker-end: url(#arrow); }
+      .return { stroke: #475569; stroke-width: 1.25; stroke-dasharray: 5 4; marker-end: url(#returnArrow); }
+      .mlabel { font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #111827; text-anchor: middle; }
+      .small { font: 10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .stage { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1; rx: 8; }
+      .stageText { font: 700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
     </style>
   </defs>
-  <rect class="bg" x="0" y="0" width="1500" height="1220"/>
-  <text class="title" x="750" y="42">cc-iasd Standard Flow Overview</text>
 
-  <rect class="box" x="560" y="75" width="380" height="66"/>
-  <text class="label" x="750" y="101">Bootstrap / profile update</text>
-  <text class="small" x="750" y="124">not role-visible</text>
+  <rect class="bg" width="2000" height="2220"/>
+  <text x="42" y="42" class="title">Standard Role Flow Sequence</text>
+  <text x="42" y="66" class="subtitle">The vertical bars are runtime activations: Planning Lead is the parent runtime, Ideal Interviewer is human-facing, and specialist roles are subagent runtimes.</text>
 
-  <rect class="box" x="560" y="175" width="380" height="66"/>
-  <text class="label" x="750" y="201">Planning Lead</text>
-  <text class="small" x="750" y="224">doctor + view current</text>
+  <!-- participant headers -->
+  <rect x="25" y="92" width="105" height="54" class="participant human"/>
+  <text x="77" y="114" class="ptext">Human</text>
+  <text x="77" y="132" class="psub">decision</text>
 
-  <polygon class="decision" points="750,282 910,337 750,392 590,337"/>
-  <text class="label" x="750" y="333">Ideal sufficient?</text>
-  <text class="small" x="750" y="354">readiness gate</text>
+  <rect x="155" y="92" width="115" height="54" class="participant main"/>
+  <text x="212" y="114" class="ptext">Planning Lead</text>
+  <text x="212" y="132" class="psub">parent runtime</text>
 
-  <rect class="box" x="110" y="440" width="360" height="72"/>
-  <text class="label" x="290" y="467">Ideal Interviewer</text>
-  <text class="small" x="290" y="490">human interview + ideal artifact</text>
+  <rect x="300" y="92" width="120" height="54" class="participant human"/>
+  <text x="360" y="114" class="ptext">Ideal Interviewer</text>
+  <text x="360" y="132" class="psub">human-facing</text>
 
-  <rect class="box" x="110" y="560" width="360" height="72"/>
-  <text class="label" x="290" y="587">Design Reviewer</text>
-  <text class="small" x="290" y="610">ideal review evidence</text>
+  <rect x="445" y="92" width="120" height="54" class="participant special"/>
+  <text x="505" y="114" class="ptext">Feature Designer</text>
+  <text x="505" y="132" class="psub">subagent runtime</text>
 
-  <rect class="box" x="560" y="440" width="380" height="72"/>
-  <text class="label" x="750" y="467">Feature Scope Designer</text>
-  <text class="small" x="750" y="490">feature scope + backlog</text>
+  <rect x="590" y="92" width="120" height="54" class="participant special"/>
+  <text x="650" y="114" class="ptext">Spec Designer</text>
+  <text x="650" y="132" class="psub">subagent runtime</text>
 
-  <rect class="box" x="560" y="560" width="380" height="72"/>
-  <text class="label" x="750" y="587">Design Reviewer</text>
-  <text class="small" x="750" y="610">feature review evidence</text>
+  <rect x="735" y="92" width="120" height="54" class="participant special"/>
+  <text x="795" y="114" class="ptext">Design Reviewer</text>
+  <text x="795" y="132" class="psub">subagent runtime</text>
 
-  <rect class="box" x="560" y="680" width="380" height="72"/>
-  <text class="label" x="750" y="707">Planning Lead</text>
-  <text class="small" x="750" y="730">roadmap consultation + roadmap</text>
+  <rect x="880" y="92" width="120" height="54" class="participant special"/>
+  <text x="940" y="114" class="ptext">Worker</text>
+  <text x="940" y="132" class="psub">subagent runtime</text>
 
-  <rect class="box" x="560" y="800" width="380" height="72"/>
-  <text class="label" x="750" y="827">Spec Designer</text>
-  <text class="small" x="750" y="850">spec package + tasks</text>
+  <rect x="1025" y="92" width="120" height="54" class="participant special"/>
+  <text x="1085" y="114" class="ptext">Code Quality</text>
+  <text x="1085" y="132" class="psub">subagent runtime</text>
 
-  <rect class="box" x="560" y="920" width="380" height="72"/>
-  <text class="label" x="750" y="947">Design Reviewer</text>
-  <text class="small" x="750" y="970">spec review evidence</text>
+  <rect x="1170" y="92" width="120" height="54" class="participant special"/>
+  <text x="1230" y="114" class="ptext">Compliance</text>
+  <text x="1230" y="132" class="psub">subagent runtime</text>
 
-  <rect class="box" x="1010" y="440" width="360" height="72"/>
-  <text class="label" x="1190" y="467">Planning Lead</text>
-  <text class="small" x="1190" y="490">campaign + run</text>
+  <rect x="1315" y="92" width="120" height="54" class="participant special"/>
+  <text x="1375" y="114" class="ptext">Devil's Advocate</text>
+  <text x="1375" y="132" class="psub">subagent runtime</text>
 
-  <rect class="box" x="1010" y="560" width="360" height="72"/>
-  <text class="label" x="1190" y="587">Worker</text>
-  <text class="small" x="1190" y="610">implementation in src/</text>
+  <rect x="1460" y="92" width="120" height="54" class="participant cli"/>
+  <text x="1520" y="114" class="ptext">cc-iasd CLI</text>
+  <text x="1520" y="132" class="psub">artifact ops</text>
 
-  <rect class="box" x="1010" y="680" width="360" height="72"/>
-  <text class="label" x="1190" y="707">Code Quality Auditor</text>
-  <text class="small" x="1190" y="730">task-unit review evidence</text>
+  <rect x="1600" y="92" width="105" height="54" class="participant src"/>
+  <text x="1652" y="114" class="ptext">src/</text>
+  <text x="1652" y="132" class="psub">implementation</text>
 
-  <rect class="box" x="1010" y="800" width="360" height="72"/>
-  <text class="label" x="1190" y="827">Planning Lead</text>
-  <text class="small" x="1190" y="850">run reconciliation + open-item routing</text>
+  <rect x="1735" y="92" width="185" height="54" class="participant artifact"/>
+  <text x="1827" y="114" class="ptext">product/ ops/ evidence/</text>
+  <text x="1827" y="132" class="psub">managed artifacts</text>
 
-  <rect class="box" x="1010" y="920" width="360" height="72"/>
-  <text class="label" x="1190" y="947">Compliance Auditor</text>
-  <text class="small" x="1190" y="970">evidence / rule compliance</text>
+  <!-- lifelines -->
+  <line x1="77" y1="146" x2="77" y2="2170" class="lifeline"/>
+  <line x1="212" y1="146" x2="212" y2="2170" class="lifeline"/>
+  <line x1="360" y1="146" x2="360" y2="2170" class="lifeline"/>
+  <line x1="505" y1="146" x2="505" y2="2170" class="lifeline"/>
+  <line x1="650" y1="146" x2="650" y2="2170" class="lifeline"/>
+  <line x1="795" y1="146" x2="795" y2="2170" class="lifeline"/>
+  <line x1="940" y1="146" x2="940" y2="2170" class="lifeline"/>
+  <line x1="1085" y1="146" x2="1085" y2="2170" class="lifeline"/>
+  <line x1="1230" y1="146" x2="1230" y2="2170" class="lifeline"/>
+  <line x1="1375" y1="146" x2="1375" y2="2170" class="lifeline"/>
+  <line x1="1520" y1="146" x2="1520" y2="2170" class="lifeline"/>
+  <line x1="1652" y1="146" x2="1652" y2="2170" class="lifeline"/>
+  <line x1="1827" y1="146" x2="1827" y2="2170" class="lifeline"/>
 
-  <rect class="box" x="1010" y="1040" width="360" height="72"/>
-  <text class="label" x="1190" y="1067">Devil's Advocate</text>
-  <text class="small" x="1190" y="1090">campaign completion condition</text>
+  <!-- runtime activation bars -->
+  <rect x="204" y="205" width="16" height="1945" class="act-main"/>
+  <text x="228" y="228" class="small">parent runtime</text>
+  <rect x="352" y="420" width="16" height="325" class="act-human"/>
+  <text x="375" y="445" class="small">human-facing runtime</text>
+  <rect x="497" y="815" width="16" height="235" class="act-sub"/>
+  <text x="520" y="838" class="small">subagent runtime</text>
+  <rect x="642" y="1255" width="16" height="235" class="act-sub"/>
+  <text x="665" y="1278" class="small">subagent runtime</text>
+  <rect x="787" y="610" width="16" height="100" class="act-sub"/>
+  <rect x="787" y="915" width="16" height="100" class="act-sub"/>
+  <rect x="787" y="1355" width="16" height="100" class="act-sub"/>
+  <text x="810" y="935" class="small">subagent runtime</text>
+  <rect x="932" y="1565" width="16" height="175" class="act-sub"/>
+  <text x="955" y="1588" class="small">subagent runtime</text>
+  <rect x="1077" y="1620" width="16" height="95" class="act-sub"/>
+  <text x="1100" y="1643" class="small">subagent runtime</text>
+  <rect x="1222" y="1810" width="16" height="100" class="act-sub"/>
+  <text x="1245" y="1833" class="small">subagent runtime</text>
+  <rect x="1367" y="1940" width="16" height="100" class="act-sub"/>
+  <text x="1390" y="1963" class="small">subagent runtime</text>
+  <rect x="1512" y="178" width="16" height="1945" class="act-cli"/>
+  <text x="1535" y="198" class="small">CLI artifact ops</text>
+  <rect x="1644" y="1588" width="16" height="95" class="act-src"/>
+  <text x="1668" y="1610" class="small">implementation output</text>
+  <rect x="1819" y="178" width="16" height="1945" class="act-art"/>
+  <text x="1843" y="198" class="small">managed artifact state</text>
 
-  <polygon class="decision" points="750,1040 930,1095 750,1150 570,1095"/>
-  <text class="label" x="750" y="1091">Completion accepted?</text>
-  <text class="small" x="750" y="1112">report or escalation</text>
+  <!-- setup -->
+  <rect x="1340" y="165" width="520" height="36" class="stage"/>
+  <text x="1358" y="188" class="stageText">Bootstrap/profile update is CLI-scaffolded setup, not role-visible runtime.</text>
+  <line x1="1528" y1="225" x2="1819" y2="225" class="message"/>
+  <text x="1673" y="217" class="mlabel">initialize scaffold</text>
 
-  <rect class="box" x="275" y="1045" width="250" height="64"/>
-  <text class="label" x="400" y="1071">Completion Report</text>
-  <text class="small" x="400" y="1094">human confirmation</text>
+  <!-- opening -->
+  <line x1="77" y1="255" x2="204" y2="255" class="message"/>
+  <text x="140" y="247" class="mlabel">development request</text>
+  <line x1="220" y1="295" x2="1512" y2="295" class="message"/>
+  <text x="865" y="287" class="mlabel">doctor + view current</text>
+  <line x1="1512" y1="325" x2="220" y2="325" class="return"/>
+  <text x="865" y="347" class="mlabel">readiness and current context</text>
 
-  <rect class="box" x="275" y="1140" width="250" height="64"/>
-  <text class="label" x="400" y="1166">Escalation Packet</text>
-  <text class="small" x="400" y="1189">human decision</text>
+  <!-- ideal -->
+  <rect x="42" y="370" width="235" height="28" class="stage"/>
+  <text x="58" y="389" class="stageText">alt: ideal missing or thin</text>
+  <line x1="220" y1="420" x2="352" y2="420" class="message"/>
+  <text x="286" y="412" class="mlabel">request ideal interview</text>
+  <line x1="368" y1="455" x2="77" y2="455" class="message"/>
+  <text x="222" y="447" class="mlabel">ideal interview packet</text>
+  <line x1="77" y1="490" x2="352" y2="490" class="return"/>
+  <text x="215" y="512" class="mlabel">product intent response</text>
+  <line x1="368" y1="545" x2="1512" y2="545" class="message"/>
+  <text x="940" y="537" class="mlabel">ideal add</text>
+  <line x1="1528" y1="575" x2="1819" y2="575" class="message"/>
+  <text x="1673" y="567" class="mlabel">ideal artifact + log</text>
+  <line x1="368" y1="610" x2="787" y2="610" class="message"/>
+  <text x="578" y="602" class="mlabel">request ideal review</text>
+  <line x1="803" y1="645" x2="1512" y2="645" class="message"/>
+  <text x="1158" y="637" class="mlabel">review add</text>
+  <line x1="1528" y1="675" x2="1819" y2="675" class="message"/>
+  <text x="1673" y="667" class="mlabel">ideal review evidence</text>
+  <line x1="787" y1="710" x2="368" y2="710" class="return"/>
+  <text x="578" y="732" class="mlabel">Design Review Packet</text>
+  <line x1="352" y1="745" x2="220" y2="745" class="return"/>
+  <text x="286" y="767" class="mlabel">reviewed ideal handoff</text>
 
-  <rect class="box" x="985" y="1140" width="385" height="64"/>
-  <text class="label" x="1177" y="1166">Lifecycle maintenance</text>
-  <text class="small" x="1177" y="1189">log / reference / archive / outdate</text>
+  <!-- feature -->
+  <line x1="220" y1="815" x2="497" y2="815" class="message"/>
+  <text x="358" y="807" class="mlabel">launch feature scope design</text>
+  <line x1="513" y1="850" x2="1512" y2="850" class="message"/>
+  <text x="1012" y="842" class="mlabel">feature add</text>
+  <line x1="1528" y1="880" x2="1819" y2="880" class="message"/>
+  <text x="1673" y="872" class="mlabel">feature scope + backlog + log</text>
+  <line x1="513" y1="915" x2="787" y2="915" class="message"/>
+  <text x="650" y="907" class="mlabel">request feature boundary review</text>
+  <line x1="803" y1="950" x2="1512" y2="950" class="message"/>
+  <text x="1158" y="942" class="mlabel">view scope + review add</text>
+  <line x1="1528" y1="980" x2="1819" y2="980" class="message"/>
+  <text x="1673" y="972" class="mlabel">feature review evidence</text>
+  <line x1="787" y1="1015" x2="513" y2="1015" class="return"/>
+  <text x="650" y="1037" class="mlabel">Design Review Packet</text>
+  <line x1="497" y1="1050" x2="220" y2="1050" class="return"/>
+  <text x="358" y="1072" class="mlabel">reviewed feature handoff</text>
 
-  <rect class="store" x="110" y="760" width="250" height="70"/>
-  <text class="label" x="235" y="787">product/</text>
-  <text class="small" x="235" y="810">ideal / specs</text>
+  <!-- roadmap and spec -->
+  <line x1="220" y1="1105" x2="77" y2="1105" class="message"/>
+  <text x="148" y="1097" class="mlabel">roadmap consultation packet</text>
+  <line x1="77" y1="1135" x2="204" y2="1135" class="return"/>
+  <text x="140" y="1157" class="mlabel">roadmap decision</text>
+  <line x1="220" y1="1175" x2="1512" y2="1175" class="message"/>
+  <text x="866" y="1167" class="mlabel">roadmap add</text>
+  <line x1="1528" y1="1205" x2="1819" y2="1205" class="message"/>
+  <text x="1673" y="1197" class="mlabel">roadmap artifact + log</text>
 
-  <rect class="store" x="110" y="855" width="250" height="70"/>
-  <text class="label" x="235" y="882">ops/</text>
-  <text class="small" x="235" y="905">scopes / execution</text>
+  <line x1="220" y1="1255" x2="642" y2="1255" class="message"/>
+  <text x="431" y="1247" class="mlabel">launch spec design</text>
+  <line x1="658" y1="1290" x2="1512" y2="1290" class="message"/>
+  <text x="1085" y="1282" class="mlabel">spec add</text>
+  <line x1="1528" y1="1320" x2="1819" y2="1320" class="message"/>
+  <text x="1673" y="1312" class="mlabel">spec package + task list + log</text>
+  <line x1="658" y1="1355" x2="787" y2="1355" class="message"/>
+  <text x="722" y="1347" class="mlabel">request spec review</text>
+  <line x1="803" y1="1390" x2="1512" y2="1390" class="message"/>
+  <text x="1158" y="1382" class="mlabel">view scope + review add</text>
+  <line x1="1528" y1="1420" x2="1819" y2="1420" class="message"/>
+  <text x="1673" y="1412" class="mlabel">spec review evidence</text>
+  <line x1="787" y1="1455" x2="658" y2="1455" class="return"/>
+  <text x="722" y="1477" class="mlabel">Design Review Packet</text>
+  <line x1="642" y1="1490" x2="220" y2="1490" class="return"/>
+  <text x="431" y="1512" class="mlabel">reviewed spec handoff</text>
 
-  <rect class="store" x="110" y="950" width="250" height="70"/>
-  <text class="label" x="235" y="977">ops/evidence/</text>
-  <text class="small" x="235" y="1000">logs / reviews / reports</text>
+  <!-- execution and completion overview -->
+  <rect x="894" y="1510" width="585" height="28" class="stage"/>
+  <text x="910" y="1529" class="stageText">execution and completion reviews</text>
+  <line x1="220" y1="1530" x2="1512" y2="1530" class="message"/>
+  <text x="866" y="1522" class="mlabel">campaign add + run start</text>
+  <line x1="1528" y1="1550" x2="1819" y2="1550" class="message"/>
+  <text x="1673" y="1542" class="mlabel">campaign/run artifacts + logs</text>
+  <line x1="220" y1="1565" x2="932" y2="1565" class="message"/>
+  <text x="576" y="1557" class="mlabel">launch implementation run</text>
+  <line x1="948" y1="1595" x2="1644" y2="1595" class="message"/>
+  <text x="1296" y="1587" class="mlabel">implement selected tasks in src/</text>
+  <line x1="948" y1="1625" x2="1077" y2="1625" class="message"/>
+  <text x="1012" y="1617" class="mlabel">task-unit review</text>
+  <line x1="1093" y1="1660" x2="1512" y2="1660" class="message"/>
+  <text x="1302" y="1652" class="mlabel">view run + review add</text>
+  <line x1="1528" y1="1690" x2="1819" y2="1690" class="message"/>
+  <text x="1673" y="1682" class="mlabel">code quality review evidence</text>
+  <line x1="1077" y1="1720" x2="948" y2="1720" class="return"/>
+  <text x="1012" y="1742" class="mlabel">review findings</text>
+  <line x1="932" y1="1755" x2="220" y2="1755" class="return"/>
+  <text x="576" y="1777" class="mlabel">implementation result with review evidence</text>
 
-  <path class="line" d="M750 141 L750 175"/>
-  <path class="line" d="M750 241 L750 282"/>
-  <path class="line" d="M590 337 C430 337 290 360 290 440"/>
-  <text class="edge" x="435" y="327">No</text>
-  <path class="line" d="M290 512 L290 560"/>
-  <path class="line" d="M470 596 C540 596 540 230 750 241"/>
-  <path class="line" d="M750 392 L750 440"/>
-  <text class="edge" x="795" y="422">Yes</text>
-  <path class="line" d="M750 512 L750 560"/>
-  <path class="line" d="M750 632 L750 680"/>
-  <path class="line" d="M750 752 L750 800"/>
-  <path class="line" d="M750 872 L750 920"/>
-  <path class="line" d="M940 956 C1000 956 1000 476 1010 476"/>
-  <path class="line" d="M1190 512 L1190 560"/>
-  <path class="line" d="M1190 632 L1190 680"/>
-  <path class="line" d="M1190 752 L1190 800"/>
-  <path class="line" d="M1190 872 L1190 920"/>
-  <path class="line" d="M1190 992 L1190 1040"/>
-  <path class="line" d="M1010 1076 C950 1076 930 1095 930 1095"/>
-  <path class="line" d="M570 1095 L525 1077"/>
-  <text class="edge" x="535" y="1080">Yes</text>
-  <path class="line" d="M570 1095 C485 1095 420 1110 400 1140"/>
-  <text class="edge" x="505" y="1133">No</text>
-  <path class="line" d="M525 1077 C720 1077 870 1165 985 1172"/>
-  <path class="line" d="M525 1172 L985 1172"/>
+  <line x1="220" y1="1810" x2="1222" y2="1810" class="message"/>
+  <text x="721" y="1802" class="mlabel">launch compliance review</text>
+  <line x1="1238" y1="1845" x2="1512" y2="1845" class="message"/>
+  <text x="1375" y="1837" class="mlabel">doctor + view evidence + review add</text>
+  <line x1="1528" y1="1875" x2="1819" y2="1875" class="message"/>
+  <text x="1673" y="1867" class="mlabel">compliance review evidence</text>
+  <line x1="1222" y1="1905" x2="220" y2="1905" class="return"/>
+  <text x="721" y="1927" class="mlabel">compliance findings</text>
 
-  <path class="dash" d="M360 795 C440 780 495 485 560 476"/>
-  <path class="dash" d="M360 795 C465 805 520 835 560 836"/>
-  <path class="dash" d="M360 890 C460 885 505 610 560 596"/>
-  <path class="dash" d="M360 890 C650 900 915 485 1010 476"/>
-  <path class="dash" d="M360 985 C520 1000 530 610 560 596"/>
-  <path class="dash" d="M360 985 C840 1010 960 705 1010 716"/>
-  <path class="dash" d="M360 985 C825 1085 970 950 1010 956"/>
+  <line x1="220" y1="1940" x2="1367" y2="1940" class="message"/>
+  <text x="793" y="1932" class="mlabel">launch campaign completion review</text>
+  <line x1="1383" y1="1975" x2="1512" y2="1975" class="message"/>
+  <text x="1447" y="1967" class="mlabel">view scope + run + evidence + review add</text>
+  <line x1="1528" y1="2005" x2="1819" y2="2005" class="message"/>
+  <text x="1673" y="1997" class="mlabel">Devil's Advocate evidence</text>
+  <line x1="1367" y1="2035" x2="220" y2="2035" class="return"/>
+  <text x="793" y="2057" class="mlabel">completion findings</text>
+
+  <rect x="42" y="2065" width="230" height="28" class="stage"/>
+  <text x="58" y="2084" class="stageText">alt: report or escalation</text>
+  <line x1="220" y1="2095" x2="1512" y2="2095" class="message"/>
+  <text x="866" y="2087" class="mlabel">campaign mark-run + report, or escalate</text>
+  <line x1="1528" y1="2125" x2="1819" y2="2125" class="message"/>
+  <text x="1673" y="2117" class="mlabel">report or escalation packet</text>
+  <line x1="204" y1="2155" x2="77" y2="2155" class="message"/>
+  <text x="140" y="2147" class="mlabel">human confirmation or decision</text>
 </svg>

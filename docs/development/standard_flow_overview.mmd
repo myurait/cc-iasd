@@ -1,30 +1,136 @@
-flowchart TD
-  B["Bootstrap / profile update<br/>not role-visible"] --> R["Planning Lead<br/>doctor + view current"]
-  R --> I{"Ideal sufficient?"}
-  I -- "No" --> II["Ideal Interviewer<br/>human interview + ideal artifact"]
-  II --> DRI["Design Reviewer<br/>ideal review evidence"]
-  DRI --> R
-  I -- "Yes" --> FSD["Feature Scope Designer<br/>feature scope + backlog"]
-  FSD --> DRF["Design Reviewer<br/>feature review evidence"]
-  DRF --> ROAD["Planning Lead<br/>roadmap consultation + roadmap"]
-  ROAD --> SD["Spec Designer<br/>spec package + tasks"]
-  SD --> DRS["Design Reviewer<br/>spec review evidence"]
-  DRS --> CAMP["Planning Lead<br/>campaign + run"]
-  CAMP --> W["Worker<br/>implementation in src/"]
-  W --> QA["Code Quality Auditor<br/>task-unit review evidence"]
-  QA --> REC["Planning Lead<br/>run reconciliation + open-item routing"]
-  REC --> CA["Compliance Auditor<br/>evidence / rule compliance"]
-  CA --> DA["Devil's Advocate<br/>campaign completion condition"]
-  DA --> DEC{"Completion accepted?"}
-  DEC -- "Yes" --> REP["Completion Report<br/>human confirmation"]
-  DEC -- "No" --> ESC["Escalation Packet<br/>human decision"]
-  REP --> MAINT["Lifecycle maintenance<br/>log / reference / archive / outdate"]
-  ESC --> MAINT
+sequenceDiagram
+  autonumber
+  actor H as Human
+  participant PL as Planning Lead<br/>parent runtime
+  participant II as Ideal Interviewer<br/>human-facing runtime
+  participant FSD as Feature Scope Designer<br/>subagent runtime
+  participant SD as Spec Designer<br/>subagent runtime
+  participant DR as Design Reviewer<br/>subagent runtime
+  participant W as Worker<br/>subagent runtime
+  participant QA as Code Quality Auditor<br/>subagent runtime
+  participant CA as Compliance Auditor<br/>subagent runtime
+  participant DA as Devil's Advocate<br/>subagent runtime
+  participant CLI as cc-iasd CLI
+  participant Src as src/
+  participant Art as product/ + ops/ + evidence/
 
-  Product[("product/<br/>ideal / specs")] -. "canon artifacts" .- II
-  Product -. "canon artifacts" .- SD
-  Ops[("ops/<br/>scopes / execution")] -. "scope and run artifacts" .- FSD
-  Ops -. "scope and run artifacts" .- CAMP
-  Evidence[("ops/evidence/<br/>logs / reviews / reports")] -. "evidence bridge" .- DRI
-  Evidence -. "evidence bridge" .- QA
-  Evidence -. "evidence bridge" .- CA
+  Note over CLI,Art: Bootstrap / profile update are CLI-scaffolded framework setup, not role-visible runtime.
+  CLI-->>Art: initialize project-context scaffold
+
+  H->>PL: governed development request
+  activate PL
+  PL->>CLI: doctor + view current
+  CLI-->>PL: readiness and current context
+
+  alt ideal is missing or too thin
+    PL->>II: request ideal interview
+    activate II
+    II->>H: Communication Packet for ideal clarification
+    H-->>II: product intent response
+    II->>CLI: ideal add
+    CLI-->>Art: product/ideal/iNNN-ideal-id.md + log
+    II->>DR: request ideal review
+    activate DR
+    Note over DR: subagent runtime activation
+    DR->>CLI: review add for ideal artifact
+    CLI-->>Art: evidence review
+    DR-->>II: Design Review Packet
+    deactivate DR
+    II-->>PL: reviewed ideal handoff
+    deactivate II
+  else ideal is sufficient
+    PL->>CLI: continue with existing ideal
+    CLI-->>PL: current ideal view
+  end
+
+  PL->>FSD: launch feature scope design
+  activate FSD
+  Note over FSD: subagent runtime activation
+  FSD->>CLI: feature add
+  CLI-->>Art: feature scope + backlog queue + log
+  FSD->>DR: request feature boundary review
+  activate DR
+  Note over DR: subagent runtime activation
+  DR->>CLI: view scope + review add
+  CLI-->>Art: feature design review evidence
+  DR-->>FSD: Design Review Packet
+  deactivate DR
+  FSD-->>PL: reviewed feature handoff
+  deactivate FSD
+
+  PL->>H: roadmap consultation packet
+  H-->>PL: roadmap decision
+  PL->>CLI: roadmap add
+  CLI-->>Art: roadmap artifact + log
+
+  PL->>SD: launch spec design
+  activate SD
+  Note over SD: subagent runtime activation
+  SD->>CLI: spec add
+  CLI-->>Art: spec package + task list + log
+  SD->>DR: request spec review
+  activate DR
+  Note over DR: subagent runtime activation
+  DR->>CLI: view scope + review add
+  CLI-->>Art: spec design review evidence
+  DR-->>SD: Design Review Packet
+  deactivate DR
+  SD-->>PL: reviewed spec handoff
+  deactivate SD
+
+  PL->>CLI: campaign add + run start
+  CLI-->>Art: campaign and run artifacts + logs
+  PL->>W: launch implementation run
+  activate W
+  Note over W: subagent runtime activation
+  W->>CLI: view run
+  CLI-->>W: selected tasks and runtime context
+  W->>Src: implement selected tasks
+  W->>CLI: open-item add when feedback escapes the run
+  CLI-->>Art: run-local open item
+  W->>QA: request task-unit code review
+  activate QA
+  Note over QA: subagent runtime activation
+  QA->>CLI: view run + review add
+  CLI-->>Art: code quality review evidence
+  QA-->>W: review findings
+  deactivate QA
+  W-->>PL: implementation result with review evidence
+  deactivate W
+
+  PL->>CLI: view scope + view run
+  CLI-->>PL: scoped execution context
+  PL->>CLI: open-item resolve when needed
+  CLI-->>Art: updated run-local open items
+
+  PL->>CA: launch compliance review
+  activate CA
+  Note over CA: subagent runtime activation
+  CA->>CLI: doctor + view evidence + review add
+  CLI-->>Art: compliance review evidence
+  CA-->>PL: compliance findings
+  deactivate CA
+
+  PL->>DA: launch campaign completion review
+  activate DA
+  Note over DA: subagent runtime activation
+  DA->>CLI: view scope + view run + view evidence + review add
+  CLI-->>Art: Devil's Advocate review evidence
+  DA-->>PL: campaign completion findings
+  deactivate DA
+
+  alt completion accepted
+    PL->>CLI: campaign mark-run + report
+    CLI-->>Art: updated campaign/run state + completion report
+    PL->>H: Completion Report Packet
+    H-->>PL: confirmation or follow-up direction
+  else human decision required
+    PL->>CLI: escalate
+    CLI-->>Art: escalation packet
+    PL->>H: Escalation Packet
+    H-->>PL: human decision
+  end
+
+  PL->>CLI: log / reference / archive / outdate lifecycle maintenance
+  CLI-->>Art: lifecycle maintenance evidence
+  deactivate PL

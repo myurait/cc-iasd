@@ -1170,7 +1170,7 @@ ideal interview は、subagent の裏側作業ではなく Human と直接対話
 
 `product outdate` と `ops archive` は標準進行の中心ではなく lifecycle maintenance である。新規作成直後に outdate するのではなく、artifact が superseded / completed / retired になった時点で Planning Lead または該当 role が明示的に実行する。
 
-標準フローの概要図は次にも置く。
+標準フローの概要シーケンス図は次にも置く。
 
 ```text
 Mermaid source: docs/development/standard_flow_overview.mmd
