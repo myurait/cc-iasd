@@ -36,6 +36,7 @@ TODO:
 - tasks 起点の implementation loop が run / evidence と過不足なく接続できるか確認する
 - 開発用資料を project-context doctor から切り離し、release 前の削除または別管理方針への委譲を扱う検査を別系統にする
 - Feature Scope Designer / Spec Designer の role prompt を強化するため、著名な agent / spec-driven development / planning assistant repository の designer・planner・architect 系 prompt を調査し、cc-iasd の role boundary、command visibility、artifact discipline に適合する要素だけを抽出する
+- spec 記述後から campaign add 後の段階で、Devil's Advocate と Compliance Auditor による計画レビューを実行するか検討する。実装後レビューとは別に、計画段階の整合性、漏れ、過剰実装リスク、証跡充足を確認する 2 段階 review flow として整理する
 ```
 
 ---
