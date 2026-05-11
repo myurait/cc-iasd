@@ -14,6 +14,8 @@ Planning backlog for feature-scoped work candidates that have not yet been cut i
 - Design Constraints: TBD
 - Target Destination: epic / supporting / roadmap / deferred
 - Source: user / planning / promoted-open-item / review
+- Human Decision Required: yes / no
+- Backtrack Target: none / ideal / feature / spec / human
 
 ## Backlog Items
 

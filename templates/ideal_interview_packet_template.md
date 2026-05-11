@@ -20,6 +20,9 @@
 - Product Ideal: TBD
 - Experience Principles: TBD
 - Boundaries: TBD
+- Non-Goals: TBD
+- Priority Signals: TBD
+- Downstream Feature Inputs: TBD
 
 ## Confirmed Decisions
 
@@ -33,8 +36,11 @@
 
 - Ideal ID: TBD
 - Ideal Path: TBD
+- Result: authored / human-decision-required / context-insufficient
 - Product Ideal Summary: TBD
 - Downstream Feature Inputs: TBD
+- Quality Requirements Checked: TBD
+- Human Decisions Required: TBD
 - Risks If Planning Continues: TBD
 - Recommended Next Role: Planning Lead
 

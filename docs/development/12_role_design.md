@@ -497,6 +497,42 @@ Role Context Packet:
 - escalation_conditions
 ```
 
+### 5.4.1 context compression recovery
+
+context compression 後、role は圧縮された会話要約だけを信頼してはならない。圧縮要約は、再読み込みのための ID、path、pending item を残すための handoff であり、artifact の正本ではない。
+
+各 role prompt は、context compression 後に必ず実行する context 読み込み command を明記する。
+
+```text
+role reload examples:
+- Planning Lead: cc-iasd doctor / cc-iasd view current / cc-iasd view scope <id> / cc-iasd view run <run-id> / cc-iasd view evidence
+- Ideal Interviewer: cc-iasd doctor / cc-iasd view current
+- Feature Scope Designer: cc-iasd doctor / cc-iasd view current
+- Spec Designer: cc-iasd doctor / cc-iasd view current
+- Design Reviewer: cc-iasd doctor / cc-iasd view current / cc-iasd view scope <id>
+- Worker: cc-iasd view run <run-id>
+- Code Quality Auditor: cc-iasd view run <run-id>
+- Devil's Advocate: cc-iasd view scope <id> / cc-iasd view run <run-id> / cc-iasd view evidence
+- Compliance Auditor: cc-iasd doctor / cc-iasd view evidence / cc-iasd view run <run-id>
+```
+
+context compression 時に絶対必須として残す文脈は次である。
+
+```text
+compression handoff required context:
+- active role
+- current phase
+- active artifact IDs and paths
+- active campaign ID and run ID
+- pending Backtrack Request / review finding / escalation / human decision
+- review mode
+- changed files and commands already run
+- evidence paths already created
+- next intended action
+```
+
+resumed role は、上記の ID と path を使って command と直接ファイル読みにより context を復元する。圧縮要約内の artifact 本文、review status、campaign queue、run state、human decision は正本として扱わない。
+
 ### 5.5 role ごとに tool permission を制限する
 
 role は、使える tool も分ける。

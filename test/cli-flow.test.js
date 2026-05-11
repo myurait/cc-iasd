@@ -76,7 +76,9 @@ test('init creates the product ops reference structure', async () => {
     assert.match(roleRuntime, /### ideal-interviewer/);
     assert.match(roleRuntime, /`cc-iasd ideal add <id>`/);
     assert.match(roleRuntime, /### worker/);
-    assert.match(roleRuntime, /No explicit command visibility section found/);
+    assert.match(roleRuntime, /`cc-iasd view run <run-id>`/);
+    assert.match(roleRuntime, /## Context Compression Recovery/);
+    assert.match(roleRuntime, /Compressed handoff must preserve active role/);
 
     assert.equal(existsSync(path.join(root, 'ops/evidence-index.md')), false);
     assert.equal(existsSync(path.join(root, 'ops/milestones')), false);
@@ -102,7 +104,7 @@ test('artifact commands write to the new structure and keep doctor green', async
     runCli(['open-item', 'add', runId, '--kind', 'follow-up', '--summary', 'Follow up A', '--target', 'ops/scopes/features/f001-feature-a.md', '--root', root]);
     runCli(['open-item', 'resolve', runId, 'oi-001', '--resolution', 'resolved', '--summary', 'Handled', '--root', root]);
     runCli(['campaign', 'mark-run', 'c001-campaign-a', runId, '--status', 'completed', '--root', root]);
-    runCli(['review', 'add', runId, '--type', 'light', '--summary', 'Review A', '--result', 'passed', '--root', root]);
+    runCli(['review', 'add', runId, '--type', 'full', '--review-mode', 'campaign-completion', '--summary', 'Review A', '--result', 'passed', '--root', root]);
     runCli(['escalate', runId, '--root', root]);
     runCli(['report', runId, '--root', root]);
     runCli(['reference', 'add', 'note', 'planning-note', '--summary', 'Planning note', '--root', root]);
@@ -133,12 +135,22 @@ test('artifact commands write to the new structure and keep doctor green', async
 
     const feature = await readFile(path.join(root, 'ops/scopes/features/f001-feature-a.md'), 'utf8');
     assert.match(feature, /## Backlog/);
+    assert.match(feature, /- Deferred: TBD/);
+    assert.match(feature, /- Blocked: TBD/);
+    assert.match(feature, /## Quality Requirements/);
 
     assert.equal(existsSync(path.join(root, 'product/specs/s001-spec-a/spec.md')), true);
     assert.equal(existsSync(path.join(root, 'product/specs/s001-spec-a/research.md')), true);
     assert.equal(existsSync(path.join(root, 'product/specs/s001-spec-a/data-model.md')), true);
     assert.equal(existsSync(path.join(root, 'product/specs/s001-spec-a/contracts/README.md')), true);
     assert.equal(existsSync(path.join(root, 'product/specs/s001-spec-a/tasks.md')), true);
+    const spec = await readFile(path.join(root, 'product/specs/s001-spec-a/spec.md'), 'utf8');
+    assert.match(spec, /## Source Trace/);
+    assert.match(spec, /## Quality Requirements/);
+    const specPlan = await readFile(path.join(root, 'product/specs/s001-spec-a/plan.md'), 'utf8');
+    assert.match(specPlan, /## Implementation Boundaries/);
+    const specTasks = await readFile(path.join(root, 'product/specs/s001-spec-a/tasks.md'), 'utf8');
+    assert.match(specTasks, /## Task Quality Requirements/);
 
     const runState = await readFile(path.join(root, 'ops/execution/runs', runId, 'state.md'), 'utf8');
     assert.match(runState, /## Open Items/);
@@ -173,6 +185,7 @@ test('artifact commands write to the new structure and keep doctor green', async
     const review = await readFile(path.join(root, 'ops/evidence/reviews', reviewId), 'utf8');
     assert.match(review, /- Reviewer: cc-iasd review command/);
     assert.match(review, /- Base Commit: not-recorded/);
+    assert.match(review, /- Review Mode: campaign-completion/);
     assert.doesNotMatch(review, /Reviewer: TBD/);
     assert.doesNotMatch(review, /Base Commit: TBD/);
     assert.doesNotMatch(review, /Review Notes\n\n- TBD/);

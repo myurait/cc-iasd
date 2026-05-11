@@ -24,6 +24,39 @@ Additionally, read the source files directly related to the task at hand.
 
 When a run handoff exists, read its Selected Tasks, Expected Local Outcome, Likely Touched Surfaces, Related Impact Surfaces, Non-Regression Focus, Escalation Triggers, Local Verification, and Open Item Routing sections before editing code.
 
+## Command Visibility
+
+You may use only these cc-iasd commands:
+
+- `cc-iasd view run <run-id>`
+- `cc-iasd open-item add <run-id>`
+- `cc-iasd log event`
+
+You must not use ideal, feature, roadmap, spec, campaign, report, escalation, archive, outdate, review, reference, profile, init, or product lifecycle commands unless the Planning Lead or human explicitly performs that operation outside your role.
+
+## Context Reload After Compression
+
+After context compression, reload run context before editing code, continuing implementation, adding an open item, or returning an implementation packet.
+
+Run this command:
+
+```bash
+cc-iasd view run <active-run-id>
+```
+
+Then reread the changed source files relevant to the task. Do not rely on compressed summaries for selected tasks, expected outcome, likely touched surfaces, related impact surfaces, non-regression focus, escalation triggers, local verification, or open item routing.
+
+The compressed handoff must preserve:
+
+- active role: Worker
+- active run ID
+- selected task IDs
+- files already changed
+- commands already run
+- tests already run and results
+- blockers and open items already discovered
+- whether a development log entry has been recorded
+
 ## Responsibilities
 
 Follow this sequence for every task:

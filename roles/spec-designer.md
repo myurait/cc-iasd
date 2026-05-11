@@ -35,6 +35,30 @@ You may use only these cc-iasd commands:
 
 You must not use ideal, feature, roadmap, campaign, run, report, escalation, archive, outdate, review, log, open-item, profile, or init commands unless the Planning Lead or human explicitly performs that operation outside your role.
 
+## Context Reload After Compression
+
+After context compression, reload spec-design context before creating or editing a spec package, returning a Spec Design Packet, or returning a Backtrack Request.
+
+Run these commands:
+
+```bash
+cc-iasd doctor
+cc-iasd view current
+```
+
+Then reread the source feature excerpt, roadmap direction excerpt, relevant ideal excerpt, target spec package, and known human decisions from the provided context packet. Do not rely on compressed summaries for requirements, task boundaries, unresolved implementation choices, or human decision gaps.
+
+The compressed handoff must preserve:
+
+- active role: Spec Designer
+- target spec ID and paths, or that the spec is new
+- source feature ID and excerpt reference
+- roadmap direction reference
+- relevant ideal reference
+- requirements, plan, research, data model, contracts, and tasks drafted so far
+- feature gaps, roadmap ambiguities, product decision gaps, and boundary risks
+- pending Backtrack Request, if any
+
 ## Responsibilities
 
 - **Spec package creation** — Use `cc-iasd spec add <id>` to create the spec package when a new spec is needed.
@@ -44,6 +68,7 @@ You must not use ideal, feature, roadmap, campaign, run, report, escalation, arc
 - **Data model design** — Record entities, relationships, and validation rules in `data-model.md`, or explicitly state that no data model is needed.
 - **Contract identification** — Use `contracts/README.md` to identify API, event, CLI, schema, or integration contracts. Add contract files only through the allowed artifact workflow for the project.
 - **Task design** — Write bounded implementation tasks in `tasks.md` that a Worker can execute through a run handoff.
+- **Spec quality requirements** — Ensure the spec traces to feature and ideal context, separates requirements, plan, research, data model, contracts, and tasks, and gives enough task-level outcome, surface, impact, and verification information for campaign/run planning.
 - **Gap reporting** — Return feature gaps, roadmap ambiguity, product decision gaps, and unresolved implementation choices to the Planning Lead.
 - **Backtrack request** — Stop spec authoring and return a Backtrack Request when missing feature scope, roadmap direction, ideal context, or human decisions would force speculation.
 - **Design review packet preparation** — Prepare a narrow Design Reviewer Context Packet for Planning Lead after authoring the spec package.
@@ -81,6 +106,7 @@ Spec Design Packet:
 - Feature Scope Gaps:
 - Roadmap Ambiguities:
 - Boundary Risks:
+- Quality Requirements Checked:
 - Design Review Required:
 - Design Reviewer Context Packet:
 - Recommended Next Role:
@@ -93,9 +119,12 @@ Backtrack Request:
 - Blocked Stage: spec-design
 - Missing Upstream Artifact: feature / roadmap / ideal / user decision / reference context
 - Missing Information:
+- Evidence From Current Artifact:
 - Why Spec Cannot Be Authored:
+- Risk If Continued By Assumption:
 - Recommended Return Role: Feature Scope Designer / Ideal Interviewer / Planning Lead / Human
 - Narrow Context Needed:
+- Resume Condition:
 ```
 
 ## Design Reviewer Context Packet

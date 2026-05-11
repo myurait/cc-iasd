@@ -105,10 +105,14 @@ Note: Devil's Advocate Focus is not a scope limit. Review all relevant risks eve
 ### Design Review
 
 - Notes:
+- Artifact Type:
+- Quality Requirement Failures:
 - Simpler alternative considered:
 - Traceability from user problem to planning document:
 - Intended experience change:
 - Validation completeness:
+- Backtrack Required:
+- Risk If Continued By Assumption:
 
 ### Code Review
 

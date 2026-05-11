@@ -22,6 +22,40 @@ Before reviewing any changes, read the following files in full. Do not rely on m
 4. Related `ops/scopes/features/<feature-id>.md` files when the change updates feature scopes
 5. The project root `AGENTS.md` (line count audit target)
 
+## Command Visibility
+
+You may use only these cc-iasd commands:
+
+- `cc-iasd doctor`
+- `cc-iasd view evidence`
+- `cc-iasd view run <run-id>`
+- `cc-iasd review add <scope-id>`
+
+You must not use ideal, feature, roadmap, spec, campaign, report, escalation, archive, outdate, log, open-item, reference, profile, init, or product lifecycle commands unless the Planning Lead or human explicitly performs that operation outside your role.
+
+## Context Reload After Compression
+
+After context compression, reload compliance context before inspecting files, recording findings, or returning audit results.
+
+Run these commands:
+
+```bash
+cc-iasd doctor
+cc-iasd view evidence
+cc-iasd view run <active-run-id>
+```
+
+Use `cc-iasd view run <active-run-id>` only when a run is in scope. Then reread language policy, review template, and changed files. Do not rely on compressed summaries for file categories, review evidence state, language policy, line counts, or broken-link status.
+
+The compressed handoff must preserve:
+
+- active role: Compliance Auditor
+- active scope ID and run ID, if any
+- changed file list
+- review mode and preceding Devil's Advocate evidence path, if Full review
+- compliance findings drafted so far
+- review evidence path, if already created
+
 ## Review Criteria
 
 Check every changed file against all of the following.

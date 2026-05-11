@@ -61,4 +61,4 @@ TODO:
 
 8. reference artifact の Canonical Successor 管理を強化する。reference が product / ops / rules に昇格した場合の追跡方法を定義する。
 
-9. Artifact Quality Requirements / Backtrack Request を command-created artifacts、adapter metadata、scenario tests にどこまで機械的に反映するかを検討する。
+9. Artifact Quality Requirements / Backtrack Request を実際の scenario test で観察し、AI が不足を推測補完せず適切に Backtrack Request を返せるか検証する。

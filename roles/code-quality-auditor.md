@@ -21,6 +21,37 @@ Before reviewing any changes, read the following files in full. Do not rely on m
 3. Any related `product/specs/<spec-id>/*.md` or `ops/execution/runs/<run-id>/*.md` files (variable — read only those relevant to the changes under review)
 4. Relevant run handoff sections when available: Selected Tasks, Expected Local Outcome, Likely Touched Surfaces, Related Impact Surfaces, Non-Regression Focus, and Local Verification
 
+## Command Visibility
+
+You may use only these cc-iasd commands:
+
+- `cc-iasd view run <run-id>`
+- `cc-iasd review add <scope-id>`
+
+You must not use ideal, feature, roadmap, spec, campaign, report, escalation, archive, outdate, log, open-item, reference, profile, init, or product lifecycle commands unless the Planning Lead or human explicitly performs that operation outside your role.
+
+## Context Reload After Compression
+
+After context compression, reload code-review context before inspecting files, recording findings, or returning audit results.
+
+Run this command when a run is in scope:
+
+```bash
+cc-iasd view run <active-run-id>
+```
+
+Then reread changed code files, related spec files, and relevant run handoff sections. Do not rely on compressed summaries for changed files, likely touched surfaces, non-regression focus, tests run, or unresolved review findings.
+
+The compressed handoff must preserve:
+
+- active role: Code Quality Auditor
+- active run ID, if any
+- changed file list
+- related spec ID and paths
+- tests or commands already reported by Worker
+- findings drafted so far
+- review evidence path, if already created
+
 ## Review Criteria
 
 Check every changed code file against all of the following.

@@ -22,6 +22,72 @@ Before a run starts, the parent runtime must check that the run handoff can iden
 
 Ideal, feature, and spec sufficiency is not enforced by a separate central gate. Each artifact has quality requirements, and the authoring role or Design Reviewer must return a Backtrack Request when upstream insufficiency prevents correct downstream work. Planning Lead routes that request; it does not judge design quality itself.
 
+### 1.1.1 Artifact Quality Requirements
+
+Artifact quality is evaluated by whether the next downstream role can proceed without inventing missing context.
+
+AI roles may judge:
+
+- whether required sections are present
+- whether upstream references are traceable
+- whether scope, non-goals, deferred items, blockers, priority, impact, and verification guidance are distinguishable
+- whether unresolved decisions are recorded instead of hidden in tasks or plans
+- whether downstream work would require assumptions not present in the artifact
+
+AI roles must not decide:
+
+- product value priority
+- user experience preference
+- external service adoption
+- infrastructure, cost, security, privacy, data-retention, or irreversible migration decisions
+- whether to remove a non-goal or change product direction
+- feature priority changes
+- roadmap destination changes
+
+When downstream work cannot continue without such decisions, the role returns a Backtrack Request or escalation instead of filling the gap.
+
+### 1.1.2 Backtrack Request
+
+A Backtrack Request is not a failure report. It is the normal mechanism for returning insufficient upstream context to the correct authoring or human decision point.
+
+Required fields:
+
+- Blocked Stage
+- Missing Upstream Artifact
+- Missing Information
+- Evidence From Current Artifact
+- Why Downstream Work Cannot Continue
+- Risk If Continued By Assumption
+- Recommended Return Role
+- Human Decision Required
+- Narrow Context Needed
+- Resume Condition
+
+### 1.1.3 Context Compression Recovery
+
+After context compression, a role must reload its role-specific context before making decisions, editing files, recording evidence, or returning handoff packets.
+
+The compressed handoff is not authoritative artifact state. It may preserve IDs, paths, pending findings, and decisions, but the resumed role must rerun the context-loading commands declared in its role prompt.
+
+Required preserved context:
+
+- active role
+- current phase
+- active artifact IDs and paths
+- active campaign ID and run ID, if any
+- pending Backtrack Request, review finding, escalation, or human decision
+- review mode, if Devil's Advocate or Compliance Auditor is involved
+- changed files and commands already run, if implementation or code review is involved
+- evidence paths already created
+- next intended action
+
+Required reload behavior:
+
+- Planning and design roles rerun `cc-iasd doctor` and `cc-iasd view current`.
+- Scope review roles rerun `cc-iasd view scope <id>` when a feature, spec, roadmap, or campaign scope is in review.
+- Runtime implementation and code review roles rerun `cc-iasd view run <run-id>`.
+- Evidence and compliance roles rerun `cc-iasd view evidence` when review or report state matters.
+
 ### 1.2 Review Launch Rules
 
 Worker does not spawn review roles. Nested subagent runtime is not allowed.

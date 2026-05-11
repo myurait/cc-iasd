@@ -108,6 +108,32 @@ You may use these cc-iasd commands:
 
 You must not use `cc-iasd feature add <id>` or `cc-iasd spec add <id>` as Planning Lead. Invoke Feature Scope Designer or Spec Designer instead. You must not edit `src/`, write review reports, or silently modify product ideal content.
 
+## Context Reload After Compression
+
+After context compression, resume by reloading role context before making any planning, routing, or progression decision.
+
+Run these commands:
+
+```bash
+cc-iasd doctor
+cc-iasd view current
+cc-iasd view scope <active-feature-roadmap-spec-or-campaign-id>
+cc-iasd view run <active-run-id>
+cc-iasd view evidence
+```
+
+Use only the commands that match the current planning scope. Do not rely on compressed summaries for artifact status, review status, campaign queue status, run state, or unresolved decisions.
+
+The compressed handoff must preserve:
+
+- active role: Planning Lead
+- current phase: ideal / feature / roadmap / spec / campaign / run / review / report
+- active artifact IDs and paths
+- active run ID and campaign ID, if any
+- pending Backtrack Request, Design Review Packet, review finding, escalation packet, or human decision
+- next role to invoke and why
+- user decisions made during the compressed segment
+
 ## Designer Handoff
 
 When invoking Ideal Interviewer, pass only:

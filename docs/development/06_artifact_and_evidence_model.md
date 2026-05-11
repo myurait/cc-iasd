@@ -432,7 +432,44 @@ escalation triggers:
   想定変更面を大きく越える場合、外部依存や人間判断が必要な場合、または UX / data / security 境界を変更する必要が出た場合に Planning Lead へ戻す条件。
 ```
 
-### 7.2.1 state.md
+### 7.3 Artifact Quality Requirements
+
+ideal / feature / spec は、独立 gate で承認されるのではなく、各 artifact の品質要件によって downstream 進行可能性を表す。
+
+```text
+ideal quality:
+  product intent、experience principles、boundaries、non-goals、priority signals、human decision points、downstream feature inputs を持つ。
+
+feature quality:
+  ideal trace、included / excluded / deferred / blocked scope、priority、experience tie、impact scope、blockers、source、spec-ready boundary を持つ。
+
+spec quality:
+  feature / ideal trace、requirements、success criteria、implementation boundaries、research decisions、data / contract decision status、task outcome、surface、impact、verification guidance を持つ。
+```
+
+AI が判断できるのは、これらの項目が存在し、次 role が推測なしに作業できるかである。AI は product value、priority 変更、外部 service、infrastructure、cost、security、privacy、data retention などの人間判断を補完しない。
+
+### 7.4 Backtrack Request
+
+Backtrack Request は、downstream role が upstream artifact の不足により完全な成果物を書けない場合に返す packet である。
+
+```text
+Backtrack Request:
+- Blocked Stage
+- Missing Upstream Artifact
+- Missing Information
+- Evidence From Current Artifact
+- Why Downstream Work Cannot Continue
+- Risk If Continued By Assumption
+- Recommended Return Role
+- Human Decision Required
+- Narrow Context Needed
+- Resume Condition
+```
+
+Backtrack Request は evidence layer の review finding とは限らない。authoring role が執筆を中断して Planning Lead へ返す handoff packet としても使う。Planning Lead はこの packet を上流 role または Human へ中継し、該当 artifact が修正され review された後に downstream role を再開する。
+
+### 7.5 state.md
 
 ```text
 state.md:

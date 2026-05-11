@@ -1072,6 +1072,14 @@ const featureBacklogTemplate = () => [
   '',
   '- None',
   '',
+  '## Backtrack Signals',
+  '',
+  '- Missing ideal connection',
+  '- Missing priority',
+  '- Missing impact scope',
+  '- Missing human decision',
+  '- Missing target destination',
+  '',
 ].join('\n');
 
 const featureFileTemplate = ({ featureId, featureKind, summary, idealPillar, now }) => [
@@ -1088,6 +1096,8 @@ const featureFileTemplate = ({ featureId, featureKind, summary, idealPillar, now
   '',
   '- Included: TBD',
   '- Excluded: TBD',
+  '- Deferred: TBD',
+  '- Blocked: TBD',
   '',
   '## Roadmap Notes',
   '',
@@ -1096,6 +1106,14 @@ const featureFileTemplate = ({ featureId, featureKind, summary, idealPillar, now
   '## Backlog',
   '',
   '- None',
+  '',
+  '## Quality Requirements',
+  '',
+  '- Linked ideal pillar is explicit or ideal gap is reported.',
+  '- Included, excluded, deferred, and blocked scope are separated.',
+  '- Backlog items include priority, experience tie, impact scope, blockers, target destination, and source.',
+  '- Human decision gaps are listed instead of being resolved by assumption.',
+  '- Spec Designer can derive a spec boundary without inventing feature scope or product value.',
   '',
 ].join('\n');
 
@@ -1118,6 +1136,31 @@ const idealFileTemplate = ({ idealId, summary, now }) => [
   '## Boundaries',
   '',
   '- TBD',
+  '',
+  '## Non-Goals',
+  '',
+  '- TBD',
+  '',
+  '## Priority Signals',
+  '',
+  '- TBD',
+  '',
+  '## Human Decision Points',
+  '',
+  '- Confirmed: none recorded',
+  '- Unresolved: none recorded',
+  '',
+  '## Downstream Feature Inputs',
+  '',
+  '- TBD',
+  '',
+  '## Quality Requirements',
+  '',
+  '- Product intent is specific enough that Feature Scope Designer does not need to invent product direction.',
+  '- Experience principles can guide feature scope design.',
+  '- Boundaries and non-goals are explicit.',
+  '- Priority signals are present or unresolved priority decisions are listed.',
+  '- Infrastructure, cost, security, privacy, external service, and data-retention decisions are either decided or listed as unresolved.',
   '',
 ].join('\n');
 
@@ -1164,6 +1207,19 @@ const specTemplate = ({ specId, summary, now }) => [
   '',
   '- TBD',
   '',
+  '## Source Trace',
+  '',
+  '- Source Feature: TBD',
+  '- Relevant Ideal: TBD',
+  '- Human Decisions: TBD',
+  '',
+  '## Quality Requirements',
+  '',
+  '- Requirements trace to feature scope and relevant ideal context.',
+  '- User scenarios, requirements, and success criteria are specific enough for task design.',
+  '- Unresolved product or human decisions are listed instead of hidden in requirements.',
+  '- Campaign planning can derive feature/spec coverage and expected user experience outcome.',
+  '',
 ].join('\n');
 
 const specPlanTemplate = ({ specId, summary, now }) => [
@@ -1180,6 +1236,13 @@ const specPlanTemplate = ({ specId, summary, now }) => [
   '## Dependencies',
   '',
   '- TBD',
+  '',
+  '## Implementation Boundaries',
+  '',
+  '- Likely Touched Surfaces: TBD',
+  '- Related Impact Surfaces: TBD',
+  '- Non-Regression Focus: TBD',
+  '- Escalation Triggers: TBD',
   '',
 ].join('\n');
 
@@ -1202,6 +1265,11 @@ const specResearchTemplate = ({ specId, summary, now }) => [
   '',
   '- None recorded.',
   '',
+  '## Human Decision Routing',
+  '',
+  '- Decisions required before implementation: none recorded.',
+  '- Decisions safe for autonomous proceed: none recorded.',
+  '',
 ].join('\n');
 
 const specDataModelTemplate = ({ specId, summary, now }) => [
@@ -1223,6 +1291,11 @@ const specDataModelTemplate = ({ specId, summary, now }) => [
   '',
   '- None recorded.',
   '',
+  '## Data Decision Status',
+  '',
+  '- Privacy / retention decisions required: none recorded.',
+  '- Migration or irreversible data changes required: none recorded.',
+  '',
 ].join('\n');
 
 const specContractsTemplate = ({ specId, summary, now }) => [
@@ -1233,6 +1306,11 @@ const specContractsTemplate = ({ specId, summary, now }) => [
   `- Created At: ${now}`,
   '',
   'Contract artifacts live in this directory when the spec needs API, event, CLI, schema, or integration contracts.',
+  '',
+  '## Contract Decision Status',
+  '',
+  '- External service or integration decisions required: none recorded.',
+  '- Security / permission decisions required: none recorded.',
   '',
 ].join('\n');
 
@@ -1246,6 +1324,14 @@ const specTasksTemplate = ({ specId, summary, now }) => [
   '## Tasks',
   '',
   '- [ ] TBD',
+  '',
+  '## Task Quality Requirements',
+  '',
+  '- Each task has an expected local outcome.',
+  '- Each task identifies likely touched surfaces or states why they are unknown.',
+  '- Each task identifies related impact surfaces and non-regression focus.',
+  '- Each task has local verification guidance.',
+  '- Tasks do not contain unresolved human decisions as implementation instructions.',
   '',
 ].join('\n');
 
@@ -1911,6 +1997,20 @@ const roleRuntimeTemplate = ({ now, roleEntries }) => [
   'Role runtime metadata is generated from canonical role files under `rules/roles/`. Tool-specific wrappers may refer to these files, but the canonical role text remains under `rules/roles/`.',
   '',
   'Only expose the commands listed for the active role when preparing role-specific runtime context.',
+  '',
+  '## Role Invocation Metadata',
+  '',
+  '- Designer roles may return `Backtrack Request` instead of authored artifacts when upstream context is insufficient.',
+  '- Backtrack Request metadata must include blocked stage, missing upstream artifact, missing information, evidence from current artifact, risk if continued by assumption, recommended return role, narrow context needed, and resume condition.',
+  '- Devil\'s Advocate must be invoked with `Review Mode: Design Launch Review` before campaign execution when campaign launch risk is inspected.',
+  '- Devil\'s Advocate must be invoked with `Review Mode: Campaign Completion Review` before campaign completion is accepted.',
+  '- Planning Lead routes Backtrack Requests and review-mode invocation metadata. Planning Lead does not judge ideal, feature, or spec artifact quality directly.',
+  '',
+  '## Context Compression Recovery',
+  '',
+  '- After context compression, the active role must rerun the context-loading commands listed in its canonical role prompt.',
+  '- Compressed handoff must preserve active role, current phase, active artifact IDs and paths, active campaign/run IDs, pending Backtrack Request or review finding, review mode, changed files, evidence paths, and next intended action.',
+  '- Compressed handoff is not authoritative artifact state. Resume from command output and direct artifact reads, not from compressed summaries.',
   '',
 ].join('\n');
 

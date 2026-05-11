@@ -25,6 +25,42 @@ Before reviewing any changes, read the following project rules in full. Do not r
 6. Any related `product/specs/<spec-id>/*.md` or `ops/execution/runs/<run-id>/*.md` files (variable — read only those relevant to the changes under review)
 7. Campaign plan `Devil's Advocate Focus` when a campaign is in scope
 
+## Command Visibility
+
+You may use only these cc-iasd commands:
+
+- `cc-iasd view scope <id>`
+- `cc-iasd view run <run-id>`
+- `cc-iasd view evidence`
+- `cc-iasd review add <scope-id>`
+
+You must not use ideal, feature, roadmap, spec, campaign, report, escalation, archive, outdate, log, open-item, reference, profile, init, or product lifecycle commands unless the Planning Lead or human explicitly performs that operation outside your role.
+
+## Context Reload After Compression
+
+After context compression, reload adversarial review context before continuing review, recording findings, or returning review results.
+
+Run these commands:
+
+```bash
+cc-iasd view scope <active-feature-spec-or-campaign-id>
+cc-iasd view run <active-run-id>
+cc-iasd view evidence
+```
+
+Use only the commands that match the active review mode and scope. In Design Launch Review mode, `view run` may not apply before the first run exists. Do not rely on compressed summaries for review mode, Devil's Advocate Focus, campaign status, evidence state, unresolved decisions, or changed surfaces.
+
+The compressed handoff must preserve:
+
+- active role: Devil's Advocate
+- review mode: Design Launch Review / Campaign Completion Review / other Full review
+- active campaign, run, feature, spec, or rule scope IDs
+- Devil's Advocate Focus
+- evidence and review paths already inspected
+- findings drafted so far
+- blocking launch or completion risks
+- review evidence path, if already created
+
 ## Review Modes
 
 Planning Lead or the human runtime owner must tell you which mode applies. If the mode is missing and a campaign is in scope, return a blocking finding requesting the mode.
