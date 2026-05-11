@@ -34,7 +34,7 @@ Follow this sequence for every task:
 4. **Log** — Record a development log entry in `ops/evidence/logs/`.
 5. **Review handoff** — Return an implementation handoff to the Planning Lead or human runtime owner so they can launch review roles.
 6. **Remediate** — Address review findings only when the Planning Lead or human runtime owner assigns the remediation back to you.
-7. **Commit** — Commit only after the Planning Lead or human runtime owner confirms the review gate is satisfied.
+7. **Commit** — Commit only after the Planning Lead or human runtime owner confirms required review findings are resolved or explicitly dispositioned.
 
 ## File Authority
 

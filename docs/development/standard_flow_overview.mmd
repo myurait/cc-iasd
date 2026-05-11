@@ -79,8 +79,23 @@ sequenceDiagram
   DR-->>PL: Design Review Packet
   deactivate DR
 
-  PL->>CLI: campaign add + run start
-  CLI-->>Art: campaign and run artifacts + logs
+  PL->>CLI: campaign add
+  CLI-->>Art: campaign artifact + log
+  PL->>DA: launch Design Launch Review before first run
+  activate DA
+  Note over DA: subagent runtime activation
+  DA->>CLI: view scope + view evidence + review add --review-mode design-launch
+  CLI-->>Art: Devil's Advocate design launch evidence
+  DA-->>PL: launch findings
+  deactivate DA
+  alt launch accepted
+    PL->>CLI: run start
+    CLI-->>Art: run artifacts + logs
+  else launch blocked
+    PL->>H: escalation or upstream backtrack packet
+    H-->>PL: human decision or correction direction
+  end
+
   PL->>W: launch implementation run
   activate W
   Note over W: subagent runtime activation
@@ -104,10 +119,10 @@ sequenceDiagram
   PL->>CLI: open-item resolve when needed
   CLI-->>Art: updated run-local open items
 
-  PL->>DA: launch campaign completion review
+  PL->>DA: launch Campaign Completion Review
   activate DA
   Note over DA: subagent runtime activation
-  DA->>CLI: view scope + view run + view evidence + review add
+  DA->>CLI: view scope + view run + view evidence + review add --review-mode campaign-completion
   CLI-->>Art: Devil's Advocate review evidence
   DA-->>PL: campaign completion findings
   deactivate DA

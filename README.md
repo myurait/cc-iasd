@@ -6,6 +6,22 @@ cc-iasd is a project-context framework for governed agentic software development
 
 It does not replace coding agents such as Codex or Claude Code. It creates the project-context around them: constraints, user input, ideal state, features, roadmaps, specs, execution campaigns, runs, logs, evidence, escalation packets, and completion reports.
 
+## Execution Harness Purpose
+
+cc-iasd is an execution harness for turning human intent into bounded agent work.
+
+It exists to keep autonomous implementation from drifting away from the product intent. Before work reaches a run, cc-iasd should make the intended user experience, expected feature coverage, priority, implementation scope, impact surfaces, and human-decision points explicit enough for an AI agent to act without inventing a different product.
+
+The harness is designed to:
+
+- prevent agents from building functionality the user did not intend
+- prevent expected functionality from being lost during task breakdown
+- preserve feature priority across ideal, feature, spec, campaign, and run artifacts
+- define expected touched surfaces and related impact surfaces before execution
+- return infrastructure, cost, security, and product-value decisions to a human early
+- make each run small and strict enough to verify
+- keep direct user-experience impact grouped at the campaign level
+
 ## Core Structure
 
 ```text

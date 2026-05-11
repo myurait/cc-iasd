@@ -6,6 +6,22 @@ cc-iasd は、AI 駆動開発のための project-context framework です。
 
 Codex、Claude Code のような実装エージェントを置き換えるものではありません。それらの外側で、制約、ユーザー入力、理想状態、features、ロードマップ、仕様、campaign、run、logs、証跡、エスカレーション、完了報告を管理する project-context を作ります。
 
+## 実行ハーネスとしての目的
+
+cc-iasd は、人間の意図を境界づけられた AI 実行作業へ変換するための実行ハーネスです。
+
+cc-iasd の目的は、自律実装が product intent から逸脱することを防ぐことです。作業が run に到達する前に、意図されたユーザー体験、想定機能の coverage、優先度、実装 scope、影響面、人間判断へ戻すべき事項を明確にし、AI エージェントが別の product を作り始めない状態を作ります。
+
+この harness は次を目的とします。
+
+- ユーザーが意図していない機能を作らせない
+- task 分解の過程で想定機能を失わせない
+- ideal、feature、spec、campaign、run を通じて機能の重要度を維持する
+- 実行前に想定変更面と関連影響面を定義する
+- infrastructure、cost、security、product value に関わる判断を早期に人間へ戻す
+- 各 run を検証可能な小さく厳密な単位にする
+- ユーザー体験への直接影響を campaign 単位でまとめる
+
 ## 基本構造
 
 ```text

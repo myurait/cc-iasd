@@ -11,6 +11,7 @@ Use flat bullets and headings. Do not use Markdown tables in review evidence.
 - Scope ID:
 - Review Path: ops/evidence/reviews/review_{YYYYMMDDhhmmss}_{scope_description}.md
 - Review Type: Light review / Full review
+- Review Mode: none / Design Launch Review / Campaign Completion Review / other
 - Review Roles:
   - Light review: Compliance Auditor, Code Quality Auditor
   - Full review: Devil's Advocate (+ Planning Lead when Trigger E applies)
@@ -42,6 +43,7 @@ Fill only the criteria that match the review type and roles above.
 - The change can be explained to the user without relying on internal implementation context.
 - Architecture judgment and cross-cutting consistency are sound.
 - Design quality does not regress.
+- Campaign launch risk or campaign completion risk is inspected according to Review Mode.
 - No credentials or secrets in the commit.
 
 ### Full Review — Planning Lead
@@ -78,7 +80,11 @@ Fill only the dimensions that match the review type and roles above.
 
 ### Devil's Advocate Review
 
+- Mode-Specific Question:
 - Predeclared Focus Checked:
+- Human-Decision Risk:
+- Coverage Risk:
+- Campaign Launch / Completion Risk:
 - Debt Prevention:
 - Complexity Versus Value:
 - Decomposition and Boundaries:

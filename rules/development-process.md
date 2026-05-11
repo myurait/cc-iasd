@@ -20,6 +20,8 @@ Missing documentation, review evidence, or log entries means the task is not com
 
 Before a run starts, the parent runtime must check that the run handoff can identify selected tasks, expected local outcome, likely touched surfaces, related impact surfaces, non-regression focus, escalation triggers, local verification, and open item routing. Missing fields are a planning readiness issue, not a Worker implementation issue.
 
+Ideal, feature, and spec sufficiency is not enforced by a separate central gate. Each artifact has quality requirements, and the authoring role or Design Reviewer must return a Backtrack Request when upstream insufficiency prevents correct downstream work. Planning Lead routes that request; it does not judge design quality itself.
+
 ### 1.2 Review Launch Rules
 
 Worker does not spawn review roles. Nested subagent runtime is not allowed.
@@ -34,7 +36,7 @@ After Worker completes Steps 1-4, the Worker returns an implementation handoff p
 **Full review (trigger conditions):**
 
 - Light review roles (as above)
-- Devil's Advocate: launched under Trigger D conditions before Compliance Auditor
+- Devil's Advocate: launched in the applicable review mode under Trigger D conditions before Compliance Auditor
 - Planning Lead: parent runtime owner for orchestration, or launched under Trigger E when the parent runtime is human-owned
 
 ### 1.3 Trigger Steps (conditional, only when triggered)
@@ -63,9 +65,9 @@ After Worker completes Steps 1-4, the Worker returns an implementation handoff p
 
 **Trigger D — Full review (Devil's Advocate):**
 
-- When: Trigger B conditions, rule changes (`rules/policies/` or CLAUDE.md rule sections), feature completion, campaign or run completion, explicit user request
+- When: Trigger B conditions, rule changes (`rules/policies/` or CLAUDE.md rule sections), campaign launch review, feature completion, campaign or run completion, explicit user request
 - Additional steps:
-  1. Planning Lead or the human runtime owner launches Devil's Advocate
+  1. Planning Lead or the human runtime owner launches Devil's Advocate with `Design Launch Review` or `Campaign Completion Review` mode when campaign launch or completion is in scope
   2. Create a review evidence file in `ops/evidence/reviews/` (see Section 2.4)
   3. Launch Compliance Auditor after Devil's Advocate findings are available
 
@@ -101,7 +103,7 @@ After Worker completes Steps 1-4, the Worker returns an implementation handoff p
 **Full review:**
 
 - Roles: Devil's Advocate + Compliance Auditor (+ Planning Lead when Trigger E applies and is not already parent runtime)
-- Scope: architecture judgment, design quality, cross-cutting consistency
+- Scope: architecture judgment, design quality, cross-cutting consistency, campaign launch risk, and campaign completion risk
 - Evidence: review evidence file in `ops/evidence/reviews/`
 - Trigger: Trigger D and/or Trigger E conditions only
 - Runtime order: Devil's Advocate runs before Compliance Auditor
@@ -145,6 +147,7 @@ Each review role checks only the items within its responsibility. Items are not 
 - Record `Reviewer` explicitly. When the reviewer is AI, write the model name in the publicly disclosable form.
 - Record `Base Commit` for every initial review and every follow-up review entry.
 - `Review Type` must match the actual review lens and criteria used.
+- `Review Mode` must be recorded when Devil's Advocate is used for campaign launch or campaign completion.
 - Do not use Markdown tables in review evidence. Use headings and flat bullet lists instead.
 
 ### 2.5 Review Finding Severity

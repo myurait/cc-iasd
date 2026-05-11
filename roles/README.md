@@ -17,8 +17,8 @@ A role is a set of instructions that an AI agent adopts when performing a specif
 - `worker.md` — minimal-context implementer that focuses on coding, testing, and returning implementation handoff packets. Entry point for implementation tasks.
 - `feature-scope-designer.md` — designs feature scopes and structured feature backlogs from product ideals and user decisions. Owns ideal-to-feature scope design.
 - `spec-designer.md` — designs Spec Kit-compatible spec packages from feature scopes and roadmap direction. Owns feature-to-spec package design.
-- `design-reviewer.md` — reviews newly authored ideal, feature, and spec artifacts with narrow context before Planning Lead receives them.
+- `design-reviewer.md` — reviews newly authored ideal, feature, and spec artifacts with narrow context, and can request same-design-level remediation or upstream backtrack.
 - `compliance-auditor.md` — audits language policy compliance and document format quality across all changed files. Launched after required quality or Devil's Advocate review evidence is available.
 - `code-quality-auditor.md` — audits coding conventions, naming patterns, test design quality, and design document drift. Launched by Planning Lead or the human runtime owner when code files are changed.
-- `devils-advocate.md` — adversarial reviewer that enforces project rules as a strict guardian. Launched during Full review before Compliance Auditor.
-- `planning-lead.md` — orchestration role for roadmap progression, campaign/run evaluation, designer handoff, review routing, and user-facing plan communication.
+- `devils-advocate.md` — adversarial reviewer with Design Launch Review and Campaign Completion Review modes. Launched during Full review before Compliance Auditor.
+- `planning-lead.md` — orchestration role for roadmap progression, campaign/run evaluation, designer handoff, backtrack routing, review routing, and user-facing plan communication.

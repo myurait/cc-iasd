@@ -224,9 +224,9 @@
   <rect x="894" y="1510" width="585" height="28" class="stage"/>
   <text x="910" y="1529" class="stageText">execution and completion reviews</text>
   <line x1="220" y1="1530" x2="1512" y2="1530" class="message"/>
-  <text x="866" y="1522" class="mlabel">campaign add + run start</text>
+  <text x="866" y="1522" class="mlabel">campaign add + DA Design Launch Review + run start</text>
   <line x1="1528" y1="1550" x2="1819" y2="1550" class="message"/>
-  <text x="1673" y="1542" class="mlabel">campaign/run artifacts + logs</text>
+  <text x="1673" y="1542" class="mlabel">campaign/run artifacts + DA launch evidence + logs</text>
   <line x1="220" y1="1565" x2="932" y2="1565" class="message"/>
   <text x="576" y="1557" class="mlabel">launch implementation run</text>
   <line x1="948" y1="1595" x2="1644" y2="1595" class="message"/>
@@ -243,9 +243,9 @@
   <text x="576" y="1777" class="mlabel">implementation result and review evidence</text>
 
   <line x1="220" y1="1810" x2="1222" y2="1810" class="message"/>
-  <text x="721" y="1802" class="mlabel">launch campaign completion review</text>
+  <text x="721" y="1802" class="mlabel">launch DA Campaign Completion Review</text>
   <line x1="1238" y1="1845" x2="1512" y2="1845" class="message"/>
-  <text x="1375" y="1837" class="mlabel">view scope + run + evidence + review add</text>
+  <text x="1375" y="1837" class="mlabel">view scope + run + evidence + review add --review-mode campaign-completion</text>
   <line x1="1528" y1="1875" x2="1819" y2="1875" class="message"/>
   <text x="1673" y="1867" class="mlabel">Devil's Advocate evidence</text>
   <line x1="1222" y1="1905" x2="220" y2="1905" class="return"/>

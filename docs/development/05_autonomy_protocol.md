@@ -101,6 +101,8 @@ ops/execution/
 
 Campaign の導入によって、Planning Lead は「高度な人間判断が必要な領域以外は、可能な限り段階的に進める」という指示を扱える。ただし、Planning Lead は campaign plan の外側へ自走範囲を拡大してはならない。
 
+最初の run を開始する前に、Devil's Advocate は Design Launch Review mode で campaign 走行可否を検査する。これは code review ではない。campaign の coverage、task selector、stop / progression conditions、impact map、non-regression focus、人間判断が必要な infrastructure / cost / security / privacy / product value を確認する。
+
 ---
 
 ## 4. Planning Lead
@@ -116,6 +118,7 @@ Planning Lead の責務:
 - 自走継続可否の判断
 - 停止・エスカレーション判断
 - completion report の整理
+- Backtrack Request の中継
 ```
 
 ## 5. Planning Lead ができること
@@ -131,6 +134,7 @@ Planning Lead can:
 - review 結果に基づく bounded remediation を行う
 - run 内で安全と判断できる範囲を自走させる
 - campaign plan に明示された条件の範囲で次の run へ進める
+- Designer / Design Reviewer からの Backtrack Request を上流 role または Human へ中継する
 ```
 
 ---
@@ -148,6 +152,8 @@ Planning Lead cannot:
 - campaign plan にない task set へ進む
 - ユーザー価値判断が必要な仕様判断を代行する
 - 既存 user decision を黙って上書きする
+- ideal / feature / spec の品質判定を自分で肩代わりする
+- 不足した上流 artifact を推測で補完して次工程へ進める
 ```
 
 ---
@@ -162,6 +168,7 @@ Planning Lead cannot:
 - 実行 runtime に渡す作業内容が明確である
 - run handoff に selected tasks、expected local outcome、likely touched surfaces、related impact surfaces、non-regression focus、escalation triggers、local verification、open item routing がある
 - campaign plan に user experience outcome、feature / spec coverage、task selector、stop / progression / completion conditions、impact map、cross-run non-regression focus、Devil's Advocate Focus がある
+- Devil's Advocate Design Launch Review が完了している
 - 人間判断が必要な未解決事項がない
 - 既存 constraints に明確に反しない
 ```
@@ -286,4 +293,4 @@ campaign aggregate report:
 - campaign / run artifact model
 ```
 
-複雑な multi-role workflow や compliance gate は後段でよい。
+複雑な multi-role workflow や compliance workflow は後段でよい。

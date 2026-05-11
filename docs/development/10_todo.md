@@ -36,7 +36,7 @@ TODO:
 - tasks 起点の implementation loop が run / evidence と過不足なく接続できるか確認する
 - 開発用資料を project-context doctor から切り離し、release 前の削除または別管理方針への委譲を扱う検査を別系統にする
 - Feature Scope Designer / Spec Designer の role prompt を強化するため、著名な agent / spec-driven development / planning assistant repository の designer・planner・architect 系 prompt を調査し、cc-iasd の role boundary、command visibility、artifact discipline に適合する要素だけを抽出する
-- spec 記述後から campaign add 後の段階で、Devil's Advocate と Compliance Auditor による計画レビューを実行するか検討する。実装後レビューとは別に、計画段階の整合性、漏れ、過剰実装リスク、証跡充足を確認する 2 段階 review flow として整理する
+- Devil's Advocate の `Design Launch Review` / `Campaign Completion Review` mode を CLI / adapter の role invocation metadata として明示的に渡す仕組みを実装する。
 ```
 
 ---
@@ -61,4 +61,4 @@ TODO:
 
 8. reference artifact の Canonical Successor 管理を強化する。reference が product / ops / rules に昇格した場合の追跡方法を定義する。
 
-9. 自走開始前の readiness check を定義する。ideal、roadmap、feature、spec、tasks、campaign plan、run selected tasks のどこが薄いかを判定し、interview / planning / implementation のどこへ戻るかを決められるようにする。
+9. Artifact Quality Requirements / Backtrack Request を command-created artifacts、adapter metadata、scenario tests にどこまで機械的に反映するかを検討する。

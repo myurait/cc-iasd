@@ -288,9 +288,10 @@ scope 横断の review record を `ops/evidence/reviews/` に作成する。
 1. review scope type を受け取る
 2. review scope refs を受け取る
 3. review type を受け取る
-4. summary と result を受け取る
-5. ops/evidence/reviews/ に review file を作成する
-6. ops/evidence/logs/ に review event を記録する
+4. 任意で review mode を受け取る
+5. summary と result を受け取る
+6. ops/evidence/reviews/ に review file を作成する
+7. ops/evidence/logs/ に review event を記録する
 ```
 
 ### 8.3 出力
@@ -300,6 +301,8 @@ ops/evidence/reviews/review_<timestamp>_<scope>.md
 ```
 
 review は特定 scope 配下に置かない。run、campaign、spec、roadmap などは review ID または path を参照する。
+
+Devil's Advocate を campaign 走行前または完了前に起動する場合、review mode として `design-launch` または `campaign-completion` を記録する。
 
 ---
 
@@ -431,7 +434,7 @@ ops/scopes/roadmaps/<id>.md
 処理:
 1. campaign id を受け取る
 2. linked roadmap / spec / tasks を受け取る
-3. user experience outcome / feature-spec coverage / task selector / stop condition / progression condition / cross-run non-regression focus / impact map / Devil's Advocate Focus / completion condition を受け取る
+3. user experience outcome / feature-spec coverage / task selector / stop condition / progression condition / cross-run non-regression focus / impact map / Devil's Advocate Focus / Devil's Advocate Design Launch Review / completion condition を受け取る
 4. ops/execution/campaigns/ に campaign directory を作成する
 5. ops/evidence/logs/ に campaign event を記録する
 ```
@@ -448,6 +451,8 @@ ops/execution/campaigns/<id>/aggregate-report.md
 campaign は runtime output を直接内包しない。実行結果は `ops/evidence/` に置き、Source Campaign / Source Run で関連付ける。
 
 Devil's Advocate Focus は、Devil's Advocate の監査範囲を制限しない。計画時点で特に警戒すべき項目を明示するための入力である。
+
+Devil's Advocate Design Launch Review は、campaign 作成後、最初の run を開始する前に記録される review evidence への参照である。campaign 完了時の Campaign Completion Review とは review mode を分ける。
 
 ### 13.4 cc-iasd campaign mark-run
 

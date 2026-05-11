@@ -369,7 +369,7 @@ ops/execution/
 
 execution layer は campaign と run で構成する。spec-driven development 的には実装進行の中心は spec / task であり、campaign / run はその実行を cc-iasd の project-context に接続する transaction artifact である。
 
-campaign は複数 run の進行制御を持つ。user experience outcome、feature / spec coverage、task selector、stop condition、progression condition、cross-run non-regression focus、impact map、Devil's Advocate Focus、completion condition、run queue を持つが、runtime output は持たない。
+campaign は複数 run の進行制御を持つ。user experience outcome、feature / spec coverage、task selector、stop condition、progression condition、cross-run non-regression focus、impact map、Devil's Advocate Focus、Devil's Advocate Design Launch Review、completion condition、run queue を持つが、runtime output は持たない。
 
 campaign queue は operation artifact である。run 登録、status 更新、進行状態の変更は cc-iasd command が行う。AI agent は queue の自由編集によって進行状態を変更しない。
 
@@ -377,7 +377,7 @@ run は task の実行選択と runtime context を持つ。旧 cycle 概念は 
 
 ```text
 campaign:
-  user experience outcome、feature / spec coverage、task selector、stop condition、progression condition、cross-run non-regression focus、impact map、Devil's Advocate Focus、completion condition、run queue、aggregate report を持つ
+  user experience outcome、feature / spec coverage、task selector、stop condition、progression condition、cross-run non-regression focus、impact map、Devil's Advocate Focus、Devil's Advocate Design Launch Review、completion condition、run queue、aggregate report を持つ
 
 state.md:
   Status、active blocker、open items、related spec、related tasks、related campaign、related logs、related reviews、related reports を持つ

@@ -53,11 +53,19 @@
 - Focus Items: TBD
 - Rationale: This does not limit Devil's Advocate review scope; it identifies especially important risks to inspect.
 
+## Devil's Advocate Design Launch Review
+
+- Required Before First Run: yes
+- Review Evidence: TBD
+- Launch Decision: pending
+- Blocking Findings: TBD
+
 ## Completion Conditions
 
 - Campaign complete when: TBD
 - Completion report ready when: TBD
 - Implementation review ready when: TBD
+- Devil's Advocate Campaign Completion Review ready when: TBD
 
 ## Current Decision State
 

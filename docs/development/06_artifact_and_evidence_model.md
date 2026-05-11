@@ -378,6 +378,7 @@ campaign が持つもの:
 - cross-run non-regression focus
 - impact map
 - Devil's Advocate Focus
+- Devil's Advocate Design Launch Review
 - completion condition
 - run queue
 - aggregate report
@@ -386,6 +387,8 @@ campaign が持つもの:
 campaign は runtime output を直接所有しない。証跡は `ops/evidence/` に置き、どの campaign / run から発行されたかを metadata で記録する。
 
 Devil's Advocate Focus は監査範囲を限定しない。Devil's Advocate は見るべきものをすべて見る。Focus は、特に警戒すべき観点を campaign 作成時に渡すための事前入力である。
+
+Devil's Advocate Design Launch Review は、最初の run を開始する前に campaign 走行可否を検査した証跡への参照である。これは実装後の Campaign Completion Review とは別の review mode であり、code quality review を代替しない。
 
 campaign ID は `cNNN-<campaign-slug>` とする。
 

@@ -22,7 +22,7 @@ Usage:
   cc-iasd view scope <id> [--root <project-context-path>]
   cc-iasd view run <id> [--root <project-context-path>]
   cc-iasd log event --summary <text> [--type <type>] [--source-campaign <id>] [--source-run <id>] [--evidence <path>] [--root <project-context-path>]
-  cc-iasd review add <scope-id> --summary <text> --result <text> [--type light|full] [--reviewer <name>] [--base-commit <ref>] [--root <project-context-path>]
+  cc-iasd review add <scope-id> --summary <text> --result <text> [--type light|full] [--review-mode <mode>] [--reviewer <name>] [--base-commit <ref>] [--root <project-context-path>]
   cc-iasd open-item add <run-id> --kind <kind> --summary <text> [--target <ref>] [--root <project-context-path>]
   cc-iasd open-item resolve <run-id> <item-id> --resolution resolved|escalated|promoted|deferred [--target <ref>] [--summary <text>] [--root <project-context-path>]
   cc-iasd ideal add <id> --summary <text> [--root <project-context-path>]
@@ -44,6 +44,7 @@ Options:
   --type <type>           Log event type, or review type for review add
   --summary <text>        Log event or review summary
   --result <text>         Review result summary
+  --review-mode <mode>    Review mode, such as design-launch or campaign-completion
   --reviewer <name>       Reviewer name for review add. Default: cc-iasd review command
   --base-commit <ref>     Base commit for review add. Default: not-recorded
   --resolution <status>   Open item resolution
@@ -80,6 +81,7 @@ const parseArgs = (argv) => {
     eventType: 'manual',
     eventSummary: '',
     reviewResult: '',
+    reviewMode: '',
     reviewer: '',
     baseCommit: '',
     resolution: '',
@@ -295,6 +297,9 @@ const parseArgs = (argv) => {
         break;
       case '--result':
         parsed.reviewResult = readValue(token);
+        break;
+      case '--review-mode':
+        parsed.reviewMode = readValue(token);
         break;
       case '--reviewer':
         parsed.reviewer = readValue(token);
@@ -1297,11 +1302,19 @@ const campaignPlanTemplate = ({ campaignId, summary = 'TBD', now, linkedFeature,
   '- Focus Items: TBD',
   "- Rationale: This does not limit Devil's Advocate review scope; it identifies especially important risks to inspect.",
   '',
+  "## Devil's Advocate Design Launch Review",
+  '',
+  '- Required Before First Run: yes',
+  '- Review Evidence: TBD',
+  '- Launch Decision: pending',
+  '- Blocking Findings: TBD',
+  '',
   '## Completion Conditions',
   '',
   '- Campaign complete when: TBD',
   '- Completion report ready when: TBD',
   '- Implementation review ready when: TBD',
+  "- Devil's Advocate Campaign Completion Review ready when: TBD",
   '',
 ].join('\n');
 
@@ -1594,7 +1607,7 @@ const completionReportTemplate = ({ scopeId, scopePath, now, runStates, reviewFi
   '',
 ].join('\n');
 
-const reviewRecordTemplate = ({ scopeId, now, reviewType, summary, result, reviewer, baseCommit }) => [
+const reviewRecordTemplate = ({ scopeId, now, reviewType, reviewMode, summary, result, reviewer, baseCommit }) => [
   `# Review: ${scopeId}`,
   '',
   `- Date: ${now}`,
@@ -1603,6 +1616,7 @@ const reviewRecordTemplate = ({ scopeId, now, reviewType, summary, result, revie
   `- Scope: ${summary}`,
   `- Scope ID: ${scopeId}`,
   `- Review Type: ${reviewType}`,
+  `- Review Mode: ${reviewMode || 'none'}`,
   `- Result: ${result}`,
   '- Trigger: manual',
   '',
@@ -2658,6 +2672,7 @@ const addReview = async (args) => {
     scopeId,
     now,
     reviewType: args.eventType,
+    reviewMode: args.reviewMode,
     summary: args.eventSummary,
     result: args.reviewResult,
     reviewer: args.reviewer,
