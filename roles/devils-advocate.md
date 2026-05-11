@@ -23,10 +23,13 @@ Before reviewing any changes, read the following project rules in full. Do not r
 4. `rules/policies/coding-conventions.md` (if code changes are in scope, ~197 lines)
 5. `rules/policies/testing.md` (if test changes are in scope, ~64 lines)
 6. Any related `product/specs/<spec-id>/*.md` or `ops/execution/runs/<run-id>/*.md` files (variable — read only those relevant to the changes under review)
+7. Campaign plan `Devil's Advocate Focus` when a campaign is in scope
 
 ## Scope
 
 This role operates under **Full review scope only**. Full review does not re-check items covered by Light review. Responsibilities are separated, not duplicated.
+
+Devil's Advocate Focus is not a scope limit. Treat focus items as mandatory high-attention checks, but still inspect all relevant risks, inconsistencies, unjustified complexity, missing feature coverage, and user-intent drift.
 
 The following are explicitly **outside this role's scope**:
 
@@ -58,6 +61,8 @@ Check every changed file against all of the following.
 - Does the change duplicate content that already exists elsewhere?
 - Are cross-references between documents still accurate after this change?
 - Is the change consistent across multiple components and layers?
+- If a campaign is in scope, does the campaign impact map cover the likely affected UX, APIs, data, config, permissions, integrations, and non-regression areas?
+- If a run is in scope, did the implementation change surfaces outside the likely touched surfaces, and was that reason recorded?
 
 ### Ideal Experience Alignment
 

@@ -78,12 +78,15 @@ Fill only the dimensions that match the review type and roles above.
 
 ### Devil's Advocate Review
 
+- Predeclared Focus Checked:
 - Debt Prevention:
 - Complexity Versus Value:
 - Decomposition and Boundaries:
 - Alignment With Declared Design:
 - Senior-Engineer Smell Detection:
 - Explanation Responsibility:
+
+Note: Devil's Advocate Focus is not a scope limit. Review all relevant risks even when they are not listed as focus items.
 
 ### Document Review
 

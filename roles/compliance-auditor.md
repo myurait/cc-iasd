@@ -44,6 +44,8 @@ Determine the file category and verify the correct language is used:
 - **Broken links**: Local links in changed Markdown files must resolve to existing files.
 - **View output**: Output from `cc-iasd view ...` is temporary context, not a canonical project file.
 - **Artifact creation authority**: New or lifecycle-changed files under `product/`, `ops/`, `rules/`, `runtime/`, `user/`, or `reference/` must have been created or moved by cc-iasd commands or explicit human file operations. Flag AI free-created managed artifacts.
+- **Campaign / run readiness fields**: Campaign plans should include user experience outcome, feature/spec coverage, task selector, stop/progression/completion conditions, impact map, cross-run non-regression focus, and Devil's Advocate Focus. Run handoff should include selected tasks, expected local outcome, likely touched surfaces, related impact surfaces, non-regression focus, escalation triggers, local verification, and open item routing.
+- **Devil's Advocate Focus wording**: Focus must not be described as limiting the review scope.
 
 ### Run Knowledge Management
 

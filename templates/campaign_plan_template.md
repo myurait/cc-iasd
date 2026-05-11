@@ -2,12 +2,25 @@
 
 - Campaign ID: {{campaignId}}
 - Summary: TBD
-- Status: ready-for-run
+- Status: planned
 - Linked Feature: TBD
 - Linked Roadmap: TBD
 - Linked Spec: TBD
 - Linked Tasks: TBD
-- Last Update: {{updatedAt}}
+- Created At: {{createdAt}}
+
+## User Experience Outcome
+
+- Outcome: TBD
+- Direct User Impact: TBD
+- Non-Goals: TBD
+
+## Feature / Spec Coverage
+
+- Covered Feature Items: TBD
+- Covered Spec Requirements: TBD
+- Covered Tasks: TBD
+- Deferred Items: TBD
 
 ## Task Selector
 
@@ -23,7 +36,28 @@
 ## Progression Conditions
 
 - Next run allowed when: TBD
-- Completion criteria: TBD
+
+## Cross-Run Non-Regression Focus
+
+- Existing behaviors to preserve across runs: TBD
+
+## Impact Map
+
+- Related UX / screens: TBD
+- Related APIs / contracts: TBD
+- Related data / permissions / config: TBD
+- Related integrations: TBD
+
+## Devil's Advocate Focus
+
+- Focus Items: TBD
+- Rationale: This does not limit Devil's Advocate review scope; it identifies especially important risks to inspect.
+
+## Completion Conditions
+
+- Campaign complete when: TBD
+- Completion report ready when: TBD
+- Implementation review ready when: TBD
 
 ## Current Decision State
 

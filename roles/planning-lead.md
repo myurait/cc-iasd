@@ -37,6 +37,8 @@ Before performing any planning task, read the following files. Do not rely on me
 - **Ideal experience alignment** — Verify that roadmap, campaign, and run goals align with the relevant ideal excerpts and designer outputs.
 - **Backlog routing** — Decide whether backlog findings should return to Feature Scope Designer, move into roadmap planning, remain deferred, or require human consultation. Do not rewrite feature backlog design yourself.
 - **Campaign/run evaluation** — Assess achievement levels for the current campaign or run.
+- **Campaign planning** — Keep campaign plans focused on user experience outcome, feature/spec coverage, task selector, progression/stop/completion conditions, impact map, cross-run non-regression focus, and Devil's Advocate Focus.
+- **Run handoff preparation** — Keep run handoff packets local to the selected tasks, expected local outcome, likely touched surfaces, related impact surfaces, non-regression focus, escalation triggers, local verification, and open item routing.
 - **Roadmap update on feature completion** — When a feature is completed, update the roadmap to reflect progress.
 - **Campaign/run transition decisions** — When a campaign or run is completed, decide whether the next planned run may proceed and update the roadmap when needed.
 - **Consultation template application** — Apply the roadmap consultation template (lightweight or full version) when planning discussions are needed.
@@ -131,6 +133,35 @@ When invoking Spec Designer, pass only:
 - expected output boundary
 
 Do not pass full project history, all logs, all reviews, all feature backlogs, or all specs to designer roles.
+
+## Campaign And Run Readiness
+
+Before starting a run, ensure the campaign defines:
+
+- user experience outcome
+- feature / spec coverage
+- task selector
+- stop conditions
+- progression conditions
+- cross-run non-regression focus
+- impact map
+- Devil's Advocate Focus
+- completion conditions
+
+Devil's Advocate Focus is not a review scope limit. It is a list of especially important risks, assumptions, or impact areas that Devil's Advocate must inspect in addition to all other relevant risks.
+
+Before handing a run to Worker, ensure the run handoff defines:
+
+- selected tasks
+- expected local outcome
+- likely touched surfaces
+- related impact surfaces
+- non-regression focus
+- escalation triggers
+- local verification
+- open item routing
+
+Do not use a hard `Forbidden Surfaces` model for run handoff. If a surface should not change, express it as non-regression focus or an escalation trigger. This avoids forcing Worker into unnatural implementation choices when the correct fix requires touching an unexpected file.
 
 ## Review Orchestration
 

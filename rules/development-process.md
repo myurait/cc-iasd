@@ -18,6 +18,8 @@ Step 6: Commit     — Stage files explicitly by name (git add -A is prohibited)
 
 Missing documentation, review evidence, or log entries means the task is not complete.
 
+Before a run starts, the parent runtime must check that the run handoff can identify selected tasks, expected local outcome, likely touched surfaces, related impact surfaces, non-regression focus, escalation triggers, local verification, and open item routing. Missing fields are a planning readiness issue, not a Worker implementation issue.
+
 ### 1.2 Review Launch Rules
 
 Worker does not spawn review roles. Nested subagent runtime is not allowed.

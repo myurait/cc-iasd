@@ -50,6 +50,9 @@ Campaign は、複数の run を段階的に消化するための上位計画概
 campaign:
 - roadmap / feature / task set を順番に処理する long-run 計画
 - 各 run の bounded scope は維持する
+- user experience outcome と feature / spec coverage を持つ
+- impact map と cross-run non-regression focus を持つ
+- Devil's Advocate Focus を持つ
 - 次の run へ進む条件を明示する
 - 停止条件に触れたら escalation へ切り替える
 ```
@@ -61,10 +64,14 @@ Campaign で定義するものは次である。
 ```text
 campaign plan:
 - 対象 feature / roadmap / task queue
-- 実行してよい scope の上限
+- user experience outcome
+- feature / spec coverage
 - task selector
 - 自動で次 run へ進めてよい条件
 - 必ず停止して user decision に戻す条件
+- impact map
+- cross-run non-regression focus
+- Devil's Advocate Focus
 - 各 run の handoff に引き継ぐ情報
 - campaign 全体の completion / escalation report 条件
 ```
@@ -153,6 +160,8 @@ Planning Lead cannot:
 - 対象 spec / tasks が存在する
 - 成果物 root が src/ として解決できる
 - 実行 runtime に渡す作業内容が明確である
+- run handoff に selected tasks、expected local outcome、likely touched surfaces、related impact surfaces、non-regression focus、escalation triggers、local verification、open item routing がある
+- campaign plan に user experience outcome、feature / spec coverage、task selector、stop / progression / completion conditions、impact map、cross-run non-regression focus、Devil's Advocate Focus がある
 - 人間判断が必要な未解決事項がない
 - 既存 constraints に明確に反しない
 ```

@@ -1,7 +1,7 @@
 # Run State: {{runId}}
 
 - Run ID: {{runId}}
-- Source Campaign: {{campaignId}}
+- Source ID: {{sourceId}}
 - Result: in-progress
 - Active Blocker: none recorded
 - Started At: {{startedAt}}
@@ -11,8 +11,18 @@
 
 - Linked Feature: TBD
 - Linked Roadmap: TBD
+- Linked Campaign: TBD
 - Linked Spec: TBD
 - Linked Tasks: TBD
+
+## Run Readiness Snapshot
+
+- Expected Local Outcome: TBD
+- Likely Touched Surfaces: TBD
+- Related Impact Surfaces: TBD
+- Non-Regression Focus: TBD
+- Escalation Triggers: TBD
+- Local Verification: TBD
 
 ## Execution Evidence
 

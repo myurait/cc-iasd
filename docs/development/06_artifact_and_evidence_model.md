@@ -370,14 +370,22 @@ campaign は、複数 run の進行を束ねる orchestration artifact である
 campaign が持つもの:
 
 ```text
+- user experience outcome
+- feature / spec coverage
 - task selector
 - stop condition
 - progression condition
+- cross-run non-regression focus
+- impact map
+- Devil's Advocate Focus
+- completion condition
 - run queue
 - aggregate report
 ```
 
 campaign は runtime output を直接所有しない。証跡は `ops/evidence/` に置き、どの campaign / run から発行されたかを metadata で記録する。
+
+Devil's Advocate Focus は監査範囲を限定しない。Devil's Advocate は見るべきものをすべて見る。Focus は、特に警戒すべき観点を campaign 作成時に渡すための事前入力である。
 
 campaign ID は `cNNN-<campaign-slug>` とする。
 
@@ -389,6 +397,13 @@ run が持つもの:
 
 ```text
 - selected tasks
+- expected local outcome
+- likely touched surfaces
+- related impact surfaces
+- non-regression focus
+- escalation triggers
+- local verification
+- open item routing
 - runtime context
 - handoff packet
 - current state
@@ -397,6 +412,22 @@ run が持つもの:
 ```
 
 run は証跡の正本ではない。実行結果、review、report、log は `ops/evidence/` に切り出し、Source Campaign / Source Run を明記する。
+
+run は `Forbidden Surfaces` のような強い禁止領域を中心にしない。必要な変更を避けた迂回実装を防ぐため、run は次を区別する。
+
+```text
+likely touched surfaces:
+  触る可能性が高い file / directory / module。逸脱は即違反ではないが、理由を state、log、handoff result のいずれかに残す。
+
+related impact surfaces:
+  直接変更しない可能性はあるが、影響確認すべき機能、画面、API、data、config、integration。
+
+non-regression focus:
+  壊してはいけない既存挙動。禁止ではなく outcome 制約である。
+
+escalation triggers:
+  想定変更面を大きく越える場合、外部依存や人間判断が必要な場合、または UX / data / security 境界を変更する必要が出た場合に Planning Lead へ戻す条件。
+```
 
 ### 7.2.1 state.md
 
@@ -490,6 +521,14 @@ handoff.md:
 - Linked Product Artifacts
 - Linked Scope Artifacts
 - Constraints
+- Selected Tasks
+- Expected Local Outcome
+- Likely Touched Surfaces
+- Related Impact Surfaces
+- Non-Regression Focus
+- Escalation Triggers
+- Local Verification
+- Open Item Routing
 - Expected Output
 - Evidence To Record
 ```

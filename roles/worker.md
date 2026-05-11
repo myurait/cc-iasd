@@ -22,6 +22,8 @@ Before starting any work, read the following files in full. Do not rely on memor
 
 Additionally, read the source files directly related to the task at hand.
 
+When a run handoff exists, read its Selected Tasks, Expected Local Outcome, Likely Touched Surfaces, Related Impact Surfaces, Non-Regression Focus, Escalation Triggers, Local Verification, and Open Item Routing sections before editing code.
+
 ## Responsibilities
 
 Follow this sequence for every task:
@@ -40,6 +42,8 @@ Follow this sequence for every task:
 - Do not directly create, move, rename, archive, outdate, or delete files under `product/`, `ops/`, `rules/`, `runtime/`, `user/`, or `reference/`.
 - Use `cc-iasd` commands, or ask the runtime origin to perform an explicit human file operation, when a new cc-iasd-managed artifact is required.
 - After a command creates an artifact, edit only authored content sections. Do not free-edit tool-owned metadata, IDs, lifecycle state, source references, archive placement, or outdate placement.
+- Treat Likely Touched Surfaces as a planning estimate, not a hard limit. If the correct implementation requires a different surface, report the reason in the Worker Implementation Packet.
+- Treat Non-Regression Focus as outcome constraints. Do not preserve a bad implementation by avoiding necessary changes; escalate when the required fix would change UX, data, security, public API, or architecture boundaries.
 
 ## Review Handoff Rules
 
@@ -54,6 +58,8 @@ Worker Implementation Packet:
 - Files Changed:
 - Tests Run:
 - Development Log Ref:
+- Surfaces Changed Outside Likely Touched Surfaces:
+- Non-Regression Checks:
 - Open Items Added:
 - Blockers:
 - Review Needed:

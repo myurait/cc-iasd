@@ -19,6 +19,7 @@ Before reviewing any changes, read the following files in full. Do not rely on m
 1. `rules/policies/coding-conventions.md` (coding rules, ~197 lines)
 2. `rules/policies/testing.md` (testing rules, ~64 lines)
 3. Any related `product/specs/<spec-id>/*.md` or `ops/execution/runs/<run-id>/*.md` files (variable — read only those relevant to the changes under review)
+4. Relevant run handoff sections when available: Selected Tasks, Expected Local Outcome, Likely Touched Surfaces, Related Impact Surfaces, Non-Regression Focus, and Local Verification
 
 ## Review Criteria
 
@@ -50,6 +51,8 @@ Check every changed code file against all of the following.
 
 - If the changed code has a related spec or planning package, check whether the implementation matches it.
 - Flag any discrepancy between the design document description and the actual implementation.
+- If changed files fall outside the run's Likely Touched Surfaces, verify the implementation result records the reason.
+- Check whether Non-Regression Focus and Local Verification were addressed by tests, commands, or explicit notes.
 
 ## Trigger Conditions
 

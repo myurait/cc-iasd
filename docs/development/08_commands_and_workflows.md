@@ -145,7 +145,7 @@ run:
 - 対象 spec / tasks を解決する
 - linked roadmap / feature / campaign を確認する
 - 自走条件を確認する
-- 実行 runtime に渡す handoff.md を生成する
+- 実行 runtime に渡す handoff.md を生成する。handoff は selected tasks、expected local outcome、likely touched surfaces、related impact surfaces、non-regression focus、escalation triggers、local verification、open item routing を持つ
 - state.md を初期化する
 - open-items.md を用意する
 - knowledge.md を用意する
@@ -181,6 +181,8 @@ run:
 - 対象 spec がない
 - tasks がない
 - run scope が曖昧
+- expected local outcome が定義できない
+- related impact surfaces または non-regression focus が空のままになる
 - user decision が未解決
 - src/ root が解決不能
 - roadmap / campaign 目的変更が必要
@@ -429,7 +431,7 @@ ops/scopes/roadmaps/<id>.md
 処理:
 1. campaign id を受け取る
 2. linked roadmap / spec / tasks を受け取る
-3. task selector / stop condition / progression condition を受け取る
+3. user experience outcome / feature-spec coverage / task selector / stop condition / progression condition / cross-run non-regression focus / impact map / Devil's Advocate Focus / completion condition を受け取る
 4. ops/execution/campaigns/ に campaign directory を作成する
 5. ops/evidence/logs/ に campaign event を記録する
 ```
@@ -444,6 +446,8 @@ ops/execution/campaigns/<id>/aggregate-report.md
 ```
 
 campaign は runtime output を直接内包しない。実行結果は `ops/evidence/` に置き、Source Campaign / Source Run で関連付ける。
+
+Devil's Advocate Focus は、Devil's Advocate の監査範囲を制限しない。計画時点で特に警戒すべき項目を明示するための入力である。
 
 ### 13.4 cc-iasd campaign mark-run
 
