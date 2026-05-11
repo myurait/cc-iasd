@@ -47,7 +47,7 @@ TODO:
 
 1. CLI command surface の肥大化を抑える。単一 CLI が全レイヤーの操作を露出することで、AI に不要な横断コンテキストを与えない設計を検討する。
 
-2. 不足 role の有無を検討する。product decision escalation、open item routing、campaign progression 判定を既存 role に吸収できるか、将来 role として分けるべきかを判断する。
+2. Planning Lead と Execution Manager を並立 entry point として分離した後、command visibility と runtime handoff が context pressure を増やしていないかを scenario test で検証する。
 
 3. campaign `aggregate-report.md` の更新 workflow を定義する。いつ、誰が、どの command または authored section として campaign aggregate を更新するかを決める。
 

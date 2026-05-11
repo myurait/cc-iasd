@@ -54,6 +54,7 @@ test('init creates the product ops reference structure', async () => {
     assert.equal(existsSync(path.join(root, 'rules/templates/ideal_interview_packet_template.md')), true);
     assert.equal(existsSync(path.join(root, 'rules/roles/ideal-interviewer.md')), true);
     assert.equal(existsSync(path.join(root, 'rules/roles/design-reviewer.md')), true);
+    assert.equal(existsSync(path.join(root, 'rules/roles/execution-manager.md')), true);
 
     const projectPolicies = await readFile(path.join(root, 'rules/project-policies.md'), 'utf8');
     assert.match(projectPolicies, /## Source Projects/);
@@ -70,6 +71,7 @@ test('init creates the product ops reference structure', async () => {
     assert.match(roleRuntime, /rules\/roles\/ideal-interviewer\.md/);
     assert.match(roleRuntime, /rules\/roles\/worker\.md/);
     assert.match(roleRuntime, /rules\/roles\/planning-lead\.md/);
+    assert.match(roleRuntime, /rules\/roles\/execution-manager\.md/);
     assert.match(roleRuntime, /## Command Visibility By Role/);
     assert.match(roleRuntime, /### design-reviewer/);
     assert.match(roleRuntime, /`cc-iasd review add <scope-id>`/);
@@ -78,6 +80,7 @@ test('init creates the product ops reference structure', async () => {
     assert.match(roleRuntime, /### worker/);
     assert.match(roleRuntime, /`cc-iasd view run <run-id>`/);
     assert.match(roleRuntime, /## Context Compression Recovery/);
+    assert.match(roleRuntime, /Planning Lead and Execution Manager are parallel entry points/);
     assert.match(roleRuntime, /Compressed handoff must preserve active role/);
 
     assert.equal(existsSync(path.join(root, 'ops/evidence-index.md')), false);

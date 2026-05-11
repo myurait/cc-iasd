@@ -271,6 +271,7 @@ cc-iasd のロールは、AI の人格設定ではなく、責務分離である
 ```text
 最小ロール:
 - Planning Lead
+- Execution Manager
 - Worker
 - Reviewer
 ```
@@ -288,19 +289,34 @@ cc-iasd のロールは、AI の人格設定ではなく、責務分離である
 
 ### 8.1 Planning Lead
 
-Planning Lead は project-context 内の開発チームリーダーである。
+Planning Lead は planning entry point である。実行を直接統括する開発チームリーダーではなく、ideal / feature / roadmap / spec / design review を束ね、実行可能な Execution Entry Packet を作成する。
 
 ```text
 Planning Lead の責務:
-- scope / run の開発進行管理
+- planning phase の開始
+- Designer / Design Reviewer への作業割当
+- Backtrack Request の中継
+- roadmap consultation
+- Execution Entry Packet の作成
+- execution feedback の計画層への反映
+```
+
+### 8.2 Execution Manager
+
+Execution Manager は execution entry point である。Planning Lead から subagent として起動されるのではなく、Execution Entry Packet を入力として別 runtime で開始される。
+
+```text
+Execution Manager の責務:
+- campaign / run の開発進行管理
 - task breakdown の調整
 - Worker / Reviewer への作業割当
 - run 内の軽微判断
 - 停止・エスカレーション判断
 - completion report の整理
+- planning-layer feedback の返却
 ```
 
-### 8.2 Worker
+### 8.3 Worker
 
 Worker は、task を実装する。
 
@@ -312,7 +328,7 @@ Worker の責務:
 - 実装中に判明した問題の報告
 ```
 
-### 8.3 Reviewer
+### 8.4 Reviewer
 
 Reviewer は、Worker の結果を検査する。
 

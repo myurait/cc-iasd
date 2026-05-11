@@ -1,7 +1,8 @@
 sequenceDiagram
   autonumber
   actor H as Human
-  participant PL as Planning Lead<br/>parent runtime
+  participant PL as Planning Lead<br/>planning entry runtime
+  participant EM as Execution Manager<br/>execution entry runtime
   participant II as Ideal Interviewer<br/>human-facing runtime
   participant FSD as Feature Scope Designer<br/>subagent runtime
   participant SD as Spec Designer<br/>subagent runtime
@@ -21,7 +22,7 @@ sequenceDiagram
   activate PL
   PL->>CLI: doctor + view current
   CLI-->>PL: readiness and current context
-  Note over PL,DA: Nested subagent runtime is not allowed. Planning Lead launches every specialist subagent.
+  Note over PL,EM: Planning and execution are parallel entry points. Planning Lead prepares an Execution Entry Packet; Execution Manager starts as a separate runtime.
 
   alt ideal is missing or too thin
     PL->>II: request ideal interview
@@ -79,24 +80,29 @@ sequenceDiagram
   DR-->>PL: Design Review Packet
   deactivate DR
 
-  PL->>CLI: campaign add
+  PL-->>H: Execution Entry Packet
+  H->>EM: start execution entry with Execution Entry Packet
+  activate EM
+  EM->>CLI: doctor + view scope
+  CLI-->>EM: readiness and scoped planning context
+  EM->>CLI: campaign add
   CLI-->>Art: campaign artifact + log
-  PL->>DA: launch Design Launch Review before first run
+  EM->>DA: launch Design Launch Review before first run
   activate DA
   Note over DA: subagent runtime activation
   DA->>CLI: view scope + view evidence + review add --review-mode design-launch
   CLI-->>Art: Devil's Advocate design launch evidence
-  DA-->>PL: launch findings
+  DA-->>EM: launch findings
   deactivate DA
   alt launch accepted
-    PL->>CLI: run start
+    EM->>CLI: run start
     CLI-->>Art: run artifacts + logs
   else launch blocked
-    PL->>H: escalation or upstream backtrack packet
-    H-->>PL: human decision or correction direction
+    EM->>H: escalation or upstream backtrack packet
+    H-->>EM: human decision or correction direction
   end
 
-  PL->>W: launch implementation run
+  EM->>W: launch implementation run
   activate W
   Note over W: subagent runtime activation
   W->>CLI: view run
@@ -104,49 +110,52 @@ sequenceDiagram
   W->>Src: implement selected tasks
   W->>CLI: open-item add when feedback escapes the run
   CLI-->>Art: run-local open item
-  W-->>PL: implementation result
+  W-->>EM: implementation result
   deactivate W
-  PL->>QA: launch task-unit code review
+  EM->>QA: launch task-unit code review
   activate QA
   Note over QA: subagent runtime activation
   QA->>CLI: view run + review add
   CLI-->>Art: code quality review evidence
-  QA-->>PL: code quality findings
+  QA-->>EM: code quality findings
   deactivate QA
 
-  PL->>CLI: view scope + view run
-  CLI-->>PL: scoped execution context
-  PL->>CLI: open-item resolve when needed
+  EM->>CLI: view scope + view run
+  CLI-->>EM: scoped execution context
+  EM->>CLI: open-item resolve when needed
   CLI-->>Art: updated run-local open items
 
-  PL->>DA: launch Campaign Completion Review
+  EM->>DA: launch Campaign Completion Review
   activate DA
   Note over DA: subagent runtime activation
   DA->>CLI: view scope + view run + view evidence + review add --review-mode campaign-completion
   CLI-->>Art: Devil's Advocate review evidence
-  DA-->>PL: campaign completion findings
+  DA-->>EM: campaign completion findings
   deactivate DA
 
-  PL->>CA: launch compliance review after Devil's Advocate
+  EM->>CA: launch compliance review after Devil's Advocate
   activate CA
   Note over CA: subagent runtime activation
   CA->>CLI: doctor + view evidence + review add
   CLI-->>Art: compliance review evidence
-  CA-->>PL: compliance findings
+  CA-->>EM: compliance findings
   deactivate CA
 
   alt completion accepted
-    PL->>CLI: campaign mark-run + report
+    EM->>CLI: campaign mark-run + report
     CLI-->>Art: updated campaign/run state + completion report
-    PL->>H: Completion Report Packet
-    H-->>PL: confirmation or follow-up direction
+    EM->>H: Completion Report Packet
+    H-->>EM: confirmation or follow-up direction
+    EM-->>PL: Execution Handoff Packet or Planning Feedback Packet
   else human decision required
-    PL->>CLI: escalate
+    EM->>CLI: escalate
     CLI-->>Art: escalation packet
-    PL->>H: Escalation Packet
-    H-->>PL: human decision
+    EM->>H: Escalation Packet
+    H-->>EM: human decision
+    EM-->>PL: Planning Feedback Packet when planning artifacts must change
   end
 
-  PL->>CLI: log / reference / archive / outdate lifecycle maintenance
+  PL->>CLI: planning lifecycle maintenance
   CLI-->>Art: lifecycle maintenance evidence
+  deactivate EM
   deactivate PL

@@ -28,7 +28,7 @@ You may use only these cc-iasd commands:
 - `cc-iasd view run <run-id>`
 - `cc-iasd review add <scope-id>`
 
-You must not use ideal, feature, roadmap, spec, campaign, report, escalation, archive, outdate, log, open-item, reference, profile, init, or product lifecycle commands unless the Planning Lead or human explicitly performs that operation outside your role.
+You must not use ideal, feature, roadmap, spec, campaign, report, escalation, archive, outdate, log, open-item, reference, profile, init, or product lifecycle commands unless Execution Manager or the human explicitly performs that operation outside your role.
 
 ## Context Reload After Compression
 
@@ -87,7 +87,7 @@ Check every changed code file against all of the following.
 
 ## Trigger Conditions
 
-- **Code changes** — Planning Lead or the human runtime owner launches this role when code files (`.ts`, `.tsx`, `.js`, `.jsx`, `.py`) are changed.
+- **Code changes** — Execution Manager or the human runtime owner launches this role when code files (`.ts`, `.tsx`, `.js`, `.jsx`, `.py`) are changed.
 - Also launched during Full review when code changes are in scope.
 
 ## Output Language

@@ -429,7 +429,7 @@ non-regression focus:
   壊してはいけない既存挙動。禁止ではなく outcome 制約である。
 
 escalation triggers:
-  想定変更面を大きく越える場合、外部依存や人間判断が必要な場合、または UX / data / security 境界を変更する必要が出た場合に Planning Lead へ戻す条件。
+  想定変更面を大きく越える場合、外部依存や人間判断が必要な場合、または UX / data / security 境界を変更する必要が出た場合に Execution Manager へ戻す条件。計画層の変更が必要な場合は Execution Manager が Planning Feedback Packet として Planning Lead または Human へ戻す。
 ```
 
 ### 7.3 Artifact Quality Requirements
@@ -609,7 +609,7 @@ product 正本に影響するもの:
   reference/
 ```
 
-user decisions と run-local 軽微判断は分離する。人間による product / policy / scope 判断は `user/decisions.md` に置く。Planning Lead の軽微判断は発生した run state、knowledge、review、report のいずれかに閉じる。
+user decisions と run-local 軽微判断は分離する。人間による product / policy / scope 判断は `user/decisions.md` に置く。Execution Manager の軽微判断は発生した run state、knowledge、review、report のいずれかに閉じる。
 
 ---
 

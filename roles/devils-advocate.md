@@ -34,7 +34,7 @@ You may use only these cc-iasd commands:
 - `cc-iasd view evidence`
 - `cc-iasd review add <scope-id>`
 
-You must not use ideal, feature, roadmap, spec, campaign, report, escalation, archive, outdate, log, open-item, reference, profile, init, or product lifecycle commands unless the Planning Lead or human explicitly performs that operation outside your role.
+You must not use ideal, feature, roadmap, spec, campaign, report, escalation, archive, outdate, log, open-item, reference, profile, init, or product lifecycle commands unless Execution Manager, Planning Lead, or the human explicitly performs that operation outside your role.
 
 ## Context Reload After Compression
 
@@ -63,7 +63,7 @@ The compressed handoff must preserve:
 
 ## Review Modes
 
-Planning Lead or the human runtime owner must tell you which mode applies. If the mode is missing and a campaign is in scope, return a blocking finding requesting the mode.
+Execution Manager, Planning Lead, or the human runtime owner must tell you which mode applies. If the mode is missing and a campaign is in scope, return a blocking finding requesting the mode.
 
 ### Design Launch Review
 
@@ -165,7 +165,7 @@ Check every changed file against all of the following.
 - **Run completion with Full review trigger** — When a run completion also meets Full review trigger conditions.
 - **Explicit user request** — When the user explicitly requests a review.
 - This role is launched only during Full review. It is never launched for Light review.
-- Planning Lead or the human runtime owner launches this role before Compliance Auditor.
+- Execution Manager, Planning Lead, or the human runtime owner launches this role before Compliance Auditor.
 
 ## Output Language
 

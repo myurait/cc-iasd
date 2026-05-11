@@ -7,7 +7,7 @@
 
 ## 1. この文書の目的
 
-この文書は、cc-iasd における自走範囲、停止条件、Planning Lead の権限境界を定義する。
+この文書は、cc-iasd における自走範囲、停止条件、Planning Lead と Execution Manager の権限境界を定義する。
 
 cc-iasd の中核価値は、AI に無制限の自律性を与えることではない。
 
@@ -35,7 +35,7 @@ run が参照できる scope:
 - task set
 - single task
 - bugfix scope
-- Planning Lead が安全と判断した bounded scope
+- Execution Manager が Execution Entry Packet 内で安全と判断した bounded scope
 ```
 
 自走単位を task に固定すると自走性が弱い。roadmap 全体に広げると権限が大きすぎる。cc-iasd では run を標準の実行単位とし、run が campaign や task set などの bounded scope を参照する。
@@ -99,32 +99,39 @@ ops/execution/
       run_<timestamp>_<scope>/
 ```
 
-Campaign の導入によって、Planning Lead は「高度な人間判断が必要な領域以外は、可能な限り段階的に進める」という指示を扱える。ただし、Planning Lead は campaign plan の外側へ自走範囲を拡大してはならない。
+Campaign の導入によって、Execution Manager は「高度な人間判断が必要な領域以外は、可能な限り段階的に進める」という指示を扱える。ただし、Execution Manager は Execution Entry Packet と campaign plan の外側へ自走範囲を拡大してはならない。
 
 最初の run を開始する前に、Devil's Advocate は Design Launch Review mode で campaign 走行可否を検査する。これは code review ではない。campaign の coverage、task selector、stop / progression conditions、impact map、non-regression focus、人間判断が必要な infrastructure / cost / security / privacy / product value を確認する。
 
 ---
 
-## 4. Planning Lead
+## 4. Entry Point Boundary
 
-Planning Lead は project-context 内の開発チームリーダーである。
+Planning Lead と Execution Manager は並立する entry point である。Planning Lead は planning phase を扱い、Execution Manager は execution phase を扱う。Planning Lead から Execution Manager を subagent として起動しない。
 
 ```text
 Planning Lead の責務:
+- Backtrack Request の中継
+- ideal / feature / spec / roadmap の計画進行
+- Designer / Design Reviewer の起動
+- Execution Entry Packet の作成
+- execution feedback の計画層への反映
+
+Execution Manager の責務:
 - run 内の進行管理
 - task breakdown の調整
-- Worker / Reviewer への割当
-- 実装結果を踏まえた局所計画変更
+- Worker / execution Reviewer への割当
+- 実装結果を踏まえた run-local 変更
 - 自走継続可否の判断
 - 停止・エスカレーション判断
 - completion report の整理
-- Backtrack Request の中継
+- planning-layer feedback packet の作成
 ```
 
-## 5. Planning Lead ができること
+## 5. Execution Manager ができること
 
 ```text
-Planning Lead can:
+Execution Manager can:
 - run 内の task を分割する
 - run 内の task を統合する
 - run 内の作業順序を変更する
@@ -134,15 +141,15 @@ Planning Lead can:
 - review 結果に基づく bounded remediation を行う
 - run 内で安全と判断できる範囲を自走させる
 - campaign plan に明示された条件の範囲で次の run へ進める
-- Designer / Design Reviewer からの Backtrack Request を上流 role または Human へ中継する
+- planning-layer feedback を Planning Lead または Human へ返す
 ```
 
 ---
 
-## 6. Planning Lead ができないこと
+## 6. Execution Manager ができないこと
 
 ```text
-Planning Lead cannot:
+Execution Manager cannot:
 - roadmap を自由に変更する
 - product direction を変更する
 - campaign の目的を変更する
@@ -154,6 +161,7 @@ Planning Lead cannot:
 - 既存 user decision を黙って上書きする
 - ideal / feature / spec の品質判定を自分で肩代わりする
 - 不足した上流 artifact を推測で補完して次工程へ進める
+- Planning Lead を subagent として起動する
 ```
 
 ---
@@ -227,7 +235,7 @@ campaign progression 条件:
 
 ## 10. 軽微判断の扱い
 
-軽微判断は、Planning Lead が run 内で行ってよい。ただし、run state、run-local knowledge、logs、reviews、reports のいずれか適切な artifact に残す。
+軽微判断は、Execution Manager が run 内で行ってよい。ただし、run state、run-local knowledge、logs、reviews、reports のいずれか適切な artifact に残す。
 
 ```text
 軽微判断の例:
@@ -284,7 +292,7 @@ campaign aggregate report:
 
 ```text
 初期固定項目:
-- Planning Lead can / cannot
+- Planning Lead / Execution Manager can / cannot
 - 自走開始条件
 - 自走継続条件
 - 停止条件

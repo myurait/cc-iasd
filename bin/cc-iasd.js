@@ -2005,6 +2005,8 @@ const roleRuntimeTemplate = ({ now, roleEntries }) => [
   '- Devil\'s Advocate must be invoked with `Review Mode: Design Launch Review` before campaign execution when campaign launch risk is inspected.',
   '- Devil\'s Advocate must be invoked with `Review Mode: Campaign Completion Review` before campaign completion is accepted.',
   '- Planning Lead routes Backtrack Requests and review-mode invocation metadata. Planning Lead does not judge ideal, feature, or spec artifact quality directly.',
+  '- Planning Lead and Execution Manager are parallel entry points. Planning Lead prepares an Execution Entry Packet; Execution Manager is started separately from that packet and is not a nested subagent of Planning Lead.',
+  '- Execution Manager owns Worker, Code Quality Auditor, Devil\'s Advocate, Compliance Auditor, campaign/run, report, and execution escalation orchestration.',
   '',
   '## Context Compression Recovery',
   '',

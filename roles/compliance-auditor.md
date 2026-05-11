@@ -31,7 +31,7 @@ You may use only these cc-iasd commands:
 - `cc-iasd view run <run-id>`
 - `cc-iasd review add <scope-id>`
 
-You must not use ideal, feature, roadmap, spec, campaign, report, escalation, archive, outdate, log, open-item, reference, profile, init, or product lifecycle commands unless the Planning Lead or human explicitly performs that operation outside your role.
+You must not use ideal, feature, roadmap, spec, campaign, report, escalation, archive, outdate, log, open-item, reference, profile, init, or product lifecycle commands unless Execution Manager, Planning Lead, or the human explicitly performs that operation outside your role.
 
 ## Context Reload After Compression
 
@@ -88,7 +88,7 @@ Determine the file category and verify the correct language is used:
 
 ## Trigger Conditions
 
-- **All changes** — Planning Lead or the human runtime owner launches this role for every commit. Language inspection is required regardless of file type.
+- **All changes** — Execution Manager, Planning Lead, or the human runtime owner launches this role for every commit. Language inspection is required regardless of file type.
 - In Full review, this role runs after Devil's Advocate findings are available.
 
 ## Output Language

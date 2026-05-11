@@ -1,271 +1,85 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="2220" viewBox="0 0 2000 2220" role="img" aria-labelledby="title desc">
-  <title id="title">cc-iasd standard role flow sequence overview</title>
-  <desc id="desc">A sequence diagram showing parent runtime, human-facing runtime, subagent runtime roles, CLI artifact operations, src output, and managed artifacts.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="860" viewBox="0 0 1280 860" role="img" aria-labelledby="title desc">
+  <title id="title">cc-iasd standard role sequence overview</title>
+  <desc id="desc">Planning Lead and Execution Manager are parallel entry points. Planning Lead prepares an Execution Entry Packet. Execution Manager starts separately and orchestrates execution roles.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .title { font: 700 26px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #17202a; }
+    .label { font: 600 15px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #17202a; }
+    .small { font: 13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #273746; }
+    .note { font: 12px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #566573; }
+    .lane { fill: #f7f9fb; stroke: #d5dce4; stroke-width: 1; }
+    .planning { fill: #edf5ff; stroke: #8bb7e8; }
+    .execution { fill: #eef8f1; stroke: #89c89a; }
+    .evidence { fill: #fff7e8; stroke: #e1b76b; }
+    .src { fill: #f4efff; stroke: #b39ddb; }
+    .arrow { stroke: #34495e; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+    .dash { stroke: #7f8c8d; stroke-width: 2; fill: none; stroke-dasharray: 6 5; marker-end: url(#arrow); }
+  </style>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f2937"/>
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#34495e"/>
     </marker>
-    <marker id="returnArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
-    </marker>
-    <style>
-      .bg { fill: #ffffff; }
-      .title { font: 700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
-      .subtitle { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
-      .participant { fill: #f8fafc; stroke: #334155; stroke-width: 1.4; rx: 8; }
-      .human { fill: #fefce8; stroke: #a16207; }
-      .main { fill: #eff6ff; stroke: #1d4ed8; }
-      .special { fill: #f0fdf4; stroke: #15803d; }
-      .cli { fill: #f5f3ff; stroke: #6d28d9; }
-      .src { fill: #ecfeff; stroke: #0e7490; }
-      .artifact { fill: #fff7ed; stroke: #c2410c; }
-      .ptext { font: 700 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; text-anchor: middle; }
-      .psub { font: 10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; text-anchor: middle; }
-      .lifeline { stroke: #94a3b8; stroke-width: 1.2; stroke-dasharray: 6 6; }
-      .act-main { fill: #dbeafe; stroke: #1d4ed8; stroke-width: 1.1; }
-      .act-human { fill: #fef9c3; stroke: #a16207; stroke-width: 1.1; }
-      .act-sub { fill: #dcfce7; stroke: #15803d; stroke-width: 1.1; }
-      .act-cli { fill: #ede9fe; stroke: #6d28d9; stroke-width: 1.1; }
-      .act-src { fill: #cffafe; stroke: #0e7490; stroke-width: 1.1; }
-      .act-art { fill: #ffedd5; stroke: #c2410c; stroke-width: 1.1; }
-      .message { stroke: #1f2937; stroke-width: 1.45; marker-end: url(#arrow); }
-      .return { stroke: #475569; stroke-width: 1.25; stroke-dasharray: 5 4; marker-end: url(#returnArrow); }
-      .mlabel { font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #111827; text-anchor: middle; }
-      .small { font: 10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
-      .stage { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1; rx: 8; }
-      .stageText { font: 700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
-    </style>
   </defs>
+  <rect class="bg" width="1280" height="860"/>
+  <text class="title" x="40" y="48">cc-iasd Standard Flow: Parallel Planning and Execution Entry Points</text>
+  <text class="note" x="40" y="75">Execution Manager is not a nested subagent of Planning Lead. A human or runtime owner starts execution separately with an Execution Entry Packet.</text>
 
-  <rect class="bg" width="2000" height="2220"/>
-  <text x="42" y="42" class="title">Standard Role Flow Sequence</text>
-  <text x="42" y="66" class="subtitle">The vertical bars are runtime activations: Planning Lead is the parent runtime, Ideal Interviewer is human-facing, and specialist roles are subagent runtimes.</text>
+  <rect class="lane" x="40" y="110" width="180" height="690" rx="8"/>
+  <rect class="planning" x="250" y="110" width="300" height="690" rx="8"/>
+  <rect class="execution" x="585" y="110" width="330" height="690" rx="8"/>
+  <rect class="src" x="950" y="110" width="125" height="690" rx="8"/>
+  <rect class="evidence" x="1100" y="110" width="140" height="690" rx="8"/>
 
-  <!-- participant headers -->
-  <rect x="25" y="92" width="105" height="54" class="participant human"/>
-  <text x="77" y="114" class="ptext">Human</text>
-  <text x="77" y="132" class="psub">decision</text>
+  <text class="label" x="90" y="140">Human</text>
+  <text class="label" x="335" y="140">Planning Entry</text>
+  <text class="label" x="690" y="140">Execution Entry</text>
+  <text class="label" x="990" y="140">src/</text>
+  <text class="label" x="1125" y="140">Artifacts</text>
 
-  <rect x="155" y="92" width="115" height="54" class="participant main"/>
-  <text x="212" y="114" class="ptext">Planning Lead</text>
-  <text x="212" y="132" class="psub">parent runtime</text>
+  <text class="small" x="70" y="190">Governed</text>
+  <text class="small" x="70" y="208">development</text>
+  <text class="small" x="70" y="226">request</text>
+  <path class="arrow" d="M 220 205 H 250"/>
 
-  <rect x="300" y="92" width="120" height="54" class="participant human"/>
-  <text x="360" y="114" class="ptext">Ideal Interviewer</text>
-  <text x="360" y="132" class="psub">human-facing</text>
+  <text class="small" x="280" y="190">Planning Lead</text>
+  <text class="note" x="280" y="211">doctor / view current</text>
+  <text class="note" x="280" y="229">designer orchestration</text>
+  <text class="note" x="280" y="247">design review routing</text>
+  <path class="dash" d="M 550 220 H 1100"/>
+  <text class="note" x="1120" y="218">product/ ops/</text>
 
-  <rect x="445" y="92" width="120" height="54" class="participant special"/>
-  <text x="505" y="114" class="ptext">Feature Designer</text>
-  <text x="505" y="132" class="psub">subagent runtime</text>
+  <rect class="planning" x="285" y="285" width="230" height="88" rx="6"/>
+  <text class="small" x="305" y="313">Ideal / Feature / Spec</text>
+  <text class="note" x="305" y="334">Ideal Interviewer, Designers,</text>
+  <text class="note" x="305" y="352">Design Reviewer are launched here</text>
 
-  <rect x="590" y="92" width="120" height="54" class="participant special"/>
-  <text x="650" y="114" class="ptext">Spec Designer</text>
-  <text x="650" y="132" class="psub">subagent runtime</text>
+  <rect class="planning" x="285" y="420" width="230" height="86" rx="6"/>
+  <text class="small" x="305" y="448">Execution Entry Packet</text>
+  <text class="note" x="305" y="469">reviewed feature, roadmap,</text>
+  <text class="note" x="305" y="487">spec, tasks, constraints</text>
+  <path class="arrow" d="M 515 462 H 585"/>
 
-  <rect x="735" y="92" width="120" height="54" class="participant special"/>
-  <text x="795" y="114" class="ptext">Design Reviewer</text>
-  <text x="795" y="132" class="psub">subagent runtime</text>
+  <text class="small" x="610" y="448">Execution Manager</text>
+  <text class="note" x="610" y="469">started as a separate runtime</text>
+  <text class="note" x="610" y="487">campaign / run orchestration</text>
 
-  <rect x="880" y="92" width="120" height="54" class="participant special"/>
-  <text x="940" y="114" class="ptext">Worker</text>
-  <text x="940" y="132" class="psub">subagent runtime</text>
+  <rect class="execution" x="625" y="535" width="250" height="118" rx="6"/>
+  <text class="small" x="645" y="563">Execution roles</text>
+  <text class="note" x="645" y="584">Worker implements selected run tasks</text>
+  <text class="note" x="645" y="603">Code Quality Auditor reviews code</text>
+  <text class="note" x="645" y="622">Devil's Advocate reviews launch/completion</text>
+  <text class="note" x="645" y="641">Compliance Auditor checks final evidence</text>
+  <path class="arrow" d="M 875 594 H 950"/>
+  <text class="note" x="965" y="594">implementation</text>
 
-  <rect x="1025" y="92" width="120" height="54" class="participant special"/>
-  <text x="1085" y="114" class="ptext">Code Quality</text>
-  <text x="1085" y="132" class="psub">subagent runtime</text>
+  <path class="dash" d="M 750 653 V 725 H 1100"/>
+  <text class="note" x="1118" y="725">reviews / logs</text>
+  <text class="note" x="1118" y="743">reports / escalation</text>
 
-  <rect x="1170" y="92" width="120" height="54" class="participant special"/>
-  <text x="1230" y="114" class="ptext">Devil's Advocate</text>
-  <text x="1230" y="132" class="psub">subagent runtime</text>
+  <rect class="execution" x="625" y="700" width="250" height="64" rx="6"/>
+  <text class="small" x="645" y="728">Execution Handoff Packet</text>
+  <text class="note" x="645" y="749">completion, debt, follow-up, blockers</text>
+  <path class="dash" d="M 625 732 H 550"/>
 
-  <rect x="1315" y="92" width="120" height="54" class="participant special"/>
-  <text x="1375" y="114" class="ptext">Compliance</text>
-  <text x="1375" y="132" class="psub">subagent runtime</text>
-
-  <rect x="1460" y="92" width="120" height="54" class="participant cli"/>
-  <text x="1520" y="114" class="ptext">cc-iasd CLI</text>
-  <text x="1520" y="132" class="psub">artifact ops</text>
-
-  <rect x="1600" y="92" width="105" height="54" class="participant src"/>
-  <text x="1652" y="114" class="ptext">src/</text>
-  <text x="1652" y="132" class="psub">implementation</text>
-
-  <rect x="1735" y="92" width="185" height="54" class="participant artifact"/>
-  <text x="1827" y="114" class="ptext">product/ ops/ evidence/</text>
-  <text x="1827" y="132" class="psub">managed artifacts</text>
-
-  <!-- lifelines -->
-  <line x1="77" y1="146" x2="77" y2="2170" class="lifeline"/>
-  <line x1="212" y1="146" x2="212" y2="2170" class="lifeline"/>
-  <line x1="360" y1="146" x2="360" y2="2170" class="lifeline"/>
-  <line x1="505" y1="146" x2="505" y2="2170" class="lifeline"/>
-  <line x1="650" y1="146" x2="650" y2="2170" class="lifeline"/>
-  <line x1="795" y1="146" x2="795" y2="2170" class="lifeline"/>
-  <line x1="940" y1="146" x2="940" y2="2170" class="lifeline"/>
-  <line x1="1085" y1="146" x2="1085" y2="2170" class="lifeline"/>
-  <line x1="1230" y1="146" x2="1230" y2="2170" class="lifeline"/>
-  <line x1="1375" y1="146" x2="1375" y2="2170" class="lifeline"/>
-  <line x1="1520" y1="146" x2="1520" y2="2170" class="lifeline"/>
-  <line x1="1652" y1="146" x2="1652" y2="2170" class="lifeline"/>
-  <line x1="1827" y1="146" x2="1827" y2="2170" class="lifeline"/>
-
-  <!-- runtime activation bars -->
-  <rect x="204" y="205" width="16" height="1945" class="act-main"/>
-  <text x="228" y="228" class="small">parent runtime</text>
-  <rect x="352" y="420" width="16" height="325" class="act-human"/>
-  <text x="375" y="445" class="small">human-facing runtime</text>
-  <rect x="497" y="815" width="16" height="235" class="act-sub"/>
-  <text x="520" y="838" class="small">subagent runtime</text>
-  <rect x="642" y="1255" width="16" height="235" class="act-sub"/>
-  <text x="665" y="1278" class="small">subagent runtime</text>
-  <rect x="787" y="610" width="16" height="100" class="act-sub"/>
-  <rect x="787" y="915" width="16" height="100" class="act-sub"/>
-  <rect x="787" y="1355" width="16" height="100" class="act-sub"/>
-  <text x="810" y="935" class="small">subagent runtime</text>
-  <rect x="932" y="1565" width="16" height="175" class="act-sub"/>
-  <text x="955" y="1588" class="small">subagent runtime</text>
-  <rect x="1077" y="1620" width="16" height="95" class="act-sub"/>
-  <text x="1100" y="1643" class="small">subagent runtime</text>
-  <rect x="1222" y="1810" width="16" height="100" class="act-sub"/>
-  <text x="1245" y="1833" class="small">subagent runtime</text>
-  <rect x="1367" y="1940" width="16" height="100" class="act-sub"/>
-  <text x="1390" y="1963" class="small">subagent runtime</text>
-  <rect x="1512" y="178" width="16" height="1945" class="act-cli"/>
-  <text x="1535" y="198" class="small">CLI artifact ops</text>
-  <rect x="1644" y="1588" width="16" height="95" class="act-src"/>
-  <text x="1668" y="1610" class="small">implementation output</text>
-  <rect x="1819" y="178" width="16" height="1945" class="act-art"/>
-  <text x="1843" y="198" class="small">managed artifact state</text>
-
-  <!-- setup -->
-  <rect x="1340" y="165" width="520" height="36" class="stage"/>
-  <text x="1358" y="188" class="stageText">Bootstrap/profile update is CLI-scaffolded setup, not role-visible runtime.</text>
-  <line x1="1528" y1="225" x2="1819" y2="225" class="message"/>
-  <text x="1673" y="217" class="mlabel">initialize scaffold</text>
-
-  <!-- opening -->
-  <line x1="77" y1="255" x2="204" y2="255" class="message"/>
-  <text x="140" y="247" class="mlabel">development request</text>
-  <line x1="220" y1="295" x2="1512" y2="295" class="message"/>
-  <text x="865" y="287" class="mlabel">doctor + view current</text>
-  <line x1="1512" y1="325" x2="220" y2="325" class="return"/>
-  <text x="865" y="347" class="mlabel">readiness and current context</text>
-
-  <!-- ideal -->
-  <rect x="42" y="370" width="235" height="28" class="stage"/>
-  <text x="58" y="389" class="stageText">alt: ideal missing or thin</text>
-  <line x1="220" y1="420" x2="352" y2="420" class="message"/>
-  <text x="286" y="412" class="mlabel">request ideal interview</text>
-  <line x1="368" y1="455" x2="77" y2="455" class="message"/>
-  <text x="222" y="447" class="mlabel">ideal interview packet</text>
-  <line x1="77" y1="490" x2="352" y2="490" class="return"/>
-  <text x="215" y="512" class="mlabel">product intent response</text>
-  <line x1="368" y1="545" x2="1512" y2="545" class="message"/>
-  <text x="940" y="537" class="mlabel">ideal add</text>
-  <line x1="1528" y1="575" x2="1819" y2="575" class="message"/>
-  <text x="1673" y="567" class="mlabel">ideal artifact + log</text>
-  <line x1="220" y1="610" x2="787" y2="610" class="message"/>
-  <text x="504" y="602" class="mlabel">launch ideal design review</text>
-  <line x1="803" y1="645" x2="1512" y2="645" class="message"/>
-  <text x="1158" y="637" class="mlabel">review add</text>
-  <line x1="1528" y1="675" x2="1819" y2="675" class="message"/>
-  <text x="1673" y="667" class="mlabel">ideal review evidence</text>
-  <line x1="787" y1="710" x2="220" y2="710" class="return"/>
-  <text x="504" y="732" class="mlabel">Design Review Packet</text>
-  <line x1="352" y1="745" x2="220" y2="745" class="return"/>
-  <text x="286" y="767" class="mlabel">ideal handoff packet</text>
-
-  <!-- feature -->
-  <line x1="220" y1="815" x2="497" y2="815" class="message"/>
-  <text x="358" y="807" class="mlabel">launch feature scope design</text>
-  <line x1="513" y1="850" x2="1512" y2="850" class="message"/>
-  <text x="1012" y="842" class="mlabel">feature add</text>
-  <line x1="1528" y1="880" x2="1819" y2="880" class="message"/>
-  <text x="1673" y="872" class="mlabel">feature scope + backlog + log</text>
-  <line x1="220" y1="915" x2="787" y2="915" class="message"/>
-  <text x="504" y="907" class="mlabel">launch feature boundary review</text>
-  <line x1="803" y1="950" x2="1512" y2="950" class="message"/>
-  <text x="1158" y="942" class="mlabel">view scope + review add</text>
-  <line x1="1528" y1="980" x2="1819" y2="980" class="message"/>
-  <text x="1673" y="972" class="mlabel">feature review evidence</text>
-  <line x1="787" y1="1015" x2="220" y2="1015" class="return"/>
-  <text x="504" y="1037" class="mlabel">Design Review Packet</text>
-  <line x1="497" y1="1050" x2="220" y2="1050" class="return"/>
-  <text x="358" y="1072" class="mlabel">feature handoff packet</text>
-
-  <!-- roadmap and spec -->
-  <line x1="220" y1="1105" x2="77" y2="1105" class="message"/>
-  <text x="148" y="1097" class="mlabel">roadmap consultation packet</text>
-  <line x1="77" y1="1135" x2="204" y2="1135" class="return"/>
-  <text x="140" y="1157" class="mlabel">roadmap decision</text>
-  <line x1="220" y1="1175" x2="1512" y2="1175" class="message"/>
-  <text x="866" y="1167" class="mlabel">roadmap add</text>
-  <line x1="1528" y1="1205" x2="1819" y2="1205" class="message"/>
-  <text x="1673" y="1197" class="mlabel">roadmap artifact + log</text>
-
-  <line x1="220" y1="1255" x2="642" y2="1255" class="message"/>
-  <text x="431" y="1247" class="mlabel">launch spec design</text>
-  <line x1="658" y1="1290" x2="1512" y2="1290" class="message"/>
-  <text x="1085" y="1282" class="mlabel">spec add</text>
-  <line x1="1528" y1="1320" x2="1819" y2="1320" class="message"/>
-  <text x="1673" y="1312" class="mlabel">spec package + task list + log</text>
-  <line x1="220" y1="1355" x2="787" y2="1355" class="message"/>
-  <text x="504" y="1347" class="mlabel">launch spec review</text>
-  <line x1="803" y1="1390" x2="1512" y2="1390" class="message"/>
-  <text x="1158" y="1382" class="mlabel">view scope + review add</text>
-  <line x1="1528" y1="1420" x2="1819" y2="1420" class="message"/>
-  <text x="1673" y="1412" class="mlabel">spec review evidence</text>
-  <line x1="787" y1="1455" x2="220" y2="1455" class="return"/>
-  <text x="504" y="1477" class="mlabel">Design Review Packet</text>
-  <line x1="642" y1="1490" x2="220" y2="1490" class="return"/>
-  <text x="431" y="1512" class="mlabel">spec handoff packet</text>
-
-  <!-- execution and completion overview -->
-  <rect x="894" y="1510" width="585" height="28" class="stage"/>
-  <text x="910" y="1529" class="stageText">execution and completion reviews</text>
-  <line x1="220" y1="1530" x2="1512" y2="1530" class="message"/>
-  <text x="866" y="1522" class="mlabel">campaign add + DA Design Launch Review + run start</text>
-  <line x1="1528" y1="1550" x2="1819" y2="1550" class="message"/>
-  <text x="1673" y="1542" class="mlabel">campaign/run artifacts + DA launch evidence + logs</text>
-  <line x1="220" y1="1565" x2="932" y2="1565" class="message"/>
-  <text x="576" y="1557" class="mlabel">launch implementation run</text>
-  <line x1="948" y1="1595" x2="1644" y2="1595" class="message"/>
-  <text x="1296" y="1587" class="mlabel">implement selected tasks in src/</text>
-  <line x1="220" y1="1625" x2="1077" y2="1625" class="message"/>
-  <text x="648" y="1617" class="mlabel">launch task-unit code quality review</text>
-  <line x1="1093" y1="1660" x2="1512" y2="1660" class="message"/>
-  <text x="1302" y="1652" class="mlabel">view run + review add</text>
-  <line x1="1528" y1="1690" x2="1819" y2="1690" class="message"/>
-  <text x="1673" y="1682" class="mlabel">code quality review evidence</text>
-  <line x1="1077" y1="1720" x2="948" y2="1720" class="return"/>
-  <text x="1012" y="1742" class="mlabel">review findings</text>
-  <line x1="932" y1="1755" x2="220" y2="1755" class="return"/>
-  <text x="576" y="1777" class="mlabel">implementation result and review evidence</text>
-
-  <line x1="220" y1="1810" x2="1222" y2="1810" class="message"/>
-  <text x="721" y="1802" class="mlabel">launch DA Campaign Completion Review</text>
-  <line x1="1238" y1="1845" x2="1512" y2="1845" class="message"/>
-  <text x="1375" y="1837" class="mlabel">view scope + run + evidence + review add --review-mode campaign-completion</text>
-  <line x1="1528" y1="1875" x2="1819" y2="1875" class="message"/>
-  <text x="1673" y="1867" class="mlabel">Devil's Advocate evidence</text>
-  <line x1="1222" y1="1905" x2="220" y2="1905" class="return"/>
-  <text x="721" y="1927" class="mlabel">completion findings</text>
-
-  <line x1="220" y1="1940" x2="1367" y2="1940" class="message"/>
-  <text x="793" y="1932" class="mlabel">launch compliance review after Devil's Advocate</text>
-  <line x1="1383" y1="1975" x2="1512" y2="1975" class="message"/>
-  <text x="1447" y="1967" class="mlabel">doctor + view evidence + review add</text>
-  <line x1="1528" y1="2005" x2="1819" y2="2005" class="message"/>
-  <text x="1673" y="1997" class="mlabel">compliance review evidence</text>
-  <line x1="1367" y1="2035" x2="220" y2="2035" class="return"/>
-  <text x="793" y="2057" class="mlabel">compliance findings</text>
-
-  <rect x="42" y="2065" width="230" height="28" class="stage"/>
-  <text x="58" y="2084" class="stageText">alt: report or escalation</text>
-  <line x1="220" y1="2095" x2="1512" y2="2095" class="message"/>
-  <text x="866" y="2087" class="mlabel">campaign mark-run + report, or escalate</text>
-  <line x1="1528" y1="2125" x2="1819" y2="2125" class="message"/>
-  <text x="1673" y="2117" class="mlabel">report or escalation packet</text>
-  <line x1="204" y1="2155" x2="77" y2="2155" class="message"/>
-  <text x="140" y="2147" class="mlabel">human confirmation or decision</text>
+  <text class="note" x="70" y="830">Lifecycle maintenance is explicit: product outdate and ops archive are command-managed and not part of normal artifact authoring.</text>
 </svg>

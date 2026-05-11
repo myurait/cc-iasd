@@ -650,7 +650,7 @@ Reviewer workflow:
 処理:
 1. evidence view は campaign / run / review / report の関連 path を列挙する
 2. current view は現行 product / scope / execution / recent evidence の path を列挙する
-3. scope view は scope 境界レビュー用 view として、指定 id から linked feature / roadmap / spec / campaign / run を辿り、Planning Lead が境界の重複、不足、実行対象のずれを確認するための artifact と関連 evidence をまとめる
+3. scope view は scope 境界レビュー用 view として、指定 id から linked feature / roadmap / spec / campaign / run を辿り、Planning Lead または Execution Manager が境界の重複、不足、実行対象のずれを確認するための artifact と関連 evidence をまとめる
 4. run view は指定 run の state / handoff / knowledge をまとめる
 5. 生成した view はファイルとして保存しない
 ```
