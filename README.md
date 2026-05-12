@@ -30,7 +30,7 @@ project-context/
   rules/     # stable policies, roles, templates, checklists
   user/      # human-authored intent, constraints, decisions, preferences
   product/   # product canon such as ideal and specs
-  ops/       # scopes, execution, and evidence
+  ops/       # scopes, execution, planning feedback, and evidence
   reference/ # non-canonical reference material
   src/       # source project root, never cc-iasd runtime or spec storage
 ```
@@ -46,6 +46,7 @@ user input
   -> ops/execution/campaigns
   -> ops/execution/runs
   -> ops/evidence
+  -> ops/planning-feedback
 ```
 
 ## Install
@@ -69,6 +70,8 @@ npx cc-iasd@latest campaign mark-run c001-first-campaign <run-id> --status compl
 npx cc-iasd@latest review add <run-id> --type light --summary "Review implementation result" --result "No blocking findings"
 npx cc-iasd@latest escalate <run-id>
 npx cc-iasd@latest report <run-id>
+npx cc-iasd@latest planning-feedback add pf001-first-feedback --summary "Planning follow-up" --source-report ops/evidence/reports/<report-file> --source-run <run-id> --source-campaign c001-first-campaign
+npx cc-iasd@latest planning-feedback resolve pf001-first-feedback --resolution absorbed --summary "Absorbed into feature scope" --target ops/scopes/features/f001-feature-a.md
 npx cc-iasd@latest reference add note planning-note --summary "Planning note"
 npx cc-iasd@latest view evidence
 npx cc-iasd@latest view current
@@ -97,6 +100,8 @@ node bin/cc-iasd.js campaign mark-run c001-first-campaign <run-id> --status comp
 node bin/cc-iasd.js review add <run-id> --type light --summary "Review implementation result" --result "No blocking findings" --root /tmp/my-project-context
 node bin/cc-iasd.js escalate <run-id> --root /tmp/my-project-context
 node bin/cc-iasd.js report <run-id> --root /tmp/my-project-context
+node bin/cc-iasd.js planning-feedback add pf001-first-feedback --summary "Planning follow-up" --source-report ops/evidence/reports/<report-file> --source-run <run-id> --source-campaign c001-first-campaign --root /tmp/my-project-context
+node bin/cc-iasd.js planning-feedback resolve pf001-first-feedback --resolution absorbed --summary "Absorbed into feature scope" --target ops/scopes/features/f001-feature-a.md --root /tmp/my-project-context
 node bin/cc-iasd.js reference add note planning-note --summary "Planning note" --root /tmp/my-project-context
 node bin/cc-iasd.js view evidence --root /tmp/my-project-context
 node bin/cc-iasd.js view current --root /tmp/my-project-context
@@ -176,7 +181,7 @@ AI agents may create and edit files under `src/`. Outside `src/`, new cc-iasd-ma
 
 ## Current Status
 
-The current npm CLI creates and validates the product / ops / reference structure, including ideal, feature, roadmap, spec, campaign, run, open item, review, report, escalation, log, view, reference, product outdate, and ops archive commands.
+The current npm CLI creates and validates the product / ops / reference structure, including ideal, feature, roadmap, spec, campaign, run, open item, planning feedback, review, report, escalation, log, view, reference, product outdate, and ops archive commands.
 
 ## License
 

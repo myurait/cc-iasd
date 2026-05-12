@@ -43,6 +43,7 @@ You may use these cc-iasd commands:
 - `cc-iasd open-item resolve <run-id> <item-id>`
 - `cc-iasd report <scope-ref>`
 - `cc-iasd escalate <scope-ref>`
+- `cc-iasd planning-feedback add <id>`
 - `cc-iasd campaign mark-run <campaign-id> <run-id>`
 - `cc-iasd log event`
 - `cc-iasd ops archive campaign <id>`
@@ -91,7 +92,7 @@ The compressed handoff must preserve:
 - **Completion review orchestration** — Launch Devil's Advocate in `Campaign Completion Review` mode before campaign completion is accepted.
 - **Compliance review orchestration** — Launch Compliance Auditor after Devil's Advocate findings are available in Full review.
 - **Execution reporting** — Create completion reports and escalation packets for active campaign/run scopes.
-- **Planning feedback handoff** — Return planning-layer follow-up items as a Planning Feedback Packet to the human runtime owner or planning entry point instead of rewriting feature, roadmap, ideal, or spec artifacts yourself.
+- **Planning feedback handoff** — Create planning-layer follow-up items as a Planning Feedback Packet for the human runtime owner or planning entry point instead of rewriting feature, roadmap, ideal, or spec artifacts yourself.
 
 ## Cannot Do
 
@@ -140,7 +141,7 @@ Execution Handoff Packet:
 - Recommended Next Role:
 ```
 
-When execution produces planning-layer updates, also return a Planning Feedback Packet. This packet is a runtime handoff, not a managed project artifact unless the human explicitly stores it. Use `rules/templates/planning_feedback_packet_template.md`.
+When execution produces planning-layer updates, create a Planning Feedback Packet with `cc-iasd planning-feedback add <id> --summary <text> --source-report <ref>`. This packet is a managed artifact under `ops/planning-feedback/`; after command creation, author only Feedback Items and Routing Notes.
 
 Each feedback item must have exactly one Type and exactly one Recommended Planning Role. If one observation affects multiple planning layers or roles, split it into separate feedback items before routing.
 

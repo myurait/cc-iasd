@@ -286,7 +286,7 @@ campaign aggregate report:
 - Planning Feedback Rollup
 ```
 
-Planning Feedback Summary と Planning Feedback Rollup は、Execution Manager が planning entry point へ返す handoff の要約である。これらは feature、roadmap、ideal、spec の正本更新を代替しない。Planning Lead は別 entry point として再開し、Planning Feedback Packet を narrow context として分類する。
+Planning Feedback Summary と Planning Feedback Rollup は、Execution Manager が planning entry point へ返す handoff の要約である。これらは feature、roadmap、ideal、spec の正本更新を代替しない。Planning-layer follow-up が必要な場合、Execution Manager は `cc-iasd planning-feedback add` で `ops/planning-feedback/` に Planning Feedback Packet を作成する。Planning Lead は別 entry point として再開し、Planning Feedback Packet を narrow context として分類し、処理後に `cc-iasd planning-feedback resolve` で閉じる。
 
 ---
 

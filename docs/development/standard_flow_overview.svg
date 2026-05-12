@@ -77,8 +77,8 @@
   <text class="note" x="1118" y="743">reports / escalation</text>
 
   <rect class="execution" x="625" y="700" width="250" height="64" rx="6"/>
-  <text class="small" x="645" y="728">Execution Handoff Packet</text>
-  <text class="note" x="645" y="749">completion, debt, follow-up, blockers</text>
+  <text class="small" x="645" y="728">Execution Handoff / Feedback</text>
+  <text class="note" x="645" y="749">completion, blockers, planning-feedback id</text>
   <path class="dash" d="M 625 732 H 550"/>
 
   <text class="note" x="70" y="830">Lifecycle maintenance is explicit: product outdate and ops archive are command-managed and not part of normal artifact authoring.</text>

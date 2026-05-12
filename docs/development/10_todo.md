@@ -23,7 +23,6 @@ TODO:
 - user/product-intent.md に置かれた内容を、適切なタイミングで product/ideal/ に吸収する flow を定義する
 - user/ 配下に保持すべき情報の種類、寿命、正本への展開先、残すべき一時情報の境界を整理する
 - 既存リポジトリに後から cc-iasd を導入する際の ideal と feature の初期定義方法を整理する
-- Planning Feedback Packet を reference note のまま runtime handoff として扱うか、専用 artifact / command として正本化するかを決める
 - reference artifact が product / ops / rules に昇格した場合の Canonical Successor 管理を、reference 側の追跡で足りるか専用 workflow が必要か判断する
 ```
 
@@ -56,8 +55,6 @@ TODO:
 
 以下は `/tmp/cc-iasd-scenario-test-b` の走行で観測した未対応課題である。今回の修正で実装済みの feature link 維持、DA review full 制約、Planning Feedback Summary 形式、Recommended Planning Role の単一値化、role-specific help、open-item file lock は除外する。
 
-1. Planning Feedback Packet を reference note として残すか、dedicated command / artifact として扱うかを判断する。
+1. Artifact Quality Requirements / Backtrack Request が、実装を伴う scenario でも推測補完を防げるか検証する。
 
-2. Artifact Quality Requirements / Backtrack Request が、実装を伴う scenario でも推測補完を防げるか検証する。
-
-3. tasks 起点の implementation loop が、run / evidence / completion report / Planning Feedback Packet と過不足なく接続できるか検証する。
+2. tasks 起点の implementation loop が、run / evidence / completion report / Planning Feedback Packet と過不足なく接続できるか検証する。

@@ -62,6 +62,8 @@ test('init creates the product ops reference structure', async () => {
     assert.equal(existsSync(path.join(root, 'runtime/adapters/role-runtime.md')), true);
     assert.equal(existsSync(path.join(root, 'ops/execution/campaigns/archived')), true);
     assert.equal(existsSync(path.join(root, 'ops/execution/runs/archived')), true);
+    assert.equal(existsSync(path.join(root, 'ops/planning-feedback')), true);
+    assert.equal(existsSync(path.join(root, 'ops/planning-feedback/archived')), true);
     assert.equal(existsSync(path.join(root, 'ops/evidence/reviews/archived')), true);
     assert.equal(existsSync(path.join(root, 'reference/INDEX.md')), true);
     assert.equal(existsSync(path.join(root, 'rules/templates/open_item_template.md')), true);
@@ -98,7 +100,7 @@ test('init creates the product ops reference structure', async () => {
     assert.match(roleRuntime, /`cc-iasd view run <run-id>`/);
     assert.match(roleRuntime, /## Context Compression Recovery/);
     assert.match(roleRuntime, /`planning-lead` and `execution-manager` are parallel entry points/);
-    assert.match(roleRuntime, /`execution-manager` returns Planning Feedback Packet items/);
+    assert.match(roleRuntime, /`execution-manager` creates Planning Feedback Packet items/);
     assert.match(roleRuntime, /--type full --review-mode design-launch/);
     assert.match(roleRuntime, /--type full --review-mode campaign-completion/);
     assert.match(roleRuntime, /Compressed handoff must preserve active role/);
@@ -153,6 +155,9 @@ test('artifact commands write to the new structure and keep doctor green', async
     runCli(['escalate', runId, '--root', root]);
     runCli(['report', runId, '--root', root]);
     runCli(['reference', 'add', 'note', 'planning-note', '--summary', 'Planning note', '--root', root]);
+    const reportIdForFeedback = readdirSync(path.join(root, 'ops/evidence/reports')).find((name) => name.startsWith('report_'));
+    const reportPathForFeedback = `ops/evidence/reports/${reportIdForFeedback}`;
+    runCli(['planning-feedback', 'add', 'pf001-feedback-a', '--summary', 'Feedback A', '--source-report', reportPathForFeedback, '--source-run', runId, '--source-campaign', 'c001-campaign-a', '--root', root]);
 
     const evidenceView = runCli(['view', 'evidence', '--root', root]);
     assert.match(evidenceView, /# Evidence View/);
@@ -164,6 +169,7 @@ test('artifact commands write to the new structure and keep doctor green', async
     assert.match(currentView, /# Current View/);
     assert.match(currentView, /ops\/execution\/campaigns\/c001-campaign-a/);
     assert.match(currentView, new RegExp(`ops/execution/runs/${runId}`));
+    assert.match(currentView, /ops\/planning-feedback\/pf001-feedback-a\.md/);
 
     const scopeView = runCli(['view', 'scope', 'f001-feature-a', '--root', root]);
     assert.match(scopeView, /# Scope Boundary View: f001-feature-a/);
@@ -254,6 +260,24 @@ test('artifact commands write to the new structure and keep doctor green', async
     assert.match(report, /Recommended Planning Role/);
     assert.match(report, /Allowed Planning Roles: Planning Lead, Feature Scope Designer, Spec Designer, Ideal Interviewer, Human, none/);
     assert.doesNotMatch(report, /Recommended Planning Role: Planning Lead \/ Feature Scope Designer/);
+
+    const feedback = await readFile(path.join(root, 'ops/planning-feedback/pf001-feedback-a.md'), 'utf8');
+    assert.match(feedback, /# Planning Feedback Packet: pf001-feedback-a/);
+    assert.match(feedback, new RegExp(`- Source Run: ${runId}`));
+    assert.match(feedback, /- Source Campaign: c001-campaign-a/);
+
+    const feedbackView = runCli(['planning-feedback', 'view', 'pf001-feedback-a', '--root', root]);
+    assert.match(feedbackView, /# Planning Feedback Packet: pf001-feedback-a/);
+
+    assert.throws(() => runCli(['ops', 'archive', 'planning-feedback', 'pf001-feedback-a', '--root', root]), /Usage: cc-iasd ops archive feature\|roadmap\|campaign\|run\|log\|review\|report <id>/);
+    assert.throws(() => runCli(['planning-feedback', 'resolve', 'pf001-feedback-a', '--resolution', 'routed', '--summary', 'Routed to planning', '--root', root]), /Resolution must be absorbed, rejected, or deferred/);
+    assert.throws(() => runCli(['planning-feedback', 'resolve', 'pf001-feedback-a', '--resolution', 'deferred', '--summary', 'Deferred', '--target', 'ops/scopes/features/f001-feature-a.md', '--root', root]), /Resolution target is only allowed when resolution is absorbed/);
+    runCli(['planning-feedback', 'resolve', 'pf001-feedback-a', '--resolution', 'absorbed', '--summary', 'Absorbed into feature backlog', '--target', 'ops/scopes/features/f001-feature-a.md', '--root', root]);
+    assert.equal(existsSync(path.join(root, 'ops/planning-feedback/pf001-feedback-a.md')), false);
+    assert.equal(existsSync(path.join(root, 'ops/planning-feedback/archived/pf001-feedback-a.md')), true);
+    const resolvedFeedback = await readFile(path.join(root, 'ops/planning-feedback/archived/pf001-feedback-a.md'), 'utf8');
+    assert.match(resolvedFeedback, /- Status: absorbed/);
+    assert.match(resolvedFeedback, /- Resolution Target: ops\/scopes\/features\/f001-feature-a\.md/);
 
     runCli(['doctor', root]);
   } finally {
@@ -509,7 +533,7 @@ test('product outdate and ops archive move artifacts to inactive storage', async
   }
 });
 
-test('ops archive supports every ops layer and preserves doctor validity', async () => {
+test('ops archive supports archiveable ops layers and preserves doctor validity', async () => {
   const root = await createContext();
   try {
     runCli(['feature', 'add', 'f001-feature-a', '--kind', 'epic', '--summary', 'Add feature A', '--pillar', 'Core', '--root', root]);

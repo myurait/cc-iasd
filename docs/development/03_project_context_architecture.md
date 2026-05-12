@@ -400,7 +400,19 @@ backlog は feature scope の planning context である。open item は run-loc
 
 open item は hybrid artifact である。ID、kind、status、source run、target、resolution などの metadata は cc-iasd command が管理する。背景、選択肢、推奨案、Planning Feedback Routing、補足説明は AI agent が執筆できる。metadata だけで planning-layer feedback を完了扱いにしてはならない。
 
-### 7.3 ops/evidence/
+### 7.3 ops/planning-feedback/
+
+```text
+ops/planning-feedback/
+  pfNNN-<feedback-slug>.md
+  archived/
+```
+
+planning-feedback layer は、execution entry から planning entry へ戻す planning-layer follow-up の正本である。Completion Report は evidence layer に残し、Planning Feedback Packet は planning artifact へ戻すべき項目だけを分類する。
+
+`ops/planning-feedback/` 直下の packet は active handoff である。処理後は `cc-iasd planning-feedback resolve` により `absorbed / rejected / deferred` のいずれかへ更新し、`archived/` へ退避する。`routed` は resolution としない。role や human へ渡しただけでは planning feedback が閉じたとは限らないためである。
+
+### 7.4 ops/evidence/
 
 ```text
 ops/evidence/

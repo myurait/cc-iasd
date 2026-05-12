@@ -25,6 +25,9 @@ Usage:
   cc-iasd review add <scope-id> --summary <text> --result <text> [--type light|full] [--review-mode <mode>] [--reviewer <name>] [--base-commit <ref>] [--root <project-context-path>]
   cc-iasd open-item add <run-id> --kind <kind> --summary <text> [--target <ref>] [--root <project-context-path>]
   cc-iasd open-item resolve <run-id> <item-id> --resolution resolved|escalated|promoted|deferred [--target <ref>] [--summary <text>] [--root <project-context-path>]
+  cc-iasd planning-feedback add <id> --summary <text> --source-report <ref> [--source-run <id>] [--source-campaign <id>] [--root <project-context-path>]
+  cc-iasd planning-feedback resolve <id> --resolution absorbed|rejected|deferred --summary <text> [--target <ref>] [--root <project-context-path>]
+  cc-iasd planning-feedback view <id> [--root <project-context-path>]
   cc-iasd ideal add <id> --summary <text> [--root <project-context-path>]
   cc-iasd feature add <id> --summary <text> --pillar <name> [--kind epic|supporting] [--root <project-context-path>]
   cc-iasd roadmap add <id> --summary <text> --goal <text> [--root <project-context-path>]
@@ -54,6 +57,7 @@ Options:
   --target <ref>          Target artifact reference
   --source-campaign <id>  Source campaign id for log events
   --source-run <id>       Source run id for log events
+  --source-report <ref>   Source report path for planning feedback
   --evidence <path>       Related evidence path for log events
   --feature <ref>         Linked feature
   --roadmap <ref>         Linked roadmap
@@ -111,6 +115,8 @@ const parseArgs = (argv) => {
     archiveLayer: '',
     archiveId: '',
     viewId: '',
+    planningFeedbackId: '',
+    sourceReport: '',
   };
 
   const tokens = [...argv];
@@ -118,7 +124,7 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'view', 'log', 'review', 'open-item', 'ideal', 'feature', 'roadmap', 'campaign', 'spec', 'reference', 'profile', 'product', 'ops', 'help'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'view', 'log', 'review', 'open-item', 'planning-feedback', 'ideal', 'feature', 'roadmap', 'campaign', 'spec', 'reference', 'profile', 'product', 'ops', 'help'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
@@ -187,6 +193,15 @@ const parseArgs = (argv) => {
       if (!parsed.openItemId || parsed.openItemId.startsWith('-')) {
         throw new Error('Usage: cc-iasd open-item resolve <run-id> <item-id> --resolution resolved|escalated|promoted|deferred');
       }
+    }
+  } else if (parsed.command === 'planning-feedback') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (!['add', 'resolve', 'view'].includes(parsed.runTarget)) {
+      throw new Error('Usage: cc-iasd planning-feedback add|resolve|view ...');
+    }
+    parsed.planningFeedbackId = tokens.shift() ?? '';
+    if (!parsed.planningFeedbackId || parsed.planningFeedbackId.startsWith('-')) {
+      throw new Error('Usage: cc-iasd planning-feedback add|resolve|view <id>');
     }
   } else if (parsed.command === 'ideal') {
     parsed.runTarget = tokens.shift() ?? '';
@@ -334,6 +349,9 @@ const parseArgs = (argv) => {
         break;
       case '--source-run':
         parsed.sourceRun = readValue(token);
+        break;
+      case '--source-report':
+        parsed.sourceReport = readValue(token);
         break;
       case '--evidence':
         parsed.relatedEvidence = readValue(token);
@@ -537,6 +555,8 @@ const requiredPaths = [
   'ops/execution/campaigns/archived',
   'ops/execution/runs',
   'ops/execution/runs/archived',
+  'ops/planning-feedback',
+  'ops/planning-feedback/archived',
   'ops/evidence/logs',
   'ops/evidence/logs/archived',
   'ops/evidence/reviews',
@@ -603,6 +623,7 @@ const archivedEvidenceCandidates = (ref) => {
     ['ops/scopes/roadmaps/', 'ops/scopes/roadmaps/archived/'],
     ['ops/execution/campaigns/', 'ops/execution/campaigns/archived/'],
     ['ops/execution/runs/', 'ops/execution/runs/archived/'],
+    ['ops/planning-feedback/', 'ops/planning-feedback/archived/'],
     ['ops/evidence/logs/', 'ops/evidence/logs/archived/'],
     ['ops/evidence/reviews/', 'ops/evidence/reviews/archived/'],
     ['ops/evidence/reports/', 'ops/evidence/reports/archived/'],
@@ -683,6 +704,7 @@ const doctor = async (args) => {
     await validateFeatureFiles(root, issues);
     await validateRoadmapFiles(root, issues);
     await validateSpecFiles(root, issues);
+    await validatePlanningFeedbackFiles(root, issues);
     await validateReviewFiles(root, issues);
   } else {
     issues.push(`Project-context path does not exist: ${root}`);
@@ -1002,6 +1024,56 @@ const validateReviewFiles = async (root, issues) => {
     }
     if (!hasAuthoredContent(extractMarkdownSection(content, 'Implementation Response Plan'))) {
       issues.push(`Missing review implementation response plan in ${file}`);
+    }
+  }
+};
+
+const validatePlanningFeedbackFiles = async (root, issues) => {
+  const feedbackFiles = [
+    ...await listMarkdownFiles(root, 'ops/planning-feedback'),
+    ...await listMarkdownFiles(root, 'ops/planning-feedback/archived'),
+  ];
+  for (const file of feedbackFiles) {
+    const basename = path.basename(file);
+    if (!/^pf[0-9]{3}-[a-z0-9-]+\.md$/.test(basename)) {
+      issues.push(`Invalid planning feedback file name: ${file}`);
+    }
+
+    const content = await readFile(path.join(root, file), 'utf8');
+    const status = extractField(content, 'Status');
+    const sourceReport = extractField(content, 'Source Report');
+    const sourceRun = extractField(content, 'Source Run');
+    const sourceCampaign = extractField(content, 'Source Campaign');
+    const resolutionTarget = extractField(content, 'Resolution Target');
+    if (!['open', 'absorbed', 'rejected', 'deferred'].includes(status)) {
+      issues.push(`Invalid planning feedback status in ${file}: ${status || 'missing'}`);
+    }
+    if (isUnset(sourceReport)) {
+      issues.push(`Missing planning feedback source report in ${file}`);
+    }
+    if (file.startsWith('ops/planning-feedback/archived/') && status === 'open') {
+      issues.push(`Archived planning feedback must not be open: ${file}`);
+    }
+    if (!isUnset(sourceReport) && !await resolveExistingPath(root, reportPathCandidates(sourceReport))) {
+      issues.push(`Broken planning feedback source report in ${file}: ${sourceReport}`);
+    }
+    if (!isUnset(sourceRun) && !await resolveExistingPath(root, [
+      `ops/execution/runs/${sourceRun}/state.md`,
+      `ops/execution/runs/archived/${sourceRun}/state.md`,
+    ])) {
+      issues.push(`Broken planning feedback source run in ${file}: ${sourceRun}`);
+    }
+    if (!isUnset(sourceCampaign) && !await resolveExistingPath(root, [
+      `ops/execution/campaigns/${sourceCampaign}/state.md`,
+      `ops/execution/campaigns/archived/${sourceCampaign}/state.md`,
+    ])) {
+      issues.push(`Broken planning feedback source campaign in ${file}: ${sourceCampaign}`);
+    }
+    if (status === 'absorbed' && isUnset(resolutionTarget)) {
+      issues.push(`Absorbed planning feedback requires resolution target in ${file}`);
+    }
+    if (['rejected', 'deferred'].includes(status) && !isUnset(resolutionTarget)) {
+      issues.push(`Planning feedback resolution target is only allowed for absorbed status in ${file}`);
     }
   }
 };
@@ -1801,6 +1873,58 @@ const completionReportTemplate = ({ scopeId, scopePath, now, runStates, reviewFi
   '',
 ].join('\n');
 
+const planningFeedbackTemplate = ({ feedbackId, summary, sourceReport, sourceRun, sourceCampaign, now }) => [
+  `# Planning Feedback Packet: ${feedbackId}`,
+  '',
+  `- ID: ${feedbackId}`,
+  '- Status: open',
+  `- Summary: ${summary}`,
+  `- Source Report: ${sourceReport}`,
+  `- Source Run: ${sourceRun || 'none'}`,
+  `- Source Campaign: ${sourceCampaign || 'none'}`,
+  `- Created At: ${now}`,
+  `- Updated At: ${now}`,
+  '- Resolution: TBD',
+  '- Resolution Target: TBD',
+  '- Resolution Summary: TBD',
+  '',
+  '## Feedback Items',
+  '',
+  'Each feedback item must have exactly one Type and exactly one Recommended Planning Role. Split combined feedback into separate items before routing.',
+  '',
+  '### item-001',
+  '',
+  '- Type: TBD',
+  '- Target Candidate: TBD',
+  '- Summary: TBD',
+  `- Evidence Refs: ${sourceReport}`,
+  '- Human Decision Required: yes / no / TBD',
+  '- Recommended Planning Role: TBD',
+  '- Allowed Planning Roles: Planning Lead, Feature Scope Designer, Spec Designer, Ideal Interviewer, Human, none',
+  '- Blocking: yes / no / TBD',
+  '',
+  '## Routing Notes',
+  '',
+  '- TBD',
+  '',
+  '## Tool-Owned Fields',
+  '',
+  '- ID',
+  '- Status',
+  '- Summary',
+  '- Source Report',
+  '- Source Run',
+  '- Source Campaign',
+  '- Created At',
+  '- Updated At',
+  '- Resolution',
+  '- Resolution Target',
+  '- Resolution Summary',
+  '',
+  'AI agents may edit Feedback Items and Routing Notes after `cc-iasd planning-feedback add` creates the file. Tool-owned fields are updated by `cc-iasd planning-feedback resolve`.',
+  '',
+].join('\n');
+
 const reviewRecordTemplate = ({ scopeId, now, reviewType, reviewMode, summary, result, reviewer, baseCommit }) => [
   `# Review: ${scopeId}`,
   '',
@@ -1919,7 +2043,7 @@ const evidenceViewTemplate = ({ now, entries }) => [
   ]) : ['- No evidence artifacts found.', '']),
 ].join('\n');
 
-const currentViewTemplate = ({ now, ideals, specs, features, roadmaps, campaigns, runs, logs, reviews, reports }) => [
+const currentViewTemplate = ({ now, ideals, specs, features, roadmaps, campaigns, runs, planningFeedback, logs, reviews, reports }) => [
   '# Current View',
   '',
   `- Generated At: ${now}`,
@@ -1944,6 +2068,8 @@ const currentViewTemplate = ({ now, ideals, specs, features, roadmaps, campaigns
   ...(campaigns.length ? campaigns.map((item) => `  - ${item}`) : ['  - none']),
   '- Runs:',
   ...(runs.length ? runs.map((item) => `  - ${item}`) : ['  - none']),
+  '- Planning Feedback:',
+  ...(planningFeedback.length ? planningFeedback.map((item) => `  - ${item}`) : ['  - none']),
   '- Recent Logs:',
   ...(logs.length ? logs.map((item) => `  - ${item}`) : ['  - none']),
   '- Recent Reviews:',
@@ -2084,7 +2210,7 @@ const roleInvocationMetadata = [
   '- `devils-advocate` with `review-mode=design-launch` must call `cc-iasd review add <campaign-id> --type full --review-mode design-launch ...`.',
   '- `devils-advocate` with `review-mode=campaign-completion` must call `cc-iasd review add <run-id-or-campaign-id> --type full --review-mode campaign-completion ...`.',
   '- `planning-lead` and `execution-manager` are parallel entry points. Do not invoke Execution Manager as a nested subagent from Planning Lead.',
-  '- `execution-manager` returns Planning Feedback Packet items for planning-layer follow-up instead of editing planning canon directly.',
+  '- `execution-manager` creates Planning Feedback Packet items with `cc-iasd planning-feedback add` for planning-layer follow-up instead of editing planning canon directly.',
 ];
 
 const roleRuntimeTemplate = ({ now, roleEntries }) => [
@@ -2916,6 +3042,149 @@ const resolveOpenItem = async (args) => {
   return { root, runId, itemId: args.openItemId, resolution: args.resolution, openItemsPath, written: created.written, skipped: created.skipped };
 };
 
+const planningFeedbackPath = (feedbackId) => `ops/planning-feedback/${markdownId(feedbackId)}`;
+
+const archivedPlanningFeedbackPath = (feedbackId) => `ops/planning-feedback/archived/${markdownId(feedbackId)}`;
+
+const planningFeedbackPathCandidates = (feedbackId) => [
+  planningFeedbackPath(feedbackId),
+  archivedPlanningFeedbackPath(feedbackId),
+];
+
+const reportPathCandidates = (reportRef) => {
+  if (reportRef.startsWith('ops/')) return archivedEvidenceCandidates(reportRef);
+  const fileId = markdownId(reportRef);
+  return [
+    `ops/evidence/reports/${fileId}`,
+    `ops/evidence/reports/archived/${fileId}`,
+  ];
+};
+
+const addPlanningFeedback = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for planning feedback add.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  if (!/^pf[0-9]{3}-[a-z0-9][a-z0-9-]*$/.test(args.planningFeedbackId)) {
+    throw new Error('Planning feedback id must match pfNNN-lowercase-kebab-case');
+  }
+  if (!args.eventSummary || !args.sourceReport) {
+    throw new Error('Usage: cc-iasd planning-feedback add <id> --summary <text> --source-report <ref>');
+  }
+
+  const sourceReport = await resolveExistingPath(root, reportPathCandidates(args.sourceReport));
+  if (!sourceReport) {
+    throw new Error(`Source report does not exist: ${args.sourceReport}`);
+  }
+  if (args.sourceRun && !await resolveExistingPath(root, [
+    `ops/execution/runs/${args.sourceRun}/state.md`,
+    `ops/execution/runs/archived/${args.sourceRun}/state.md`,
+  ])) {
+    throw new Error(`Source run does not exist: ${args.sourceRun}`);
+  }
+  if (args.sourceCampaign && !await resolveExistingPath(root, [
+    `ops/execution/campaigns/${args.sourceCampaign}/state.md`,
+    `ops/execution/campaigns/archived/${args.sourceCampaign}/state.md`,
+  ])) {
+    throw new Error(`Source campaign does not exist: ${args.sourceCampaign}`);
+  }
+
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  const feedbackPath = planningFeedbackPath(args.planningFeedbackId);
+  await writeText(root, feedbackPath, planningFeedbackTemplate({
+    feedbackId: args.planningFeedbackId,
+    summary: args.eventSummary,
+    sourceReport,
+    sourceRun: args.sourceRun,
+    sourceCampaign: args.sourceCampaign,
+    now,
+  }), { ...args, force: false }, created);
+
+  await writeLogEvent(root, {
+    eventType: 'planning-feedback-add',
+    summary: `Added planning feedback ${args.planningFeedbackId}`,
+    sourceRun: args.sourceRun,
+    sourceCampaign: args.sourceCampaign,
+    relatedEvidence: feedbackPath,
+  });
+
+  return { root, feedbackId: args.planningFeedbackId, feedbackPath, written: created.written, skipped: created.skipped };
+};
+
+const resolvePlanningFeedback = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for planning feedback resolve.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  if (!/^pf[0-9]{3}-[a-z0-9][a-z0-9-]*$/.test(args.planningFeedbackId)) {
+    throw new Error('Planning feedback id must match pfNNN-lowercase-kebab-case');
+  }
+  if (!['absorbed', 'rejected', 'deferred'].includes(args.resolution)) {
+    throw new Error('Resolution must be absorbed, rejected, or deferred');
+  }
+  if (!args.eventSummary) {
+    throw new Error('Usage: cc-iasd planning-feedback resolve <id> --resolution absorbed|rejected|deferred --summary <text>');
+  }
+  if (args.resolution === 'absorbed' && !args.targetRef) {
+    throw new Error('Resolution absorbed requires --target <ref>');
+  }
+  if (args.resolution !== 'absorbed' && args.targetRef) {
+    throw new Error('Resolution target is only allowed when resolution is absorbed');
+  }
+  if (args.targetRef && !await resolveExistingPath(root, archivedEvidenceCandidates(args.targetRef))) {
+    throw new Error(`Resolution target does not exist: ${args.targetRef}`);
+  }
+
+  const activePath = planningFeedbackPath(args.planningFeedbackId);
+  const archivedPath = archivedPlanningFeedbackPath(args.planningFeedbackId);
+  if (!await exists(path.join(root, activePath))) {
+    if (await exists(path.join(root, archivedPath))) {
+      throw new Error(`Planning feedback is already archived: ${args.planningFeedbackId}`);
+    }
+    throw new Error(`Planning feedback does not exist: ${args.planningFeedbackId}`);
+  }
+
+  const now = new Date().toISOString();
+  const created = { written: [], skipped: [] };
+  await updateTextFile(root, activePath, (content) => {
+    let next = replaceLine(content, '- Status:', `- Status: ${args.resolution}`);
+    next = replaceLine(next, '- Updated At:', `- Updated At: ${now}`);
+    next = replaceLine(next, '- Resolution:', `- Resolution: ${args.resolution}`);
+    next = replaceLine(next, '- Resolution Target:', `- Resolution Target: ${args.targetRef || 'none'}`);
+    next = replaceLine(next, '- Resolution Summary:', `- Resolution Summary: ${args.eventSummary}`);
+    return next;
+  }, args, created);
+
+  const moved = await movePath(root, activePath, archivedPath, args);
+  await writeLogEvent(root, {
+    eventType: 'planning-feedback-resolve',
+    summary: `Resolved planning feedback ${args.planningFeedbackId} as ${args.resolution}`,
+    relatedEvidence: moved.destination,
+  });
+
+  return { root, feedbackId: args.planningFeedbackId, resolution: args.resolution, feedbackPath: moved.destination, written: created.written, skipped: created.skipped };
+};
+
+const viewPlanningFeedback = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const doctorResult = await doctor({ ...args, target: root });
+  if (doctorResult.issues.length) {
+    throw new Error(`Project-context is not ready for planning feedback view.\n${doctorResult.issues.map((issue) => `- ${issue}`).join('\n')}`);
+  }
+  if (!/^pf[0-9]{3}-[a-z0-9][a-z0-9-]*$/.test(args.planningFeedbackId)) {
+    throw new Error('Planning feedback id must match pfNNN-lowercase-kebab-case');
+  }
+  const feedbackPath = await resolveExistingPath(root, planningFeedbackPathCandidates(args.planningFeedbackId));
+  if (!feedbackPath) {
+    throw new Error(`Planning feedback does not exist: ${args.planningFeedbackId}`);
+  }
+  const content = await readOptionalText(root, feedbackPath);
+  return { root, feedbackId: args.planningFeedbackId, feedbackPath, view: content };
+};
+
 const addReview = async (args) => {
   const root = path.resolve(process.cwd(), args.target);
   const doctorResult = await doctor({ ...args, target: root });
@@ -3002,11 +3271,12 @@ const viewCurrent = async (args) => {
   const roadmaps = await listMarkdownFiles(root, 'ops/scopes/roadmaps');
   const campaigns = (await listDirectories(root, 'ops/execution/campaigns')).filter((item) => path.basename(item) !== 'archived');
   const runs = (await listDirectories(root, 'ops/execution/runs')).filter((item) => path.basename(item) !== 'archived');
+  const planningFeedback = await listMarkdownFiles(root, 'ops/planning-feedback');
   const logs = latest(await listMarkdownFiles(root, 'ops/evidence/logs'), 5);
   const reviews = latest(await listMarkdownFiles(root, 'ops/evidence/reviews'), 5);
   const reports = latest(await listMarkdownFiles(root, 'ops/evidence/reports'), 5);
   const now = new Date().toISOString();
-  return { root, view: currentViewTemplate({ now, ideals, specs, features, roadmaps, campaigns, runs, logs, reviews, reports }) };
+  return { root, view: currentViewTemplate({ now, ideals, specs, features, roadmaps, campaigns, runs, planningFeedback, logs, reviews, reports }) };
 };
 
 const viewScope = async (args) => {
@@ -3319,6 +3589,7 @@ const init = async (args) => {
     'execution_root: ops/execution',
     'campaigns_root: ops/execution/campaigns',
     'runs_root: ops/execution/runs',
+    'planning_feedback_root: ops/planning-feedback',
     'evidence_root: ops/evidence',
     'reference_root: reference',
     '',
@@ -3336,6 +3607,7 @@ const init = async (args) => {
     execution_root: 'ops/execution',
     campaigns_root: 'ops/execution/campaigns',
     runs_root: 'ops/execution/runs',
+    planning_feedback_root: 'ops/planning-feedback',
     evidence_root: 'ops/evidence',
     profile: 'default',
   }, null, 2)}\n`, args, created);
@@ -3449,6 +3721,14 @@ const init = async (args) => {
     '',
   ].join('\n'), args, created);
   await writeText(root, 'ops/execution/runs/archived/README.md', '# Archived Runs\n', args, created);
+
+  await writeText(root, 'ops/planning-feedback/README.md', [
+    '# Planning Feedback',
+    '',
+    'Execution-to-planning handoff packets. Active files are pending or in-progress planning feedback; resolved packets move to `archived/`.',
+    '',
+  ].join('\n'), args, created);
+  await writeText(root, 'ops/planning-feedback/archived/README.md', '# Archived Planning Feedback\n', args, created);
 
   await writeText(root, 'ops/evidence/logs/README.md', [
     '# Logs',
@@ -3592,6 +3872,18 @@ try {
     console.log(`Updated ${result.written.length} file(s).`);
     if (result.skipped.length) {
       console.log(`Skipped ${result.skipped.length} unchanged file(s).`);
+    }
+  } else if (args.command === 'planning-feedback') {
+    if (args.runTarget === 'view') {
+      const result = await viewPlanningFeedback(args);
+      console.log(result.view);
+    } else {
+      const result = args.runTarget === 'add' ? await addPlanningFeedback(args) : await resolvePlanningFeedback(args);
+      console.log(`${args.runTarget === 'add' ? 'Prepared' : 'Resolved'} planning feedback ${result.feedbackId} in ${result.root}.`);
+      console.log(`${args.runTarget === 'add' ? 'Created' : 'Updated'} ${result.written.length} file(s).`);
+      if (result.skipped.length) {
+        console.log(`Skipped ${result.skipped.length} unchanged file(s).`);
+      }
     }
   } else if (args.command === 'ideal') {
     const result = await addIdeal(args);

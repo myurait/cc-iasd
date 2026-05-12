@@ -146,13 +146,17 @@ sequenceDiagram
     CLI-->>Art: updated campaign/run state + completion report
     EM->>H: Completion Report Packet
     H-->>EM: confirmation or follow-up direction
-    EM-->>PL: Execution Handoff Packet or Planning Feedback Packet
+    EM->>CLI: planning-feedback add
+    CLI-->>Art: Planning Feedback Packet
+    EM-->>PL: Execution Handoff Packet and Planning Feedback Packet ID
   else human decision required
     EM->>CLI: escalate
     CLI-->>Art: escalation packet
     EM->>H: Escalation Packet
     H-->>EM: human decision
-    EM-->>PL: Planning Feedback Packet when planning artifacts must change
+    EM->>CLI: planning-feedback add
+    CLI-->>Art: Planning Feedback Packet
+    EM-->>PL: Planning Feedback Packet ID when planning artifacts must change
   end
 
   PL->>CLI: planning lifecycle maintenance

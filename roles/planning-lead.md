@@ -91,6 +91,8 @@ You may use these cc-iasd commands:
 - `cc-iasd doctor`
 - `cc-iasd view current`
 - `cc-iasd view scope <id>`
+- `cc-iasd planning-feedback view <id>`
+- `cc-iasd planning-feedback resolve <id>`
 - `cc-iasd roadmap add <id>`
 - `cc-iasd log event`
 - `cc-iasd reference add historical|external|note <id>`
@@ -179,9 +181,9 @@ The separate Execution Manager entry point owns Worker, Code Quality Auditor, De
 
 ## Planning Feedback Intake
 
-Planning Feedback Packet is the normal bridge from execution back to planning. It is not a command-created project artifact by default. Treat it as handoff input for a new planning entry point.
+Planning Feedback Packet is the normal bridge from execution back to planning. It is a command-created managed artifact under `ops/planning-feedback/`. Treat it as handoff input for a new planning entry point.
 
-Before routing, verify that each feedback item has exactly one Type and exactly one Recommended Planning Role. If an item combines multiple feedback types or multiple roles, split it into separate routing items before invoking a designer, Ideal Interviewer, human decision, or roadmap update.
+Before routing, load the packet with `cc-iasd planning-feedback view <id>`. Verify that each feedback item has exactly one Type and exactly one Recommended Planning Role. If an item combines multiple feedback types or multiple roles, split it into separate routing items before invoking a designer, Ideal Interviewer, human decision, or roadmap update.
 
 Classify each item as follows:
 
@@ -194,3 +196,5 @@ Classify each item as follows:
 - `no-planning-action` — Planning Lead records that report evidence is sufficient and does not reopen planning.
 
 Do not read full run directories to route a feedback item unless the packet and cited evidence are insufficient. Do not allow completion report text to silently update planning canon.
+
+After processing the packet, close it with `cc-iasd planning-feedback resolve <id> --resolution absorbed|rejected|deferred --summary <text>`. Use `--target <ref>` only when the feedback was absorbed into a planning artifact; do not pass `--target` for rejected or deferred feedback. Do not use `routed` as a resolution; handing an item to a role or human does not by itself close the planning feedback.

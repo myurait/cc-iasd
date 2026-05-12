@@ -10,7 +10,7 @@ Paths like `rules/policies/...`, `rules/roles/...`, `rules/templates/...` are re
 
 ### Project paths
 
-Paths like `product/ideal/`, `product/specs/`, `ops/scopes/`, `ops/execution/`, `ops/evidence/`, and `reference/` are relative to the project root.
+Paths like `product/ideal/`, `product/specs/`, `ops/scopes/`, `ops/execution/`, `ops/planning-feedback/`, `ops/evidence/`, and `reference/` are relative to the project root.
 
 ### Path mapping from framework source to project
 
