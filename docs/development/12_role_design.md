@@ -568,6 +568,8 @@ command visibility は、role に渡す CLI surface を制限するための定�
 | `cc-iasd campaign mark-run <campaign-id> <run-id>` | Execution Manager | update campaign queue, campaign state, run state, create log |
 | `cc-iasd log event` | Planning Lead, Execution Manager | `ops/evidence/logs/log_<timestamp>_<type>.md` |
 | `cc-iasd reference add historical\|external\|note <id>` | Planning Lead | `reference/historical-documents/<id>.md`, `reference/external/<id>.md`, or `reference/notes/<id>.md`; update `reference/INDEX.md`; create log |
+| `cc-iasd help roles` | none | stdout only; list available role ids |
+| `cc-iasd help role <role-id>` | runtime owner | stdout only; show one role's command visibility and invocation metadata |
 | `cc-iasd ops archive <layer> <id>` | Planning Lead, Execution Manager | move ops artifact to the target layer's `archived/` directory, create log |
 
 ```text

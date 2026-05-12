@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { copyFile, mkdir, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, open, readFile, readdir, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -34,6 +34,8 @@ Usage:
   cc-iasd product outdate ideal <id> [--root <project-context-path>]
   cc-iasd product outdate spec <id> [--root <project-context-path>]
   cc-iasd ops archive feature|roadmap|campaign|run|log|review|report <id> [--root <project-context-path>]
+  cc-iasd help roles [--root <project-context-path>]
+  cc-iasd help role <role-id> [--root <project-context-path>]
   cc-iasd --help
 
 Options:
@@ -116,11 +118,22 @@ const parseArgs = (argv) => {
     parsed.command = tokens.shift();
   }
 
-  if (!['init', 'doctor', 'run', 'escalate', 'report', 'view', 'log', 'review', 'open-item', 'ideal', 'feature', 'roadmap', 'campaign', 'spec', 'reference', 'profile', 'product', 'ops'].includes(parsed.command)) {
+  if (!['init', 'doctor', 'run', 'escalate', 'report', 'view', 'log', 'review', 'open-item', 'ideal', 'feature', 'roadmap', 'campaign', 'spec', 'reference', 'profile', 'product', 'ops', 'help'].includes(parsed.command)) {
     throw new Error(`Unknown command: ${parsed.command}`);
   }
 
-  if (parsed.command === 'run') {
+  if (parsed.command === 'help') {
+    parsed.runTarget = tokens.shift() ?? '';
+    if (!['roles', 'role'].includes(parsed.runTarget)) {
+      throw new Error('Usage: cc-iasd help roles|role <role-id>');
+    }
+    if (parsed.runTarget === 'role') {
+      parsed.viewId = tokens.shift() ?? '';
+      if (!parsed.viewId || parsed.viewId.startsWith('-')) {
+        throw new Error('Usage: cc-iasd help role <role-id>');
+      }
+    }
+  } else if (parsed.command === 'run') {
     parsed.runTarget = tokens.shift() ?? '';
     if (parsed.runTarget !== 'start') {
       throw new Error('Usage: cc-iasd run start <id>');
@@ -405,6 +418,38 @@ const writeText = async (root, relPath, content, options, created) => {
   if (options.dryRun) return;
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(target, content, 'utf8');
+};
+
+const sleep = (ms) => new Promise((resolve) => {
+  setTimeout(resolve, ms);
+});
+
+const withFileLock = async (root, relPath, options, fn) => {
+  if (options.dryRun) return fn();
+
+  const lockPath = assertInside(path.join(root, `${relPath}.lock`), root);
+  await mkdir(path.dirname(lockPath), { recursive: true });
+
+  let handle;
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    try {
+      handle = await open(lockPath, 'wx');
+      break;
+    } catch (error) {
+      if (error?.code !== 'EEXIST') throw error;
+      await sleep(50);
+    }
+  }
+  if (!handle) {
+    throw new Error(`Timed out waiting for artifact lock: ${relPath}`);
+  }
+
+  try {
+    return await fn();
+  } finally {
+    await handle.close();
+    await unlink(lockPath).catch(() => {});
+  }
 };
 
 const movePath = async (root, sourceRel, destRel, options) => {
@@ -1014,16 +1059,18 @@ const ensureRunId = (runId) => {
 };
 
 const updateTextFile = async (root, relPath, updater, args, created) => {
-  const current = await readOptionalText(root, relPath);
-  if (!current) {
-    throw new Error(`Cannot update missing file: ${relPath}`);
-  }
-  const next = updater(current);
-  if (next === current) {
-    created.skipped.push(relPath);
-    return;
-  }
-  await writeText(root, relPath, next, { ...args, force: true }, created);
+  await withFileLock(root, relPath, args, async () => {
+    const current = await readOptionalText(root, relPath);
+    if (!current) {
+      throw new Error(`Cannot update missing file: ${relPath}`);
+    }
+    const next = updater(current);
+    if (next === current) {
+      created.skipped.push(relPath);
+      return;
+    }
+    await writeText(root, relPath, next, { ...args, force: true }, created);
+  });
 };
 
 const nextOpenItemId = (content) => {
@@ -2033,6 +2080,13 @@ const extractRoleCommandVisibility = (content) => {
   return commands.length ? commands : ['- No role-visible cc-iasd commands declared.'];
 };
 
+const roleInvocationMetadata = [
+  '- `devils-advocate` with `review-mode=design-launch` must call `cc-iasd review add <campaign-id> --type full --review-mode design-launch ...`.',
+  '- `devils-advocate` with `review-mode=campaign-completion` must call `cc-iasd review add <run-id-or-campaign-id> --type full --review-mode campaign-completion ...`.',
+  '- `planning-lead` and `execution-manager` are parallel entry points. Do not invoke Execution Manager as a nested subagent from Planning Lead.',
+  '- `execution-manager` returns Planning Feedback Packet items for planning-layer follow-up instead of editing planning canon directly.',
+];
+
 const roleRuntimeTemplate = ({ now, roleEntries }) => [
   '# Role Runtime Manifest',
   '',
@@ -2061,16 +2115,12 @@ const roleRuntimeTemplate = ({ now, roleEntries }) => [
   '',
   '## Role Invocation Metadata',
   '',
+  ...roleInvocationMetadata,
   '- Designer roles may return `Backtrack Request` instead of authored artifacts when upstream context is insufficient.',
   '- Backtrack Request metadata must include blocked stage, missing upstream artifact, missing information, evidence from current artifact, risk if continued by assumption, recommended return role, narrow context needed, and resume condition.',
-  '- Devil\'s Advocate must be invoked with `--type full --review-mode design-launch` before campaign execution when campaign launch risk is inspected.',
-  '- Devil\'s Advocate must be invoked with `--type full --review-mode campaign-completion` before campaign completion is accepted.',
   '- Planning Lead routes Backtrack Requests and review-mode invocation metadata. Planning Lead does not judge ideal, feature, or spec artifact quality directly.',
-  '- Planning Lead and Execution Manager are parallel entry points. Planning Lead prepares an Execution Entry Packet; Execution Manager is started separately from that packet and is not a nested subagent of Planning Lead.',
+  '- Planning Lead prepares an Execution Entry Packet. Execution Manager is started separately from that packet.',
   '- Execution Manager owns Worker, Code Quality Auditor, Devil\'s Advocate, Compliance Auditor, campaign/run, report, and execution escalation orchestration.',
-  '- Execution Manager must pass `--type full --review-mode design-launch` with the campaign scope before the first run starts.',
-  '- Execution Manager must pass `--type full --review-mode campaign-completion` with campaign, run, report, and evidence refs before campaign completion is accepted.',
-  '- Execution Manager must return Planning Feedback Packet items when completion report, aggregate report, or promoted open items require planning-layer follow-up.',
   '',
   '## Context Compression Recovery',
   '',
@@ -2085,6 +2135,63 @@ const writableRoleFiles = async (root) => {
   return files
     .filter((file) => !['README.md', 'PATH_CONVENTION.md'].includes(path.basename(file)))
     .sort();
+};
+
+const resolveRoleSource = async (root) => {
+  if (await exists(path.join(root, 'rules/roles'))) {
+    return { root, relDir: 'rules/roles', label: 'rules/roles' };
+  }
+  return { root: packageRoot, relDir: 'roles', label: 'package roles' };
+};
+
+const roleHelp = async (args) => {
+  const root = path.resolve(process.cwd(), args.target);
+  const source = await resolveRoleSource(root);
+  const roleFiles = await listMarkdownFiles(source.root, source.relDir);
+  const roles = roleFiles
+    .filter((file) => !['README.md', 'PATH_CONVENTION.md'].includes(path.basename(file)))
+    .map((file) => path.basename(file, '.md'))
+    .sort();
+
+  if (args.runTarget === 'roles') {
+    return [
+      '# Role Command Help',
+      '',
+      `- Source: ${source.label}`,
+      '',
+      '## Roles',
+      '',
+      ...roles.map((role) => `- ${role}`),
+      '',
+      'Use `cc-iasd help role <role-id>` to view the command surface for a single role.',
+      '',
+    ].join('\n');
+  }
+
+  const roleId = args.viewId;
+  if (!/^[a-z0-9-]+$/.test(roleId)) {
+    throw new Error('Role id must be lowercase kebab-case ASCII');
+  }
+  const rolePath = `${source.relDir}/${roleId}.md`;
+  const content = await readOptionalText(source.root, rolePath);
+  if (!content) {
+    throw new Error(`Unknown role: ${roleId}`);
+  }
+  const commands = extractRoleCommandVisibility(content);
+  return [
+    `# Role Command Help: ${roleId}`,
+    '',
+    `- Source: ${source.label}/${roleId}.md`,
+    '',
+    '## Visible Commands',
+    '',
+    ...commands,
+    '',
+    '## Invocation Metadata',
+    '',
+    ...roleInvocationMetadata.filter((line) => line.includes(`\`${roleId}\``) || line.includes(roleId)),
+    '',
+  ].join('\n');
 };
 
 const writeRuntimeProfileFiles = async (root, args, created) => {
@@ -2737,14 +2844,11 @@ const addOpenItem = async (args) => {
   }
 
   const openItemsPath = `ops/execution/runs/${runId}/open-items.md`;
-  const current = await readOptionalText(root, openItemsPath);
-  if (!current) {
-    throw new Error(`Run open items file does not exist: ${openItemsPath}`);
-  }
-  const itemId = nextOpenItemId(current);
+  let itemId = '';
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
   await updateTextFile(root, openItemsPath, (content) => {
+    itemId = nextOpenItemId(content);
     const withoutNone = content.replace(/## Items\n\n- None\n?/m, '## Items\n\n');
     return appendSection(withoutNone.replace(/\n+$/, '\n'), `${openItemEntryTemplate({
       itemId,
@@ -2782,14 +2886,13 @@ const resolveOpenItem = async (args) => {
   }
 
   const openItemsPath = `ops/execution/runs/${runId}/open-items.md`;
-  const current = await readOptionalText(root, openItemsPath);
-  if (!current.includes(`- ID: ${args.openItemId}`)) {
-    throw new Error(`Open item does not exist: ${args.openItemId}`);
-  }
   const now = new Date().toISOString();
   const created = { written: [], skipped: [] };
   await updateTextFile(root, openItemsPath, (content) => {
     const start = content.indexOf(`### ${args.openItemId}`);
+    if (start === -1) {
+      throw new Error(`Open item does not exist: ${args.openItemId}`);
+    }
     const end = content.indexOf('\n### ', start + 1);
     const before = content.slice(0, start);
     const section = content.slice(start, end === -1 ? undefined : end);
@@ -3436,7 +3539,10 @@ try {
     console.log(usage);
     process.exit(0);
   }
-  if (args.command === 'doctor') {
+  if (args.command === 'help') {
+    const result = await roleHelp(args);
+    console.log(result);
+  } else if (args.command === 'doctor') {
     const result = await doctor(args);
     if (result.issues.length) {
       console.error(`cc-iasd doctor failed for ${result.root}`);

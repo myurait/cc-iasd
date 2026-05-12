@@ -60,8 +60,9 @@ npx cc-iasd@latest ideal add i001-core --summary "Core product ideal"
 npx cc-iasd@latest feature add f001-feature-a --kind epic --summary "Add a core feature" --pillar "Core experience"
 npx cc-iasd@latest roadmap add r001-first-roadmap --summary "First roadmap" --goal "Ship the first usable flow"
 npx cc-iasd@latest spec add s001-first-slice --summary "Define the first implementation slice"
-npx cc-iasd@latest campaign add c001-first-campaign --summary "First campaign" --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice
+npx cc-iasd@latest campaign add c001-first-campaign --summary "First campaign" --feature f001-feature-a --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice
 npx cc-iasd@latest run start c001-first-campaign
+npx cc-iasd@latest help role worker
 npx cc-iasd@latest open-item add <run-id> --kind follow-up --summary "Follow-up item"
 npx cc-iasd@latest open-item resolve <run-id> oi-001 --resolution resolved --summary "Handled in this run"
 npx cc-iasd@latest campaign mark-run c001-first-campaign <run-id> --status completed
@@ -87,8 +88,9 @@ node bin/cc-iasd.js ideal add i001-core --summary "Core product ideal" --root /t
 node bin/cc-iasd.js feature add f001-feature-a --kind epic --summary "Add a core feature" --pillar "Core experience" --root /tmp/my-project-context
 node bin/cc-iasd.js roadmap add r001-first-roadmap --summary "First roadmap" --goal "Ship the first usable flow" --root /tmp/my-project-context
 node bin/cc-iasd.js spec add s001-first-slice --summary "Define the first implementation slice" --root /tmp/my-project-context
-node bin/cc-iasd.js campaign add c001-first-campaign --summary "First campaign" --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice --root /tmp/my-project-context
+node bin/cc-iasd.js campaign add c001-first-campaign --summary "First campaign" --feature f001-feature-a --roadmap r001-first-roadmap --spec s001-first-slice --tasks s001-first-slice --root /tmp/my-project-context
 node bin/cc-iasd.js run start c001-first-campaign --root /tmp/my-project-context
+node bin/cc-iasd.js help role worker --root /tmp/my-project-context
 node bin/cc-iasd.js open-item add <run-id> --kind follow-up --summary "Follow-up item" --root /tmp/my-project-context
 node bin/cc-iasd.js open-item resolve <run-id> oi-001 --resolution resolved --summary "Handled in this run" --root /tmp/my-project-context
 node bin/cc-iasd.js campaign mark-run c001-first-campaign <run-id> --status completed --root /tmp/my-project-context

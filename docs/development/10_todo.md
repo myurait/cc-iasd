@@ -23,6 +23,8 @@ TODO:
 - user/product-intent.md に置かれた内容を、適切なタイミングで product/ideal/ に吸収する flow を定義する
 - user/ 配下に保持すべき情報の種類、寿命、正本への展開先、残すべき一時情報の境界を整理する
 - 既存リポジトリに後から cc-iasd を導入する際の ideal と feature の初期定義方法を整理する
+- Planning Feedback Packet を reference note のまま runtime handoff として扱うか、専用 artifact / command として正本化するかを決める
+- reference artifact が product / ops / rules に昇格した場合の Canonical Successor 管理を、reference 側の追跡で足りるか専用 workflow が必要か判断する
 ```
 
 ---
@@ -36,7 +38,6 @@ TODO:
 - tasks 起点の implementation loop が run / evidence と過不足なく接続できるか確認する
 - 開発用資料を project-context doctor から切り離し、release 前の削除または別管理方針への委譲を扱う検査を別系統にする
 - Feature Scope Designer / Spec Designer の role prompt を強化するため、著名な agent / spec-driven development / planning assistant repository の designer・planner・architect 系 prompt を調査し、cc-iasd の role boundary、command visibility、artifact discipline に適合する要素だけを抽出する
-- Devil's Advocate の `Design Launch Review` / `Campaign Completion Review` mode を CLI / adapter の role invocation metadata として明示的に渡す仕組みを実装する。
 ```
 
 ---
@@ -45,10 +46,18 @@ TODO:
 
 以下は `/tmp/cc-iasd-scenario-test-a` の走行で観測した未対応課題である。scratch 記録、root 直下 `OVERVIEW.md`、scratch 記録内のローカルパス抽象化は、この一覧の対象外とする。
 
-1. CLI command surface の肥大化を抑える。単一 CLI が全レイヤーの操作を露出することで、AI に不要な横断コンテキストを与えない設計を検討する。
+1. reference artifact の Canonical Successor 管理を強化する。reference が product / ops / rules に昇格した場合の追跡方法を定義する。
 
-2. Planning Lead と Execution Manager を並立 entry point として分離した後、command visibility と runtime handoff が context pressure を増やしていないかを scenario test で検証する。
+2. Artifact Quality Requirements / Backtrack Request を実際の scenario test で観察し、AI が不足を推測補完せず適切に Backtrack Request を返せるか検証する。
 
-3. reference artifact の Canonical Successor 管理を強化する。reference が product / ops / rules に昇格した場合の追跡方法を定義する。
+---
 
-4. Artifact Quality Requirements / Backtrack Request を実際の scenario test で観察し、AI が不足を推測補完せず適切に Backtrack Request を返せるか検証する。
+## 5. Scenario Test B で観測した残課題
+
+以下は `/tmp/cc-iasd-scenario-test-b` の走行で観測した未対応課題である。今回の修正で実装済みの feature link 維持、DA review full 制約、Planning Feedback Summary 形式、Recommended Planning Role の単一値化、role-specific help、open-item file lock は除外する。
+
+1. Planning Feedback Packet を reference note として残すか、dedicated command / artifact として扱うかを判断する。
+
+2. Artifact Quality Requirements / Backtrack Request が、実装を伴う scenario でも推測補完を防げるか検証する。
+
+3. tasks 起点の implementation loop が、run / evidence / completion report / Planning Feedback Packet と過不足なく接続できるか検証する。

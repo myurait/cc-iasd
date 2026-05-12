@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -14,6 +14,21 @@ const runCli = (args) => execFileSync(process.execPath, [cliPath, ...args], {
   cwd: repoRoot,
   encoding: 'utf8',
   stdio: ['ignore', 'pipe', 'pipe'],
+});
+
+const runCliAsync = (args) => new Promise((resolve, reject) => {
+  execFile(process.execPath, [cliPath, ...args], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  }, (error, stdout, stderr) => {
+    if (error) {
+      error.stdout = stdout;
+      error.stderr = stderr;
+      reject(error);
+      return;
+    }
+    resolve(stdout);
+  });
 });
 
 const createContext = async () => {
@@ -74,6 +89,7 @@ test('init creates the product ops reference structure', async () => {
     assert.match(roleRuntime, /rules\/roles\/planning-lead\.md/);
     assert.match(roleRuntime, /rules\/roles\/execution-manager\.md/);
     assert.match(roleRuntime, /## Command Visibility By Role/);
+    assert.match(roleRuntime, /## Role Invocation Metadata/);
     assert.match(roleRuntime, /### design-reviewer/);
     assert.match(roleRuntime, /`cc-iasd review add <scope-id>`/);
     assert.match(roleRuntime, /### ideal-interviewer/);
@@ -81,8 +97,10 @@ test('init creates the product ops reference structure', async () => {
     assert.match(roleRuntime, /### worker/);
     assert.match(roleRuntime, /`cc-iasd view run <run-id>`/);
     assert.match(roleRuntime, /## Context Compression Recovery/);
-    assert.match(roleRuntime, /Planning Lead and Execution Manager are parallel entry points/);
-    assert.match(roleRuntime, /Execution Manager must return Planning Feedback Packet items/);
+    assert.match(roleRuntime, /`planning-lead` and `execution-manager` are parallel entry points/);
+    assert.match(roleRuntime, /`execution-manager` returns Planning Feedback Packet items/);
+    assert.match(roleRuntime, /--type full --review-mode design-launch/);
+    assert.match(roleRuntime, /--type full --review-mode campaign-completion/);
     assert.match(roleRuntime, /Compressed handoff must preserve active role/);
 
     assert.equal(existsSync(path.join(root, 'ops/evidence-index.md')), false);
@@ -90,6 +108,26 @@ test('init creates the product ops reference structure', async () => {
     assert.equal(existsSync(path.join(root, 'ops/scopes/milestones')), false);
     assert.equal(existsSync(path.join(root, 'ops/cycles')), false);
     assert.equal(existsSync(path.join(root, 'ops/logs')), false);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('role help exposes command surface for a single role', async () => {
+  const root = await createContext();
+  try {
+    const roles = runCli(['help', 'roles', '--root', root]);
+    assert.match(roles, /- execution-manager/);
+    assert.match(roles, /- worker/);
+
+    const workerHelp = runCli(['help', 'role', 'worker', '--root', root]);
+    assert.match(workerHelp, /# Role Command Help: worker/);
+    assert.match(workerHelp, /`cc-iasd view run <run-id>`/);
+    assert.doesNotMatch(workerHelp, /`cc-iasd roadmap add <id>`/);
+
+    const devilHelp = runCli(['help', 'role', 'devils-advocate', '--root', root]);
+    assert.match(devilHelp, /--type full --review-mode design-launch/);
+    assert.match(devilHelp, /--type full --review-mode campaign-completion/);
   } finally {
     await cleanup(root);
   }
@@ -218,6 +256,42 @@ test('artifact commands write to the new structure and keep doctor green', async
     assert.doesNotMatch(report, /Recommended Planning Role: Planning Lead \/ Feature Scope Designer/);
 
     runCli(['doctor', root]);
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('open item add serializes concurrent updates to one run artifact', async () => {
+  const root = await createContext();
+  try {
+    runCli(['ideal', 'add', 'i001-core', '--summary', 'Core ideal', '--root', root]);
+    await fillIdeal(root);
+    runCli(['feature', 'add', 'f001-feature-a', '--kind', 'epic', '--summary', 'Add feature A', '--pillar', 'Core', '--root', root]);
+    runCli(['roadmap', 'add', 'r001-roadmap-a', '--summary', 'Roadmap A', '--goal', 'Ship A', '--root', root]);
+    runCli(['spec', 'add', 's001-spec-a', '--summary', 'Spec A', '--root', root]);
+    runCli(['campaign', 'add', 'c001-campaign-a', '--summary', 'Campaign 1', '--feature', 'f001-feature-a', '--roadmap', 'r001-roadmap-a', '--spec', 's001-spec-a', '--tasks', 's001-spec-a', '--root', root]);
+    const runOutput = runCli(['run', 'start', 'c001-campaign-a', '--root', root]);
+    const runId = runOutput.match(/Prepared run (run_[0-9]{17}_c001-campaign-a)/)[1];
+    assert.equal(existsSync(path.join(root, 'ops/execution/runs', runId, 'open-items.md')), true);
+
+    const results = await Promise.allSettled([1, 2, 3, 4, 5].map((index) => runCliAsync([
+      'open-item',
+      'add',
+      runId,
+      '--kind',
+      'follow-up',
+      '--summary',
+      `Concurrent item ${index}`,
+      '--root',
+      root,
+    ])));
+    const rejected = results.filter((result) => result.status === 'rejected');
+    assert.deepEqual(rejected.map((result) => result.reason.stderr), []);
+
+    const openItems = await readFile(path.join(root, 'ops/execution/runs', runId, 'open-items.md'), 'utf8');
+    const ids = [...openItems.matchAll(/- ID: (oi-[0-9]{3})/g)].map((match) => match[1]);
+    assert.deepEqual(ids, ['oi-001', 'oi-002', 'oi-003', 'oi-004', 'oi-005']);
+    assert.equal(existsSync(path.join(root, 'ops/execution/runs', runId, 'open-items.md.lock')), false);
   } finally {
     await cleanup(root);
   }
