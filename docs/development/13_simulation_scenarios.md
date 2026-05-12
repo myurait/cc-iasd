@@ -316,3 +316,105 @@ owner の分類観点:
 ```
 
 保存する overview は、作成された artifact 一覧、実行したコマンド、未実装 artifact の扱い、feedback / debt routing の観察結果を記録する。特定のローカル絶対パスは正本化しない。
+
+---
+
+## 8. Scenario Test B Prompt: Planning / Execution Entry Handoff
+
+### 8.1 目的
+
+この prompt は、Planning Lead と Execution Manager を並立 entry point として分離した後、entry point 切り替え時の context pressure と runtime handoff の妥当性を検証するために使う。
+
+この prompt は scratch project-context の実行入力であり、project-context artifact へそのまま貼り付ける正本文書ではない。
+
+### 8.2 Prompt
+
+```text
+あなたは cc-iasd の scenario test runner である。
+
+目的:
+Planning Lead と Execution Manager が並立 entry point として分離された状態で、Planning -> Execution -> Planning の handoff が過不足なく成立するかを検証せよ。実装コードは書かない。artifact 作成、role handoff、feedback routing、context pressure の観察を行う。
+
+重要制約:
+1. `src/` には実装コードを書かない。
+2. cc-iasd-managed artifact の新規作成は、必ず `cc-iasd` command または明示的人間操作で行う。
+3. AI が自由に新規ファイルを作成してよいのは、scratch overview など明示された観察記録に限る。
+4. scratch project-context 内の artifact に、ローカル絶対パス、開発用文書パス、またはこの prompt 自体の保存場所を書かない。
+5. completion report から roadmap / feature / spec / ideal を直接更新しない。
+6. Execution Manager は Planning Feedback Packet を返すだけで、planning artifact を直接編集しない。
+7. Planning Lead は Planning Feedback Packet を入力として別 entry point で再開し、必要な planning role へ分類する。
+
+題材:
+WYSIWYG を持つリッチなメモ Web アプリを想定する。機能には dashboard、external API、AI agent adapter、MCP support、schedule feature、smartphone support、notification delivery が含まれる。
+
+実行フェーズ:
+
+Phase 1: Planning Entry
+- scratch project-context を初期化する。
+- product ideal を作成し、薄すぎる場合は ideal interview が必要だった箇所を記録する。
+- feature scope、roadmap、spec を作成する。
+- Design Reviewer が返すべき不足や Backtrack Request があれば、推測で補完せず記録する。
+- Execution Entry Packet を作成する。
+- Execution Entry Packet は、reviewed feature、roadmap、spec、task refs、relevant ideal excerpt、human decisions、known exclusions、escalation triggers、expected execution boundary だけを含める。
+- Planning Entry の最後に、Execution Manager へ渡すための context が過剰でないかを評価する。
+
+Phase 2: Execution Entry
+- Execution Entry Packet だけを起点として Execution Manager を開始した想定で進める。
+- Execution Manager が full ideal、full feature backlog、full spec package、full logs、full reviews を読まずに campaign / run を作れるかを確認する。
+- campaign を作成する。
+- Devil's Advocate Design Launch Review が必要な場合は review mode を明示して記録する。
+- run を開始する。
+- 実装は行わず、実装中に発生しそうな feedback を open item として作成する。
+- open item には Background、Options、Recommendation、Planning Feedback Routing、Notes を執筆する。
+- `spec-gap`、`feature-gap`、`roadmap-gap`、`implementation-debt`、`follow-up` のうち適切な kind を使う。
+- completion report を作成する。
+- campaign aggregate-report を、run、open item、review、report の集約として更新する。
+- Planning Feedback Packet を作成する。
+- Planning Feedback Packet は roadmap-update / feature-backlog / spec-refinement / ideal-gap / human-decision / debt / no-planning-action のいずれかへ各 feedback item を分類する。
+
+Phase 3: Planning Re-entry
+- Planning Feedback Packet だけを起点として Planning Lead を再開した想定で進める。
+- Planning Lead が full run directory や full evidence history を読まずに routing できるか確認する。
+- 各 feedback item を、Planning Lead、Feature Scope Designer、Spec Designer、Ideal Interviewer、Human、none のいずれかへ分類する。
+- 人間判断が必要なものと、runtime handoff だけで進められるものを分ける。
+- planning artifact を更新する必要がある場合も、直接更新せず、どの role に narrow context packet を渡すべきかを記録する。
+
+観察して記録すること:
+1. Planning Entry で読んだ context
+2. Execution Entry に渡した Execution Entry Packet の内容
+3. Execution Entry が追加で読まざるを得なかった context
+4. completion report と Planning Feedback Packet の境界
+5. Planning Re-entry が読んだ context
+6. Human Decision と Runtime Handoff の区別
+7. context pressure が増えた箇所
+8. packet が薄すぎて詰まった箇所
+9. artifact 責務が混ざった箇所
+10. cc-iasd command surface が role に対して過剰に見えた箇所
+
+出力:
+scratch project-context 直下に `SIMULATION_OVERVIEW.md` を作成し、次を記録せよ。
+
+- Scenario Name: Planning / Execution Entry Handoff
+- Commands Run
+- Artifacts Created
+- Execution Entry Packet Summary
+- Planning Feedback Packet Summary
+- Context Read By Planning Entry
+- Context Read By Execution Entry
+- Context Read By Planning Re-entry
+- Human Decision Items
+- Runtime Handoff Items
+- Context Pressure Findings
+- Artifact Boundary Findings
+- Command Visibility Findings
+- Recommended Framework Fixes
+
+完了条件:
+1. `cc-iasd doctor` が通る。
+2. `cc-iasd view current` で product / scope / execution / evidence が追える。
+3. `cc-iasd view evidence` で review / report が追える。
+4. Execution Entry Packet だけで execution を始められたかが記録されている。
+5. Planning Feedback Packet だけで planning re-entry を始められたかが記録されている。
+6. 人間判断が必要な項目と runtime handoff で足りる項目が分離されている。
+7. completion report が planning artifact を直接更新していない。
+```
