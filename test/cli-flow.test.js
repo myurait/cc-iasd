@@ -175,6 +175,8 @@ test('artifact commands write to the new structure and keep doctor green', async
     assert.match(openItems, /- Kind: spec-gap/);
     assert.match(openItems, /- Status: promoted/);
     assert.match(openItems, /#### Planning Feedback Routing/);
+    assert.match(openItems, /- Allowed Planning Roles: Planning Lead, Feature Scope Designer, Spec Designer, Ideal Interviewer, Human, none/);
+    assert.doesNotMatch(openItems, /Recommended Planning Role: Planning Lead \/ Feature Scope Designer/);
 
     const campaign = await readFile(path.join(root, 'ops/execution/campaigns/c001-campaign-a/plan.md'), 'utf8');
     assert.match(campaign, /- Linked Feature: f001-feature-a/);
@@ -210,7 +212,10 @@ test('artifact commands write to the new structure and keep doctor green', async
     const reportId = readdirSync(path.join(root, 'ops/evidence/reports')).find((name) => name.startsWith('report_'));
     const report = await readFile(path.join(root, 'ops/evidence/reports', reportId), 'utf8');
     assert.match(report, /## Planning Feedback Summary/);
+    assert.match(report, /### item-001/);
     assert.match(report, /Recommended Planning Role/);
+    assert.match(report, /Allowed Planning Roles: Planning Lead, Feature Scope Designer, Spec Designer, Ideal Interviewer, Human, none/);
+    assert.doesNotMatch(report, /Recommended Planning Role: Planning Lead \/ Feature Scope Designer/);
 
     runCli(['doctor', root]);
   } finally {
@@ -295,6 +300,45 @@ test('doctor rejects incomplete review evidence', async () => {
   }
 });
 
+test('doctor rejects light review type for launch and completion review modes', async () => {
+  const root = await createContext();
+  try {
+    await writeFile(path.join(root, 'ops/evidence/reviews/review_20260510000000001_bad-mode.md'), [
+      '# Review: bad-mode',
+      '',
+      '- Date: 2026-05-10T00:00:00.000Z',
+      '- Reviewer: reviewer',
+      '- Base Commit: not-recorded',
+      '- Scope: Campaign review',
+      '- Scope ID: c001-campaign-a',
+      '- Review Type: light',
+      '- Review Mode: campaign-completion',
+      '- Result: passed',
+      '- Trigger: manual',
+      '',
+      '## Findings',
+      '',
+      '- None',
+      '',
+      '## Review Notes',
+      '',
+      '- Reviewed campaign completion readiness.',
+      '',
+      '## Implementation Response Plan',
+      '',
+      '- Planned Fixes: None.',
+      '- Deferred Items: None.',
+      '',
+    ].join('\n'), 'utf8');
+    assert.throws(
+      () => runCli(['doctor', root]),
+      /Review mode campaign-completion requires full review type in ops\/evidence\/reviews\/review_20260510000000001_bad-mode\.md/,
+    );
+  } finally {
+    await cleanup(root);
+  }
+});
+
 test('run milestone is not accepted', async () => {
   const root = await createContext();
   try {
@@ -326,6 +370,25 @@ test('campaign add rejects unresolved links', async () => {
       () => runCli(['campaign', 'add', 'c001-campaign-a', '--summary', 'Campaign 1', '--feature', 'f999-missing-feature', '--roadmap', 'missing-roadmap', '--root', root]),
       /Cannot resolve Linked Feature: f999-missing-feature/,
     );
+  } finally {
+    await cleanup(root);
+  }
+});
+
+test('review launch and completion modes require full review type', async () => {
+  const root = await createContext();
+  try {
+    assert.throws(
+      () => runCli(['review', 'add', 'c001-campaign-a', '--type', 'light', '--review-mode', 'design-launch', '--summary', 'Design launch', '--result', 'passed', '--root', root]),
+      /Review mode design-launch requires --type full/,
+    );
+    assert.throws(
+      () => runCli(['review', 'add', 'c001-campaign-a', '--type', 'light', '--review-mode', 'campaign-completion', '--summary', 'Campaign completion', '--result', 'passed', '--root', root]),
+      /Review mode campaign-completion requires --type full/,
+    );
+
+    runCli(['review', 'add', 'c001-campaign-a', '--type', 'full', '--review-mode', 'design-launch', '--summary', 'Design launch', '--result', 'passed', '--root', root]);
+    runCli(['doctor', root]);
   } finally {
     await cleanup(root);
   }

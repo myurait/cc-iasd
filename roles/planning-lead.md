@@ -181,6 +181,8 @@ The separate Execution Manager entry point owns Worker, Code Quality Auditor, De
 
 Planning Feedback Packet is the normal bridge from execution back to planning. It is not a command-created project artifact by default. Treat it as handoff input for a new planning entry point.
 
+Before routing, verify that each feedback item has exactly one Type and exactly one Recommended Planning Role. If an item combines multiple feedback types or multiple roles, split it into separate routing items before invoking a designer, Ideal Interviewer, human decision, or roadmap update.
+
 Classify each item as follows:
 
 - `roadmap-update` — Planning Lead updates roadmap status, sequencing, or next direction.

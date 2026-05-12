@@ -142,6 +142,8 @@ Execution Handoff Packet:
 
 When execution produces planning-layer updates, also return a Planning Feedback Packet. This packet is a runtime handoff, not a managed project artifact unless the human explicitly stores it. Use `rules/templates/planning_feedback_packet_template.md`.
 
+Each feedback item must have exactly one Type and exactly one Recommended Planning Role. If one observation affects multiple planning layers or roles, split it into separate feedback items before routing.
+
 ```text
 Planning Feedback Packet:
 - Source Campaign:
@@ -153,6 +155,7 @@ Planning Feedback Packet:
   - Summary:
   - Evidence Refs:
   - Recommended Planning Role:
+  - Allowed Planning Roles: Planning Lead, Feature Scope Designer, Spec Designer, Ideal Interviewer, Human, none
   - Blocking:
 - Human Decision Required:
 - Intended Entry Point:

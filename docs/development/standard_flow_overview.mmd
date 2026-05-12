@@ -90,7 +90,7 @@ sequenceDiagram
   EM->>DA: launch Design Launch Review before first run
   activate DA
   Note over DA: subagent runtime activation
-  DA->>CLI: view scope + view evidence + review add --review-mode design-launch
+  DA->>CLI: view scope + view evidence + review add --type full --review-mode design-launch
   CLI-->>Art: Devil's Advocate design launch evidence
   DA-->>EM: launch findings
   deactivate DA
@@ -128,7 +128,7 @@ sequenceDiagram
   EM->>DA: launch Campaign Completion Review
   activate DA
   Note over DA: subagent runtime activation
-  DA->>CLI: view scope + view run + view evidence + review add --review-mode campaign-completion
+  DA->>CLI: view scope + view run + view evidence + review add --type full --review-mode campaign-completion
   CLI-->>Art: Devil's Advocate review evidence
   DA-->>EM: campaign completion findings
   deactivate DA

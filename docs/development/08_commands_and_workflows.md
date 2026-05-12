@@ -250,6 +250,8 @@ report command は source artifact 全文を report に複製しない。source 
 
 Planning Feedback Summary は、roadmap / feature / spec / ideal への直接更新ではない。Execution Manager が completion report と同時に返す Planning Feedback Packet の要約または下書きであり、Planning Lead が別 entry point として再開したときに分類して処理する。
 
+Planning Feedback Summary と Planning Feedback Packet の各 item は、Type と Recommended Planning Role をそれぞれ 1 つだけ持つ。1 つの観測が複数の planning layer または role にまたがる場合は、単一 item に併記せず、item を分割して記録する。
+
 ---
 
 ## 7. cc-iasd log event
@@ -305,7 +307,7 @@ ops/evidence/reviews/review_<timestamp>_<scope>.md
 
 review は特定 scope 配下に置かない。run、campaign、spec、roadmap などは review ID または path を参照する。
 
-Devil's Advocate を campaign 走行前または完了前に起動する場合、review mode として `design-launch` または `campaign-completion` を記録する。
+Devil's Advocate を campaign 走行前または完了前に起動する場合、review mode として `design-launch` または `campaign-completion` を記録する。この 2 つの review mode は campaign の走行可否または完了可否に関わるため、`--type full` でなければならない。
 
 ---
 

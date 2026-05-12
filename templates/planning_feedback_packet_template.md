@@ -8,13 +8,16 @@
 
 ## Feedback Items
 
+Each feedback item must have exactly one Type and exactly one Recommended Planning Role. Split combined feedback into separate items before routing.
+
 ### item-001
 
-- Type: roadmap-update / feature-backlog / spec-refinement / ideal-gap / human-decision / debt / no-planning-action
+- Type: TBD
 - Target Candidate: TBD
 - Summary: TBD
 - Evidence Refs: TBD
-- Recommended Planning Role: Planning Lead / Feature Scope Designer / Spec Designer / Ideal Interviewer / Human / none
+- Recommended Planning Role: TBD
+- Allowed Planning Roles: Planning Lead, Feature Scope Designer, Spec Designer, Ideal Interviewer, Human, none
 - Blocking: yes / no
 
 ## Human Decision Boundary

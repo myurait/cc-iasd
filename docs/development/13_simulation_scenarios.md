@@ -361,21 +361,24 @@ Phase 1: Planning Entry
 Phase 2: Execution Entry
 - Execution Entry Packet だけを起点として Execution Manager を開始した想定で進める。
 - Execution Manager が full ideal、full feature backlog、full spec package、full logs、full reviews を読まずに campaign / run を作れるかを確認する。
-- campaign を作成する。
-- Devil's Advocate Design Launch Review が必要な場合は review mode を明示して記録する。
+- campaign を `cc-iasd campaign add <campaign-id> --feature <feature-id> --roadmap <roadmap-id> ...` で作成し、feature link が抜けないことを確認する。
+- Devil's Advocate Design Launch Review は `cc-iasd review add <campaign-id> --type full --review-mode design-launch ...` で記録する。
 - run を開始する。
 - 実装は行わず、実装中に発生しそうな feedback を open item として作成する。
 - open item には Background、Options、Recommendation、Planning Feedback Routing、Notes を執筆する。
 - `spec-gap`、`feature-gap`、`roadmap-gap`、`implementation-debt`、`follow-up` のうち適切な kind を使う。
+- promoted する open item は `cc-iasd open-item resolve <run-id> <item-id> --resolution promoted ...` で解決してから report / aggregate-report に反映する。
+- Devil's Advocate Campaign Completion Review は `cc-iasd review add <run-id-or-campaign-id> --type full --review-mode campaign-completion ...` で記録する。
 - completion report を作成する。
 - campaign aggregate-report を、run、open item、review、report の集約として更新する。
 - Planning Feedback Packet を作成する。
 - Planning Feedback Packet は roadmap-update / feature-backlog / spec-refinement / ideal-gap / human-decision / debt / no-planning-action のいずれかへ各 feedback item を分類する。
+- 各 feedback item は Type を 1 つだけ持つ。複数 type にまたがる観測は item を分割する。
 
 Phase 3: Planning Re-entry
 - Planning Feedback Packet だけを起点として Planning Lead を再開した想定で進める。
 - Planning Lead が full run directory や full evidence history を読まずに routing できるか確認する。
-- 各 feedback item を、Planning Lead、Feature Scope Designer、Spec Designer、Ideal Interviewer、Human、none のいずれかへ分類する。
+- 各 feedback item を、Planning Lead、Feature Scope Designer、Spec Designer、Ideal Interviewer、Human、none のいずれか 1 つへ分類する。複数 role にまたがる観測は item を分割する。
 - 人間判断が必要なものと、runtime handoff だけで進められるものを分ける。
 - planning artifact を更新する必要がある場合も、直接更新せず、どの role に narrow context packet を渡すべきかを記録する。
 

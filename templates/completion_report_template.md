@@ -33,14 +33,17 @@
 This section is an execution-to-planning handoff summary. It is not a direct update to roadmap, feature, ideal, or spec canon.
 
 - Planning Feedback Packet Required: TBD
-- Feedback Items:
-  - Type: roadmap-update / feature-backlog / spec-refinement / ideal-gap / human-decision / debt / no-planning-action / TBD
-  - Target Candidate: TBD
-  - Summary: TBD
-  - Evidence Refs: TBD
-  - Human Decision Required: yes / no / TBD
-  - Recommended Planning Role: Planning Lead / Feature Scope Designer / Spec Designer / Ideal Interviewer / Human / none
 - Recommended Planning Entry Point: Planning Lead / none
+
+### item-001
+
+- Type: TBD
+- Target Candidate: TBD
+- Summary: TBD
+- Evidence Refs: TBD
+- Human Decision Required: yes / no / TBD
+- Recommended Planning Role: TBD
+- Allowed Planning Roles: Planning Lead, Feature Scope Designer, Spec Designer, Ideal Interviewer, Human, none
 
 ## Tool-Owned Fields
 

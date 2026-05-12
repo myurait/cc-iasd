@@ -30,7 +30,8 @@
 - Target Candidate: TBD
 - Evidence Refs: TBD
 - Human Decision Required: yes / no / TBD
-- Recommended Planning Role: Planning Lead / Feature Scope Designer / Spec Designer / Ideal Interviewer / Human / none
+- Recommended Planning Role: TBD
+- Allowed Planning Roles: Planning Lead, Feature Scope Designer, Spec Designer, Ideal Interviewer, Human, none
 
 ## Notes
 

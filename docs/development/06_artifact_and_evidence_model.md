@@ -959,14 +959,17 @@ ops/evidence/reports/
 ## 10. Planning Feedback Summary
 
 - Planning Feedback Packet Required:
-- Feedback Items:
-  - Type:
-  - Target Candidate:
-  - Summary:
-  - Evidence Refs:
-  - Human Decision Required:
-  - Recommended Planning Role:
 - Recommended Planning Entry Point:
+
+### item-001
+
+- Type:
+- Target Candidate:
+- Summary:
+- Evidence Refs:
+- Human Decision Required:
+- Recommended Planning Role:
+- Allowed Planning Roles:
 
 ## 11. 関連証跡
 ```

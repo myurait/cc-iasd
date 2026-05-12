@@ -562,7 +562,7 @@ command visibility は、role に渡す CLI surface を制限するための定�
 | `cc-iasd run start <id>` | Execution Manager | `ops/execution/runs/<run-id>/plan.md`, `handoff.md`, `state.md`, `open-items.md`, `knowledge.md`; update campaign queue; create log |
 | `cc-iasd open-item add <run-id>` | Worker | update `ops/execution/runs/<run-id>/open-items.md`, create log |
 | `cc-iasd open-item resolve <run-id> <item-id>` | Execution Manager | update `ops/execution/runs/<run-id>/open-items.md`, create log |
-| `cc-iasd review add <scope-id>` | Design Reviewer, Compliance Auditor, Code Quality Auditor, Devil's Advocate | `ops/evidence/reviews/review_<timestamp>_<summary>.md`, create log; Devil's Advocate records `--review-mode design-launch` or `--review-mode campaign-completion` when applicable |
+| `cc-iasd review add <scope-id>` | Design Reviewer, Compliance Auditor, Code Quality Auditor, Devil's Advocate | `ops/evidence/reviews/review_<timestamp>_<summary>.md`, create log; Devil's Advocate records `--type full --review-mode design-launch` or `--type full --review-mode campaign-completion` when applicable |
 | `cc-iasd report <scope-ref>` | Execution Manager | `ops/evidence/reports/report_<timestamp>_<scope-id>.md`, create log |
 | `cc-iasd escalate <scope-ref>` | Execution Manager | `ops/evidence/reports/escalation_<timestamp>_<scope-id>.md`, create log |
 | `cc-iasd campaign mark-run <campaign-id> <run-id>` | Execution Manager | update campaign queue, campaign state, run state, create log |
@@ -644,6 +644,8 @@ execution entry:
 Planning Lead が行うのは、Execution Manager の起動ではなく、実行入口に渡せる context packet の準備である。Execution Manager が行うのは、Planning Lead の補助ではなく、実行入口としての campaign/run orchestration である。
 
 Planning Feedback Packet は execution entry から planning entry へ戻る標準 handoff である。Completion Report は evidence layer に残り、Planning Feedback Packet はそれを根拠に planning artifact へ戻すべき項目だけを分類する。
+
+Planning Feedback Packet の各 item は Type と Recommended Planning Role をそれぞれ 1 つだけ持つ。複数の layer または role にまたがる feedback は、Planning Lead に渡す前に item を分割する。
 
 ### 5.8 role は entry point の代替ではない
 
@@ -1445,7 +1447,7 @@ sequenceDiagram
   CLI-->>DA: stdout scope boundary view
   DA->>CLI: cc-iasd view evidence
   CLI-->>DA: stdout evidence overview
-  DA->>CLI: cc-iasd review add cNNN-campaign-id --review-mode design-launch
+  DA->>CLI: cc-iasd review add cNNN-campaign-id --type full --review-mode design-launch
   CLI-->>Evidence: reviews/review_timestamp_summary.md
   CLI-->>Evidence: logs/log_timestamp_review-add.md
   DA-->>EM: campaign launch findings
@@ -1494,7 +1496,7 @@ sequenceDiagram
   CLI-->>DA: stdout run-local context
   DA->>CLI: cc-iasd view evidence
   CLI-->>DA: stdout evidence overview
-  DA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id --review-mode campaign-completion
+  DA->>CLI: cc-iasd review add run_timestamp_cNNN-campaign-id --type full --review-mode campaign-completion
   CLI-->>Evidence: reviews/review_timestamp_summary.md
   CLI-->>Evidence: logs/log_timestamp_review-add.md
   DA-->>EM: campaign completion findings

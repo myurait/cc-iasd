@@ -934,6 +934,7 @@ const validateReviewFiles = async (root, issues) => {
     const reviewer = extractField(content, 'Reviewer');
     const baseCommit = extractField(content, 'Base Commit');
     const reviewType = extractField(content, 'Review Type');
+    const reviewMode = extractField(content, 'Review Mode');
     const result = extractField(content, 'Result');
 
     if (isUnset(reviewer)) {
@@ -944,6 +945,9 @@ const validateReviewFiles = async (root, issues) => {
     }
     if (!['light', 'full'].includes(reviewType)) {
       issues.push(`Invalid review type in ${file}: ${reviewType || 'missing'}`);
+    }
+    if (fullReviewModeValues.includes(reviewMode) && reviewType !== 'full') {
+      issues.push(`Review mode ${reviewMode} requires full review type in ${file}`);
     }
     if (isUnset(result)) {
       issues.push(`Missing review result in ${file}`);
@@ -1000,6 +1004,8 @@ const openItemKindValues = [
   'blocker',
   'follow-up',
 ];
+
+const fullReviewModeValues = ['design-launch', 'campaign-completion'];
 
 const ensureRunId = (runId) => {
   if (!/^run_[0-9]{17}_[a-z0-9][a-z0-9-]*$/.test(runId)) {
@@ -1670,7 +1676,8 @@ const openItemEntryTemplate = ({ itemId, runId, kind, summary, targetRef, now })
   '- Target Candidate: TBD',
   '- Evidence Refs: TBD',
   '- Human Decision Required: yes / no / TBD',
-  '- Recommended Planning Role: Planning Lead / Feature Scope Designer / Spec Designer / Ideal Interviewer / Human / none',
+  '- Recommended Planning Role: TBD',
+  '- Allowed Planning Roles: Planning Lead, Feature Scope Designer, Spec Designer, Ideal Interviewer, Human, none',
   '',
   '#### Notes',
   '',
@@ -1733,14 +1740,17 @@ const completionReportTemplate = ({ scopeId, scopePath, now, runStates, reviewFi
   'This section is an execution-to-planning handoff summary. It is not a direct update to roadmap, feature, ideal, or spec canon.',
   '',
   '- Planning Feedback Packet Required: TBD',
-  '- Feedback Items:',
-  '  - Type: roadmap-update / feature-backlog / spec-refinement / ideal-gap / human-decision / debt / no-planning-action / TBD',
-  '  - Target Candidate: TBD',
-  '  - Summary: TBD',
-  '  - Evidence Refs: TBD',
-  '  - Human Decision Required: yes / no / TBD',
-  '  - Recommended Planning Role: Planning Lead / Feature Scope Designer / Spec Designer / Ideal Interviewer / Human / none',
   '- Recommended Planning Entry Point: Planning Lead / none',
+  '',
+  '### item-001',
+  '',
+  '- Type: TBD',
+  '- Target Candidate: TBD',
+  '- Summary: TBD',
+  '- Evidence Refs: TBD',
+  '- Human Decision Required: yes / no / TBD',
+  '- Recommended Planning Role: TBD',
+  '- Allowed Planning Roles: Planning Lead, Feature Scope Designer, Spec Designer, Ideal Interviewer, Human, none',
   '',
 ].join('\n');
 
@@ -2053,13 +2063,13 @@ const roleRuntimeTemplate = ({ now, roleEntries }) => [
   '',
   '- Designer roles may return `Backtrack Request` instead of authored artifacts when upstream context is insufficient.',
   '- Backtrack Request metadata must include blocked stage, missing upstream artifact, missing information, evidence from current artifact, risk if continued by assumption, recommended return role, narrow context needed, and resume condition.',
-  '- Devil\'s Advocate must be invoked with `Review Mode: Design Launch Review` before campaign execution when campaign launch risk is inspected.',
-  '- Devil\'s Advocate must be invoked with `Review Mode: Campaign Completion Review` before campaign completion is accepted.',
+  '- Devil\'s Advocate must be invoked with `--type full --review-mode design-launch` before campaign execution when campaign launch risk is inspected.',
+  '- Devil\'s Advocate must be invoked with `--type full --review-mode campaign-completion` before campaign completion is accepted.',
   '- Planning Lead routes Backtrack Requests and review-mode invocation metadata. Planning Lead does not judge ideal, feature, or spec artifact quality directly.',
   '- Planning Lead and Execution Manager are parallel entry points. Planning Lead prepares an Execution Entry Packet; Execution Manager is started separately from that packet and is not a nested subagent of Planning Lead.',
   '- Execution Manager owns Worker, Code Quality Auditor, Devil\'s Advocate, Compliance Auditor, campaign/run, report, and execution escalation orchestration.',
-  '- Execution Manager must pass `Review Mode: Design Launch Review` with the campaign scope before the first run starts.',
-  '- Execution Manager must pass `Review Mode: Campaign Completion Review` with campaign, run, report, and evidence refs before campaign completion is accepted.',
+  '- Execution Manager must pass `--type full --review-mode design-launch` with the campaign scope before the first run starts.',
+  '- Execution Manager must pass `--type full --review-mode campaign-completion` with campaign, run, report, and evidence refs before campaign completion is accepted.',
   '- Execution Manager must return Planning Feedback Packet items when completion report, aggregate report, or promoted open items require planning-layer follow-up.',
   '',
   '## Context Compression Recovery',
@@ -2811,6 +2821,9 @@ const addReview = async (args) => {
   }
   if (!['light', 'full'].includes(args.eventType)) {
     throw new Error('Review type must be light or full');
+  }
+  if (fullReviewModeValues.includes(args.reviewMode) && args.eventType !== 'full') {
+    throw new Error(`Review mode ${args.reviewMode} requires --type full`);
   }
   if (!args.eventSummary || !args.reviewResult) {
     throw new Error('Usage: cc-iasd review add <scope-id> --summary <text> --result <text>');
