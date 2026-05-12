@@ -271,6 +271,7 @@ completion report に含めるもの:
 - 残リスク
 - 未完了事項
 - 人間確認点
+- Planning Feedback Summary
 ```
 
 campaign を使う場合、各 run の completion report に加えて、campaign 全体の aggregate report を作る。
@@ -282,7 +283,10 @@ campaign aggregate report:
 - 停止または escalation した理由
 - campaign 中に発生した user decision candidates
 - 次に人間が確認すべき事項
+- Planning Feedback Rollup
 ```
+
+Planning Feedback Summary と Planning Feedback Rollup は、Execution Manager が planning entry point へ返す handoff の要約である。これらは feature、roadmap、ideal、spec の正本更新を代替しない。Planning Lead は別 entry point として再開し、Planning Feedback Packet を narrow context として分類する。
 
 ---
 

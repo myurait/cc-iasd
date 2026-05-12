@@ -547,10 +547,13 @@ authored content:
 - Background
 - Options
 - Recommendation
+- Planning Feedback Routing
 - Notes
 ```
 
 AI agent は authored content を執筆してよい。ただし、open item の作成、status 変更、resolution 変更、target 変更は cc-iasd command が行う。
+
+`promoted` は feature backlog だけを意味しない。Planning Feedback Routing の `Feedback Type` により、roadmap-update、feature-backlog、spec-refinement、ideal-gap、human-decision、debt、no-planning-action のいずれへ戻すかを指定する。
 
 ### 7.2.2 handoff.md
 
@@ -716,7 +719,33 @@ reports は、人間に返す構造化報告である。completion report、esca
 
 report は正本の複製ではなく、product / scope / execution / evidence への参照と、人間判断に必要な要約を持つ。
 
-report も hybrid artifact として扱う。Source Artifact、Source Campaign、Source Run、review refs、related report refs は command が作成する。AI agent は Scope Summary、Completion Assessment、Human Confirmation Points などの本文 section を執筆する。
+report も hybrid artifact として扱う。Source Artifact、Source Campaign、Source Run、review refs、related report refs は command が作成する。AI agent は Scope Summary、Completion Assessment、Planning Feedback Summary、Human Confirmation Points などの本文 section を執筆する。
+
+Completion Report は planning artifact を直接更新しない。Execution Manager は Completion Report と同時に Planning Feedback Packet を返せる。Planning Feedback Packet は、Execution Manager から planning entry point へ渡す runtime handoff であり、標準では正本 artifact として保存しない。
+
+Planning Feedback Packet の分類は次である。
+
+```text
+feedback type:
+- roadmap-update
+- feature-backlog
+- spec-refinement
+- ideal-gap
+- human-decision
+- debt
+- no-planning-action
+```
+
+Planning Feedback Packet が必要になる例は次である。
+
+```text
+examples:
+- completed run により roadmap status を更新すべき
+- open item が feature backlog または debt として昇格すべき
+- implementation 中に spec refinement が必要な gap が見つかった
+- ideal が薄く、UX 判断が実装中に詰まった
+- human decision が必要な cost / security / UX 判断が残った
+```
 
 report lifecycle は次である。
 
@@ -754,7 +783,7 @@ evidence artifact は、必要に応じて次の metadata を持つ。
 - Related Spec: <spec-id>
 ```
 
-Escalation report は停止理由、対象 scope refs、選択肢、推奨案、判断後の再開条件を必ず持つ。Completion report は実装内容、検証結果、review 結果、軽微判断、残リスク、関連証跡を必ず持つ。
+Escalation report は停止理由、対象 scope refs、選択肢、推奨案、判断後の再開条件を必ず持つ。Completion report は実装内容、検証結果、review 結果、軽微判断、残リスク、関連証跡、Planning Feedback Summary を必ず持つ。
 
 ---
 
@@ -927,7 +956,19 @@ ops/evidence/reports/
 
 ## 9. 人間が確認すべき点
 
-## 10. 関連証跡
+## 10. Planning Feedback Summary
+
+- Planning Feedback Packet Required:
+- Feedback Items:
+  - Type:
+  - Target Candidate:
+  - Summary:
+  - Evidence Refs:
+  - Human Decision Required:
+  - Recommended Planning Role:
+- Recommended Planning Entry Point:
+
+## 11. 関連証跡
 ```
 
 ---

@@ -398,7 +398,7 @@ knowledge.md:
 
 backlog は feature scope の planning context である。open item は run-local runtime context である。run 終了時、open item は `resolved / escalated / promoted / deferred` のいずれかへ分類する。`promoted` は feature backlog への昇格を意味する。
 
-open item は hybrid artifact である。ID、kind、status、source run、target、resolution などの metadata は cc-iasd command が管理する。背景、選択肢、推奨案、補足説明は AI agent が執筆できる。
+open item は hybrid artifact である。ID、kind、status、source run、target、resolution などの metadata は cc-iasd command が管理する。背景、選択肢、推奨案、Planning Feedback Routing、補足説明は AI agent が執筆できる。metadata だけで planning-layer feedback を完了扱いにしてはならない。
 
 ### 7.3 ops/evidence/
 

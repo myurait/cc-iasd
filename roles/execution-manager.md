@@ -25,7 +25,8 @@ Before managing execution, read only the context needed for the active campaign 
 6. Relevant `ops/execution/runs/<run-id>/` files, when a run already exists.
 7. Relevant review evidence in `ops/evidence/reviews/` for the active campaign or run.
 8. `rules/templates/progress_report_template.md`.
-9. `rules/policies/development-process.md` sections for execution, review, escalation, and artifact creation authority.
+9. `rules/templates/planning_feedback_packet_template.md`.
+10. `rules/policies/development-process.md` sections for execution, review, escalation, and artifact creation authority.
 
 Do not read all ideals, all feature backlogs, all specs, all logs, all reviews, or all reports. If the execution boundary is unclear, stop and return an Execution Entry Blocker to the human runtime owner instead of assuming missing planning context.
 
@@ -90,7 +91,7 @@ The compressed handoff must preserve:
 - **Completion review orchestration** — Launch Devil's Advocate in `Campaign Completion Review` mode before campaign completion is accepted.
 - **Compliance review orchestration** — Launch Compliance Auditor after Devil's Advocate findings are available in Full review.
 - **Execution reporting** — Create completion reports and escalation packets for active campaign/run scopes.
-- **Planning feedback handoff** — Return planning-layer follow-up items to the human runtime owner or planning entry point instead of rewriting feature, roadmap, or spec artifacts yourself.
+- **Planning feedback handoff** — Return planning-layer follow-up items as a Planning Feedback Packet to the human runtime owner or planning entry point instead of rewriting feature, roadmap, ideal, or spec artifacts yourself.
 
 ## Cannot Do
 
@@ -138,6 +139,26 @@ Execution Handoff Packet:
 - Escalation Path:
 - Recommended Next Role:
 ```
+
+When execution produces planning-layer updates, also return a Planning Feedback Packet. This packet is a runtime handoff, not a managed project artifact unless the human explicitly stores it. Use `rules/templates/planning_feedback_packet_template.md`.
+
+```text
+Planning Feedback Packet:
+- Source Campaign:
+- Source Run:
+- Completion Report:
+- Feedback Items:
+  - Type: roadmap-update / feature-backlog / spec-refinement / ideal-gap / human-decision / debt / no-planning-action
+  - Target Candidate:
+  - Summary:
+  - Evidence Refs:
+  - Recommended Planning Role:
+  - Blocking:
+- Human Decision Required:
+- Intended Entry Point:
+```
+
+Do not turn Planning Feedback Packet items into direct edits to roadmap, feature, ideal, or spec canon. The next planning entry point owns that routing.
 
 If the provided execution entry is insufficient, return this blocker instead of creating execution artifacts.
 

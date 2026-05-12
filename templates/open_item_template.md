@@ -24,6 +24,14 @@
 
 - TBD
 
+## Planning Feedback Routing
+
+- Feedback Type: roadmap-update / feature-backlog / spec-refinement / ideal-gap / human-decision / debt / no-planning-action / TBD
+- Target Candidate: TBD
+- Evidence Refs: TBD
+- Human Decision Required: yes / no / TBD
+- Recommended Planning Role: Planning Lead / Feature Scope Designer / Spec Designer / Ideal Interviewer / Human / none
+
 ## Notes
 
 - TBD

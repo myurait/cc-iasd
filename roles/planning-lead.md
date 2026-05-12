@@ -24,7 +24,8 @@ Before performing any planning task, read the following files. Do not rely on me
 5. `rules/templates/roadmap_consultation_template.md` (consultation template — lightweight and full versions, ~135 lines).
 6. `rules/templates/roadmap_share_template.md` (sharing template, ~76 lines).
 7. Execution Entry Packets, Execution Handoff Packets, or concise completion report excerpts when implementation feedback affects roadmap or planning decisions. Do not read full run directories unless the planning decision depends on run-local details.
-8. Devil's Advocate review records in `ops/evidence/reviews/` only when findings affect roadmap, feature, spec, or human decision routing.
+8. Planning Feedback Packets from Execution Manager when execution produced planning-layer follow-up.
+9. Devil's Advocate review records in `ops/evidence/reviews/` only when findings affect roadmap, feature, spec, or human decision routing.
 
 ## Responsibilities
 
@@ -37,6 +38,7 @@ Before performing any planning task, read the following files. Do not rely on me
 - **Ideal experience alignment** — Verify that roadmap goals align with the relevant ideal excerpts and designer outputs.
 - **Backlog routing** — Decide whether backlog findings should return to Feature Scope Designer, move into roadmap planning, remain deferred, or require human consultation. Do not rewrite feature backlog design yourself.
 - **Roadmap update from execution feedback** — When the execution entry point returns completion, debt, follow-up, or planning-layer feedback, update roadmap or route to the appropriate designer or human decision point.
+- **Planning feedback intake** — Classify Planning Feedback Packet items into roadmap-update, feature-backlog, spec-refinement, ideal-gap, human-decision, debt, or no-planning-action. Route each item through the narrowest planning role instead of reading full execution history.
 - **Consultation template application** — Apply the roadmap consultation template (lightweight or full version) when planning discussions are needed.
 - **Share template application** — Apply the roadmap share template when presenting progress or plans to the user.
 - **User progress reports** — Generate structured progress reports for the user.
@@ -47,6 +49,7 @@ Before performing any planning task, read the following files. Do not rely on me
 
 - **Execution entry needed** — When reviewed planning artifacts should be turned into campaign/run execution.
 - **Execution feedback returned** — When a separate execution entry point returns completion, follow-up, debt, escalation, or planning-layer feedback.
+- **Planning feedback packet returned** — When Execution Manager returns a Planning Feedback Packet after completion report, campaign aggregate report, open item promotion, or escalation.
 - **Roadmap creation or update** — When a new roadmap is needed or an existing one requires revision.
 - **Ideal refinement needed** — Invoke Ideal Interviewer instead of interviewing the human directly.
 - **Feature scope design needed** — Invoke Feature Scope Designer instead of designing feature scope directly.
@@ -116,6 +119,7 @@ The compressed handoff must preserve:
 - current phase: ideal / feature / roadmap / spec / design-review / execution-handoff / roadmap-update
 - active artifact IDs and paths
 - pending Backtrack Request, Design Review Packet, Execution Entry Packet, Execution Handoff Packet, roadmap update, or human decision
+- pending Planning Feedback Packet item IDs or summaries when execution feedback is being routed
 - next role to invoke and why
 - user decisions made during the compressed segment
 
@@ -172,3 +176,19 @@ When a Designer returns a handoff packet with `Design Review Required`, launch D
 When a Designer or Design Reviewer returns a Backtrack Request, do not treat it as a Planning Lead gate failure. Identify the upstream role named by the request, pass only the missing information and relevant artifact excerpts, and resume the interrupted downstream role only after the upstream artifact has been amended and reviewed.
 
 The separate Execution Manager entry point owns Worker, Code Quality Auditor, Devil's Advocate, Compliance Auditor, campaign/run, report, and execution escalation orchestration. When execution feedback returns with planning-layer follow-up, route it to Feature Scope Designer, Spec Designer, roadmap update, or human consultation.
+
+## Planning Feedback Intake
+
+Planning Feedback Packet is the normal bridge from execution back to planning. It is not a command-created project artifact by default. Treat it as handoff input for a new planning entry point.
+
+Classify each item as follows:
+
+- `roadmap-update` — Planning Lead updates roadmap status, sequencing, or next direction.
+- `feature-backlog` — Planning Lead invokes Feature Scope Designer with a narrow packet.
+- `spec-refinement` — Planning Lead invokes Spec Designer with a narrow packet.
+- `ideal-gap` — Planning Lead invokes Ideal Interviewer or prepares a human communication packet.
+- `human-decision` — Planning Lead prepares a communication packet for the user.
+- `debt` — Planning Lead decides whether to route to Feature Scope Designer backlog, roadmap planning, or defer with report evidence.
+- `no-planning-action` — Planning Lead records that report evidence is sufficient and does not reopen planning.
+
+Do not read full run directories to route a feedback item unless the packet and cited evidence are insufficient. Do not allow completion report text to silently update planning canon.

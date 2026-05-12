@@ -49,16 +49,6 @@ TODO:
 
 2. Planning Lead と Execution Manager を並立 entry point として分離した後、command visibility と runtime handoff が context pressure を増やしていないかを scenario test で検証する。
 
-3. campaign `aggregate-report.md` の更新 workflow を定義する。いつ、誰が、どの command または authored section として campaign aggregate を更新するかを決める。
+3. reference artifact の Canonical Successor 管理を強化する。reference が product / ops / rules に昇格した場合の追跡方法を定義する。
 
-4. roadmap / feature の planning context が薄いまま downstream へ進むことを防ぐ。roadmap の Campaigns / Runs、Feature Inputs、Deferred、feature の Scope、Roadmap Notes について、最低限の充足条件を定義する。
-
-5. open item の Background、Options、Recommendation、Notes を高密度 feedback として執筆・検査する workflow を定義する。metadata routing だけで完了扱いにならないようにする。
-
-6. open item kind の語彙を実運用に合わせて再検討する。`spec-gap` のような自然発生語彙を許可値へ追加するか、既存語彙への mapping rule を明確にする。
-
-7. completion report から campaign / roadmap / feature へ進捗や残課題を戻す workflow を定義する。report 作成で止めず、planning layer へ反映する接続を明確にする。
-
-8. reference artifact の Canonical Successor 管理を強化する。reference が product / ops / rules に昇格した場合の追跡方法を定義する。
-
-9. Artifact Quality Requirements / Backtrack Request を実際の scenario test で観察し、AI が不足を推測補完せず適切に Backtrack Request を返せるか検証する。
+4. Artifact Quality Requirements / Backtrack Request を実際の scenario test で観察し、AI が不足を推測補完せず適切に Backtrack Request を返せるか検証する。

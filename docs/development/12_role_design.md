@@ -643,6 +643,8 @@ execution entry:
 
 Planning Lead が行うのは、Execution Manager の起動ではなく、実行入口に渡せる context packet の準備である。Execution Manager が行うのは、Planning Lead の補助ではなく、実行入口としての campaign/run orchestration である。
 
+Planning Feedback Packet は execution entry から planning entry へ戻る標準 handoff である。Completion Report は evidence layer に残り、Planning Feedback Packet はそれを根拠に planning artifact へ戻すべき項目だけを分類する。
+
 ### 5.8 role は entry point の代替ではない
 
 各 specialist role は、entry point role の中継責任を置き換えない。

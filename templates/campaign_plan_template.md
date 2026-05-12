@@ -66,6 +66,15 @@
 - Completion report ready when: TBD
 - Implementation review ready when: TBD
 - Devil's Advocate Campaign Completion Review ready when: TBD
+- Planning feedback packet ready when: no planning-layer updates remain unclassified
+
+## Planning Feedback Policy
+
+- Roadmap updates return to Planning Lead.
+- Feature backlog or debt updates return to Feature Scope Designer through Planning Lead.
+- Spec refinements return to Spec Designer through Planning Lead.
+- Ideal gaps return to Ideal Interviewer or Human through Planning Lead.
+- No planning action is required only when remaining work is fully closed in report evidence.
 
 ## Current Decision State
 

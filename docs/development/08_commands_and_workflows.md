@@ -235,8 +235,9 @@ scope、campaign、run の完了報告を生成する。
 5. test / lint / build 結果を整理する
 6. 軽微判断を整理する
 7. 残リスクを整理する
-8. ops/evidence/reports/ に completion report を作成する
-9. ops/evidence/logs/ に report event を記録する
+8. Planning Feedback Summary の authored section を用意する
+9. ops/evidence/reports/ に completion report を作成する
+10. ops/evidence/logs/ に report event を記録する
 ```
 
 ### 6.3 出力
@@ -245,7 +246,9 @@ scope、campaign、run の完了報告を生成する。
 ops/evidence/reports/report_<timestamp>_<scope>.md
 ```
 
-report command は source artifact 全文を report に複製しない。source artifact、run state、review、既存 report への参照を作成し、AI agent が Completion Assessment などの authored content を執筆する。
+report command は source artifact 全文を report に複製しない。source artifact、run state、review、既存 report への参照を作成し、AI agent が Completion Assessment や Planning Feedback Summary などの authored content を執筆する。
+
+Planning Feedback Summary は、roadmap / feature / spec / ideal への直接更新ではない。Execution Manager が completion report と同時に返す Planning Feedback Packet の要約または下書きであり、Planning Lead が別 entry point として再開したときに分類して処理する。
 
 ---
 
@@ -336,6 +339,10 @@ ops/execution/runs/<run-id>/open-items.md
 ```
 
 open item の ID、kind、status、source run、target、resolution、created / updated timestamp は command が管理する。AI agent は command が作成した entry の Background、Options、Recommendation、Notes を執筆する。
+
+open item の Background、Options、Recommendation、Planning Feedback Routing、Notes は高密度 feedback の authored section として扱う。metadata だけで planning-layer follow-up を完了扱いにしてはならない。
+
+open item kind は、実行中に自然発生する planning gap を分類するため、`roadmap-gap`、`feature-gap`、`spec-gap` を許可する。解決時に planning artifact へ戻す必要がある場合は、resolution を `promoted` とし、Planning Feedback Routing に target candidate と evidence refs を記述する。
 
 ---
 
@@ -453,6 +460,8 @@ campaign は runtime output を直接内包しない。実行結果は `ops/evid
 Devil's Advocate Focus は、Devil's Advocate の監査範囲を制限しない。計画時点で特に警戒すべき項目を明示するための入力である。
 
 Devil's Advocate Design Launch Review は、campaign 作成後、最初の run を開始する前に記録される review evidence への参照である。campaign 完了時の Campaign Completion Review とは review mode を分ける。
+
+aggregate-report.md は campaign の複数 run を横断する authored summary である。Execution Manager は各 run の completion report、open items、review evidence、Planning Feedback Packet をもとに、Progression Summary、Open Item Rollup、Planning Feedback Rollup を更新する。aggregate-report.md は roadmap / feature / spec の正本更新を代替しない。
 
 ### 13.4 cc-iasd campaign mark-run
 
