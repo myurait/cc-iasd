@@ -220,7 +220,7 @@ event type は closed set とし、追加は cc-iasd 本体の version up での
 
 ## 5. ノードと状態機械
 
-カーネルのノードは 6 種、終端 packet は 2 種である。
+カーネルのノードは 6 種、終端 packet は 2 種である。各ノードの authored 媒体は Markdown ファイルであり、campaign の authored 媒体を charter と呼ぶ。
 
 ```text
 vision:    draft -> approved -> retired
@@ -766,6 +766,10 @@ open questions:
   専用 artifact の復活か charter 拡張か
 - project-context repo の auto-commit 粒度（遷移ごとか、まとめるか）
 - 旧 roles/ の prompt 資産（narrow context packet 設計等）を 3 cards へどこまで移植するか
+- gap の routed / deferred の成立条件（routed に decision を要するか、blocking gap を
+  routed にできるか）— Phase 1-B の 05 / 06 改稿時に確定する
+- journal event の refs と Markdown frontmatter の refs の対応形式 — Phase 1-B の
+  06 改稿時に確定する（設計判断が必要なら本文書へ追記して確定を取る）
 
 決定済み（2026-07-03）:
 - multi-repo: v0 必須。横断 run を許す（7.4 章）
