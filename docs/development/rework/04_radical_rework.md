@@ -813,4 +813,11 @@ open questions:
   3 ロールとも fresh-context 起動を前提とする。planner は narrow context packet、
   worker は handoff、reviewer は gate 入力を起動時に与えられ、過去 session の
   文脈を引き継がない。role card に履歴・手順を書かない規約の根拠である
+- campaign 内の spec 順序制約（2026-07-06 確定。1-E 机上検証で検出した設計の穴への
+  対応。Phase 1 末レビューで再確認）:
+  charter の Coverage は spec 単位の順序制約 after: [spec-ref] を宣言できる。
+  run open ガードは「対象 spec の after に列挙された spec の全 task が accepted
+  済みであること」を検査する。write glob が交差しない論理依存（例: API spec の後で
+  ないと意味をなさない migration spec）を決定論的に直列化するための宣言であり、
+  宣言がなければ順序制約は課されない
 ```

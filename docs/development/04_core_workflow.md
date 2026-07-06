@@ -1,90 +1,91 @@
-# 04. Core Workflow
+# 04. コアワークフロー
 
-作成日: 2026-05-04
-状態: 統合整理版 v0.3
+作成日: 2026-07-05  
+状態: kernel 正本 v1.0（Phase 1 レビュー待ち）
 
 ---
 
 ## 1. この文書の目的
 
-この文書は、cc-iasd の基本ワークフローと完了条件を定義する。
+この文書は、kernel の標準ワークフローを 1 機能を作り切る遷移列として通しで示す。各遷移の成立条件（ガード）は 05、コマンド定義は 08、packet と evidence の schema は 06 に置く。標準フローの図は `standard_flow_overview.mmd` に置く。
 
-ディレクトリ構造は `03_project_context_architecture.md`、artifact model は `06_artifact_and_evidence_model.md`、command 詳細は `08_commands_and_workflows.md` に置く。この文書は、それらを実際の開発進行としてどう接続するかだけを扱う。
+すべての前進はガードを通過した型付き遷移であり、ロールが状態を進めることはない。planner は執筆し、worker は実装し、reviewer は判断材料を返すだけである。
 
 ---
 
-## 2. 基本ワークフロー
+## 2. 標準フロー: 1 機能を作り切る
 
 ```text
-1. cc-iasd init
-2. user/ に product intent と constraints を記述する
-3. product/ideal/ に ideal 正本を作成または更新する
-4. ops/scopes/features/ で feature scope を整理する
-5. ops/scopes/roadmaps/ で roadmap を定義する
-6. product/specs/ で spec / plan / tasks を作る
-7. ops/execution/campaigns/ で campaign を定義する
-8. cc-iasd run start <id> で run を開始する
-9. Worker runtime が src/ を編集する
-10. Reviewer runtime または人間が ops/evidence/reviews/ に review を記録する
-11. 必要に応じて cc-iasd escalate <scope-ref>
-12. 人間判断後に再開する
-13. cc-iasd report <scope-ref>
-14. 必要な一時 context は cc-iasd view ... で生成する
-15. 完了した run / campaign / evidence / scope artifact を cc-iasd ops archive で archived/ へ退避する
-16. 正本でなくなった product artifact を cc-iasd product outdate で outdated/ へ退避する
+フェーズ 1: 計画と gate
+  new vision -> planner が執筆 -> decide（human 承認）-> vision approved
+  new spec   -> planner が執筆。未確定は gap 起票 + [UNRESOLVED: gNNN]
+             -> blocking gap があれば spec ready は拒否され、decide か編集 + 再 review で解消
+             -> review record（gate=spec）-> spec ready
+  new campaign -> planner が charter を執筆（Coverage / Depends On / Stop Conditions /
+                  Risk Tiers / Cross-Checks）
+             -> review record（gate=launch）-> campaign launch
+                （depends_on の全 campaign が closed であることをガードが検査）
+
+フェーズ 2: run サイクル（campaign 内で task が尽きるまで反復。並列可）
+  run open   -> handoff を CLI が機械合成。上流欠落なら欠落列挙 + 拒否（backtrack 誘導）
+             -> claim event / write glob 交差ガード / 停止条件ガードを通過して開始
+  実装        -> worker が handoff を入力に src/ のみを編集し、notes と gap 起票で報告
+  run return -> CLI が repo 別 git diff snapshot を実測記録
+  run verify -> CLI が Checks を子プロセス実行し、Surfaces と diff を照合。
+                verification evidence を生成（forbid 違反は機械 FAIL）
+  review record（gate=run）-> run accept
+                （verification pass / review 鮮度 / blocking gap 0 / reject 上限内）
+
+フェーズ 3: 締め
+  review record（gate=completion）-> report（completion）
+  -> human が report と review を読む -> campaign close
+     （全 run accepted / 全 task 消化 / gap 全処理 / cross-checks pass / completion review）
+```
+
+このフローの各所で、完了を偽装する経路は構造的に閉じている。worker には完了宣言コマンドがなく、verification は CLI 実行でのみ生成され、review record は content-hash の鮮度をカーネルが判定する。
+
+---
+
+## 3. 差し戻しと決裁の流れ
+
+run の終端は accept / block / escalate の 3 択であり、block が最も安価な合法出口である。
+
+```text
+block（上流不足）:
+  run block -> backtrack request 生成 -> blocked
+  -> 人間または planner が上流 artifact を編集（hash 更新）+ 該当 gate の再 review
+  -> run 再開
+
+escalate（人間判断要）:
+  run escalate -> escalation packet 生成 -> escalated
+  -> 人間が都合のよいタイミングで packet を読み decide（actor=human 刻印）
+  -> run 再開
+
+自動停止:
+  no-progress / budget 超過 / STOP ファイル / reject 上限到達は、
+  run open・verify のガードが機械判定して停止させる（詳細は 05）
 ```
 
 ---
 
-## 3. 成立条件
+## 4. adhoc からの導入フロー
+
+フル chain を初日から要求しない。adhoc run が導入の入口である。
 
 ```text
-成立条件:
-- project-context の構造が安定している
-- 成果物 project が src/ に分離されている
-- product 正本と ops transaction が分離されている
-- ideal / spec の正本が product/ にある
-- features / roadmap が scope artifact として整理されている
-- campaign が複数 run の進行制御として定義されている
-- run が task 実行選択と runtime context として定義されている
-- logs / reviews / reports が evidence layer にある
-- spec / plan / tasks の正本が二重化していない
-- Escalation Packet が人間判断に足る情報を持つ
-- Completion Report が作業結果と残リスクを示す
-- artifact 間参照から作業経緯を追える
+init -> run open --adhoc "<goal>" --check "<cmd>" -> session start
 ```
+
+adhoc run は spec を要求しないが、guard / journal / verify / 終端 3 択はすべて有効であり、3 不変条件は初日から守られる。規模が増えたら spec / campaign へ昇格する（doctor が促す）。探索作業には spike run を使う（コマンド列と導入手順の詳細は 08）。
 
 ---
 
-## 4. 人間判断に残す事項
-
-次の判断は、AI runtime が自動決定しない。
+## 5. 詳細仕様の参照先
 
 ```text
-人間判断:
-- ideal の目的変更
-- roadmap 変更
-- campaign の目的変更
-- spec の大幅変更
-- 技術スタック変更
-- 外部サービス導入
-- 費用が発生する判断
-- セキュリティ境界に関わる判断
-```
-
----
-
-## 5. 実装姿勢
-
-cc-iasd は、重い runtime 統合よりも、文書構造と運用規律を優先する。
-
-```text
-優先:
-- Markdown templates
-- deterministic directory structure
-- simple CLI
-- explicit root path
-- product / ops layer separation
-- archive / outdated rule
-- report generation
+- 02: 概念設計（ノード・journal・gap・終端 3 択の「なぜ」）
+- 05: 状態遷移表と全ガード / 停止条件 / gate review 既定 / 並列 run 排他規則
+- 06: handoff 合成規則 / verification 生成規則 / packet 必須欄
+- 08: コマンド定義 / 導入フローの実コマンド列
+- 12: ロールの責務境界
 ```

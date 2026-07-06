@@ -49,7 +49,10 @@ campaign launch     charter 構造化欄完備 / coverage の全 spec = ready /
 run open            campaign = active / 対象 task 未完 / handoff 機械合成成功
                     （合成失敗 = 欠落セクション列挙 + backtrack 誘導）/
                     stop-file 不在 / budget 残 / no-progress 上限未達 /
-                    write glob 交差ガード通過（7 章）
+                    write glob 交差ガード通過（7 章）/
+                    coverage 順序制約の充足（charter の Coverage が対象 spec に
+                    after: [spec-ref] を宣言する場合、列挙 spec の全 task が
+                    accepted 済みであること）
 run return          notes.md 存在 / base commit からの git diff snapshot 取得成功
 run verify          spec の Checks を CLI が子プロセス実行し exit code を期待値と照合 /
                     生出力を evidence へ捕捉 /

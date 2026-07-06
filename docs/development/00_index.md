@@ -30,7 +30,7 @@ cc-iasd
 
 ## 2. ドキュメント構成
 
-各文書の責務は kernel 正本化後の実態に一致させている。02 / 03 / 05 / 06 / 08 / 12（全面改稿群）と 00 / 01 / 07 / 09 / 10（部分改稿群）は kernel 正本化済みであり、04 と 13 のみ未改稿（後述の注記を参照）である。
+各文書の責務は kernel 正本化後の実態に一致させている。全 13 文書（00〜10、12、13）が kernel 正本化済みである。
 
 ```text
 00_index.md
@@ -48,7 +48,8 @@ cc-iasd
   write-path allowlist、out/ 非正本、multi-repo 構成
 
 04_core_workflow.md
-  基本ワークフロー。旧設計語彙のまま未改稿（後述の注記を参照。1-E 予定）
+  kernel の標準ワークフロー。1 機能を作り切る遷移列、差し戻しと決裁の流れ、
+  adhoc からの導入フロー
 
 05_autonomy_protocol.md
   自律プロトコル。状態機械と遷移ガード、停止条件、reject 階梯、risk tier、
@@ -78,7 +79,8 @@ cc-iasd
   fresh-context reviewer、role card 規約
 
 13_simulation_scenarios.md
-  机上検証シナリオ。旧設計語彙のまま未改稿（後述の注記を参照。1-E 予定）
+  机上検証シナリオ。PBI 並列完走 / backtrack / escalation / 中断再開 /
+  停止条件 / gap 終端の 6 シナリオと 1-E 検証結果
 
 rework/
   先行事例調査に基づく設計リワークの検討・作業記録。設計正本は 04_radical_rework.md、
@@ -86,7 +88,7 @@ rework/
   Phase 1 完了後は経緯記録に降格する（後述の 4 章を参照）
 ```
 
-未改稿文書の注記: 04_core_workflow.md と 13_simulation_scenarios.md は本 Phase（1-C）時点で未改稿であり、旧設計の語彙（旧ロール体系・feature / roadmap 等）を含む。両者は Phase 1 の 1-E ブロックで kernel 語彙により再構成・再作成する予定である。それまでは kernel 正本化済み文書（02 / 03 / 05 / 06 / 08 / 12）と矛盾する記述を含み得るため、正本としては扱わない。
+出荷資産（roles/ の 3 role cards、templates/ の 8 種、rules/ の廃止と処分表 rework/07）も kernel 前提へ再設計済みである。現行の bin / test は旧構造前提であり、P1 実装（rework/05 Phase 2）で全面書き直すまで動作保証しない。
 
 ---
 
