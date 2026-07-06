@@ -1,840 +1,469 @@
-# 08. Commands / Workflows
+# 08. コマンドとワークフロー
 
-作成日: 2026-05-04  
-状態: 統合整理版 v0.2
+作成日: 2026-07-05  
+状態: kernel 正本 v1.0（Phase 1 レビュー待ち）
 
 ---
 
 ## 1. この文書の目的
 
-この文書は、cc-iasd の主要 command と workflow を定義する。
+この文書は、cc-iasd kernel の CLI コマンド一覧と、それらを使った導入・実行のワークフローを定義する。各コマンドについて、目的・入力・出力・起こす状態遷移を簡潔に示す。
 
-command は完全な実行基盤ではない。Markdown scaffold、外部 framework 呼び出し、テンプレート生成、状態更新を行う薄い CLI として定義する。
+kernel の CLI は完全な実行基盤ではない。ライフサイクル状態は append-only journal が正本であり（詳細は 03 / 06）、コマンドは遷移ガードを通過した場合にのみ journal に event を追記する薄い層である。ガードの内部成立条件は 05 に置き、この文書は「どのコマンドがどの遷移を起こすか」までを扱う。
 
----
-
-## 2. 主要 command
+この文書が扱う範囲と扱わない範囲は次である。
 
 ```text
-cc-iasd init
-cc-iasd ideal add <id>
-cc-iasd campaign add <id>
-cc-iasd campaign mark-run <campaign-id> <run-id>
-cc-iasd run start <id>
-cc-iasd escalate <scope-ref>
-cc-iasd report <scope-ref>
-cc-iasd view evidence
-cc-iasd view current
-cc-iasd view scope <id>
-cc-iasd view run <id>
-cc-iasd log event
-cc-iasd review add
-cc-iasd open-item add <run-id>
-cc-iasd open-item resolve <run-id> <item-id>
-cc-iasd planning-feedback add <id>
-cc-iasd planning-feedback resolve <id>
-cc-iasd planning-feedback view <id>
-cc-iasd feature add <id>
-cc-iasd roadmap add <id>
-cc-iasd spec add <id>
-cc-iasd reference add historical|external|note <id>
-cc-iasd profile update
-cc-iasd product outdate ideal|spec <id>
-cc-iasd ops archive feature|roadmap|campaign|run|log|review|report <id>
-cc-iasd help roles
-cc-iasd help role <role-id>
-cc-iasd doctor
-```
+扱う:
+- コマンド一覧（各コマンドの目的・入力・出力・起こす遷移）
+- 対象者 3 分類と human-facing 上限
+- guard 拒否メッセージ仕様（欠けた型付き入力 + 次の一手を人間可読 + --json で返す）
+- 導入フロー（5 分導入 / 1 機能を作り切るフロー）
+- adhoc run / spike run の位置づけ
 
-横断 index は正本化しない。AI や人間に渡す要約が必要な場合は `cc-iasd view ...` が標準出力に一時 view を生成する。
-
-role-specific command visibility が必要な場合、AI role には `cc-iasd --help` ではなく `cc-iasd help role <role-id>` の出力を渡す。これにより、active role に不要な command surface を runtime context へ混入させない。
-
-### 2.1 artifact 作成権限
-
-project-context 運用中、AI agent は `src/` 配下では通常の実装成果として新規ファイルを作成してよい。
-
-一方、`product/`、`ops/`、`rules/`、`runtime/`、`user/`、`reference/` 配下の cc-iasd-managed artifact について、AI agent は新規ファイル作成、移動、rename、archive、outdate、削除、lifecycle metadata 更新を直接行わない。
-
-新規 artifact は cc-iasd command または明示的人間操作で作成する。AI agent は、command が作成した artifact のうち、本文、背景、選択肢、判断理由、補足、実装結果などの authored content section を執筆する。
-
-command が管理する領域は次である。
-
-```text
-tool-owned:
-- artifact id
-- created / updated timestamp
-- lifecycle status
-- source run / source campaign
-- target reference
-- resolution
-- archive / outdate placement
-```
-
-AI agent が執筆できる領域は次である。
-
-```text
-authored:
-- summary details
-- background
-- options
-- recommendation
-- implementation notes
-- risk notes
-- report narrative
+扱わない:
+- 遷移ガードの内部成立条件（-> 05）
+- event schema のフィールド定義（-> 06）
+- ロールの責務・authority（-> 12）
 ```
 
 ---
 
-## 3. cc-iasd init
+## 2. コマンド一覧
 
-### 3.1 目的
-
-project-context を初期化する。
-
-### 3.2 入力
+kernel の CLI は約 17 のコマンドと、引数なし起動（human inbox）から成る。旧設計の約 25〜30 コマンドを縮約したものである。
 
 ```text
-cc-iasd init <project-context-path>
+cc-iasd                                        # 引数なし = human inbox。要対応事項（open decisions /
+                                               # escalations / stale runs / close 待ち campaign / 未読 report）を
+                                               # 一覧し、その場で対話的に decide / close できる人間の定常入口
+
+cc-iasd init                                   # scaffold + journal + git init
+cc-iasd doctor                                 # 構造 / 参照 / src 汚染 / guard 再計算 / 証拠十分性の検査
+cc-iasd status [--plan | <ref>]                # 導出 view（--plan は route=vision の gap と
+                                               # campaign 順序から中期計画ビューを射影）
+
+cc-iasd new vision|spec|campaign <slug>        # scaffold 作成（AI は authored 節を執筆）
+cc-iasd spec ready <id>
+cc-iasd campaign launch <id> / close <id>
+
+cc-iasd run open <campaign-id> --tasks <T..> | --adhoc "<goal>" --check "<cmd>" [--spike]
+cc-iasd run handoff <run-id>                   # stdout 出力（Tier 0 正本経路）
+cc-iasd session start <run-id> [--runtime claude-code|codex|none] / resume <run-id>
+cc-iasd run return <run-id>                    # diff snapshot の実測記録
+cc-iasd run verify <run-id>                    # Checks の CLI 実行 + surface 照合
+cc-iasd run accept <run-id> / block <run-id> --missing <ref> / escalate <run-id>
+
+cc-iasd review record <ref> --gate spec|launch|run|completion
+cc-iasd gap add <ref> / close <id> / route <id> --to <ref>
+cc-iasd decide <decision-id> [--adopt <file>]
+cc-iasd report <ref>                           # 終端 packet / progress の skeleton 生成
+cc-iasd retire <ref>                           # 退避（ファイル移動なし。journal 状態のみ）
+cc-iasd role show planner|worker|reviewer
 ```
 
-### 3.3 処理
-
-```text
-処理:
-1. project-context directory を作成する
-2. runtime/ を作成する
-3. lock.json を作成する
-4. rules/ を作成する
-5. user/ を作成する
-6. product/ を作成する
-7. product/ideal/ を作成する
-8. product/specs/ を作成する
-9. ops/scopes/ を作成する
-10. ops/execution/ を作成する
-11. ops/execution/campaigns/ を作成する
-12. ops/execution/runs/ を作成する
-13. ops/evidence/ を作成する
-14. reference/ を作成する
-15. src/ を作成する
-16. 最小 template を配置する
-17. runtime profile / plugin / adapter metadata を記録する
-18. framework version を記録する
-```
-
-### 3.4 出力
-
-```text
-project-context/
-  runtime/
-  rules/
-  user/
-  product/
-  ops/
-  reference/
-  src/
-```
+各コマンドの目的・入力・出力・起こす遷移は 3 章以降で節ごとに定義する。
 
 ---
 
-## 4. cc-iasd run start <id>
+## 3. コマンド定義
 
-### 4.1 目的
+各コマンドについて、目的・入力・出力・起こす遷移を示す。ガードの内部条件は列挙せず、遷移が起きる／拒否される事実までを記す（成立条件は 05）。
 
-対象 task selection の run を開始し、実行に必要な runtime context と handoff packet を作る。
-
-### 4.2 初期実装での扱い
-
-初期実装では、完全自動実行を前提にしない。
+### 3.1 cc-iasd（inbox）
 
 ```text
-run:
-- 対象 spec / tasks を解決する
-- linked roadmap / feature / campaign を確認する
-- 自走条件を確認する
-- 実行 runtime に渡す handoff.md を生成する。handoff は selected tasks、expected local outcome、likely touched surfaces、related impact surfaces、non-regression focus、escalation triggers、local verification、open item routing を持つ
-- state.md を初期化する
-- open-items.md を用意する
-- knowledge.md を用意する
-- campaign source から開始した場合、campaign queue に run を登録する
-- ops/evidence/logs/ に run event を記録する
+目的: 人間の定常入口。要対応事項を一覧し、その場で decide / campaign close を対話実行する
+入力: 引数なし
+出力: open decisions / escalations / stale runs / close 待ち campaign / 未読 report の一覧
+遷移: それ自体は起こさない。選択した項目に対して decide / campaign close を対話的に呼び出す
 ```
 
-初期実装では、`ops/execution/runs/run_<timestamp>_<scope>/plan.md`、`handoff.md`、`state.md`、`open-items.md`、`knowledge.md` を作る。既存 run record は上書きしない。
-
-### 4.3 処理
+### 3.2 cc-iasd init
 
 ```text
-処理:
-1. run source id を解決
-2. linked spec を確認
-3. linked tasks を確認
-4. linked scope を確認
-5. autonomy protocol を確認
-6. blocker / open item の有無を確認
-7. 実行 runtime 用の handoff.md を作成
-8. state.md を初期化
-9. open-items.md を初期化
-10. campaign queue に running run として登録
-11. ops/evidence/logs/ に run event を記録
+目的: project-context を初期化する
+入力: プロジェクト名 / --repo <src の git URL>（任意）
+出力: project-context ディレクトリ（scaffold + journal + git init 済み）
+遷移: journal を新規作成する。ノードの状態遷移は起こさない
 ```
 
-### 4.4 停止条件
+ディレクトリツリーの詳細は 03 を参照。
 
-次の場合は run を開始せず escalation を促す。
+### 3.3 cc-iasd doctor
 
 ```text
-停止:
-- 対象 spec がない
-- tasks がない
-- run scope が曖昧
-- expected local outcome が定義できない
-- related impact surfaces または non-regression focus が空のままになる
-- user decision が未解決
-- src/ root が解決不能
-- roadmap / campaign 目的変更が必要
+目的: project-context の整合性を検査する
+入力: なし
+出力: 検査結果（構造 / 参照整合 / src 汚染 / guard 再計算一致 / 証拠十分性）
+遷移: 起こさない（読み取り検査のみ）
 ```
 
----
+doctor は adhoc run の比率を表示して spec / campaign への昇格を促す（8.1 節）。検査観点の詳細は 06 を参照。
 
-## 5. cc-iasd escalate <scope-ref>
-
-### 5.1 目的
-
-人間判断が必要な停止状態を Escalation Packet に整形する。
-
-### 5.2 処理
+### 3.4 cc-iasd status
 
 ```text
-処理:
-1. run state を読む
-2. linked product / scope artifacts を読む
-3. related logs / reviews を読む
-4. 停止理由を整理する
-5. 選択肢を整理する
-6. 推奨案を出す
-7. ops/evidence/reports/ に escalation report を作成する
-8. ops/evidence/logs/ に escalation event を記録する
+目的: journal から導出したライフサイクル view を出力する
+入力: なし | --plan | <ref>
+出力: 現在状態の導出 view。--plan は route=vision の gap と campaign 順序から中期計画ビューを射影する
+遷移: 起こさない（導出出力のみ）
 ```
 
-### 5.3 出力
+status は各ノードの可能遷移を提示し、agent への in-band 知識供給の経路になる（9 章）。
+
+### 3.5 cc-iasd new vision|spec|campaign
 
 ```text
-ops/evidence/reports/report_<timestamp>_escalation.md
+目的: vision / spec / campaign の scaffold を作成する
+入力: 種別 + <slug>
+出力: 対応する authored ファイル（AI が authored 節を執筆する）
+遷移: created event を記録する。vision は draft、spec は draft、campaign は draft で始まる
 ```
 
----
-
-## 6. cc-iasd report <scope-ref>
-
-### 6.1 目的
-
-scope、campaign、run の完了報告を生成する。
-
-### 6.2 処理
+### 3.6 cc-iasd spec ready
 
 ```text
-処理:
-1. run state を読む
-2. linked product / scope artifacts を読む
-3. related logs を確認する
-4. related reviews を確認する
-5. test / lint / build 結果を整理する
-6. 軽微判断を整理する
-7. 残リスクを整理する
-8. Planning Feedback Summary の authored section を用意する
-9. ops/evidence/reports/ に completion report を作成する
-10. ops/evidence/logs/ に report event を記録する
+目的: spec を draft から ready へ遷移させる
+入力: <spec-id>
+出力: 成功時は spec ready への遷移、拒否時は guard 拒否メッセージ
+遷移: spec draft -> ready（ガード通過時）
 ```
 
-### 6.3 出力
+### 3.7 cc-iasd campaign launch / close
 
 ```text
-ops/evidence/reports/report_<timestamp>_<scope>.md
+launch:
+  目的: campaign を実行開始可能にする
+  入力: <campaign-id>
+  出力: 成功時は active への遷移、拒否時は guard 拒否メッセージ
+  遷移: campaign draft -> active（ガード通過時）
+
+close:
+  目的: campaign を締める（人間専権。inbox から対話実行できる）
+  入力: <campaign-id>
+  出力: 成功時は closed への遷移、拒否時は guard 拒否メッセージ
+  遷移: campaign active -> closed（ガード通過時）
 ```
 
-report command は source artifact 全文を report に複製しない。source artifact、run state、review、既存 report への参照を作成し、AI agent が Completion Assessment や Planning Feedback Summary などの authored content を執筆する。
-
-Planning Feedback Summary は、roadmap / feature / spec / ideal への直接更新ではない。Execution Manager が completion report と同時に作成する Planning Feedback Packet の要約または下書きであり、Planning Lead が別 entry point として再開したときに分類して処理する。
-
-Planning Feedback Summary と Planning Feedback Packet の各 item は、Type と Recommended Planning Role をそれぞれ 1 つだけ持つ。1 つの観測が複数の planning layer または role にまたがる場合は、単一 item に併記せず、item を分割して記録する。
-
----
-
-## 7. cc-iasd log event
-
-### 7.1 目的
-
-project-context 全体の時系列作業台帳へ、明示的な log event を追加する。
-
-### 7.2 処理
+### 3.8 cc-iasd run open
 
 ```text
-処理:
-1. event type を受け取る
-2. summary を受け取る
-3. 任意で related product / scope / execution / evidence refs を受け取る
-4. ops/evidence/logs/log_<timestamp>_<type>.md を作成する
+目的: run を開始し、handoff を機械合成する
+入力: <campaign-id> --tasks <T..>（campaign 由来）
+      | --adhoc "<goal>" --check "<cmd>"（spec なし。8.1 節）
+      | 上記に [--spike] を付す（探索作業。8.2 節）
+出力: 成功時は run 生成 + handoff 合成、上流欠落時は欠落セクションを列挙して拒否
+遷移: run created -> handed-off（handoff 機械合成に成功した場合）。
+      合成失敗は run を開始せず backtrack request の生成を誘導する
 ```
 
-### 7.3 出力
+handoff の合成元と合成失敗時の扱いは 06、上流欠落の判定は 05 を参照。
+
+### 3.9 cc-iasd run handoff
 
 ```text
-ops/evidence/logs/log_<timestamp>_<type>.md
+目的: 合成済み handoff を stdout に出力する（Tier 0 の正本配布経路）
+入力: <run-id>
+出力: handoff 本文（stdout）
+遷移: 起こさない（出力のみ）
 ```
 
-初期実装では、新規 log file を作る。既存 log file への追記は行わない。最新状態は `cc-iasd view current` で確認する。
-
----
-
-## 8. cc-iasd review add
-
-### 8.1 目的
-
-scope 横断の review record を `ops/evidence/reviews/` に作成する。
-
-### 8.2 処理
+### 3.10 cc-iasd session start / resume
 
 ```text
-処理:
-1. review scope type を受け取る
-2. review scope refs を受け取る
-3. review type を受け取る
-4. 任意で review mode を受け取る
-5. summary と result を受け取る
-6. ops/evidence/reviews/ に review file を作成する
-7. ops/evidence/logs/ に review event を記録する
+start:
+  目的: run 用の bundle を compile して実行 runtime を起動する
+  入力: <run-id> [--runtime claude-code|codex|none]
+  出力: 起動された runtime session（--runtime none なら手順のみ出力）
+  遷移: session.started event を記録する。base commit を journal に記録する
+
+resume:
+  目的: 中断した session を再開する
+  入力: <run-id>
+  出力: resume brief を再コンパイルして再起動した session
+  遷移: session.resumed event を記録する
 ```
 
-### 8.3 出力
+session lifecycle と bundle 生成の詳細は 03 / 05 を参照。
+
+### 3.11 cc-iasd run return
 
 ```text
-ops/evidence/reviews/review_<timestamp>_<scope>.md
+目的: worker の実装完了後、変更を実測記録する
+入力: <run-id>
+出力: base commit からの git diff snapshot
+遷移: run handed-off -> returned（ガード通過時）
 ```
 
-review は特定 scope 配下に置かない。run、campaign、spec、roadmap などは review ID または path を参照する。
+### 3.12 cc-iasd run verify
 
-Devil's Advocate を campaign 走行前または完了前に起動する場合、review mode として `design-launch` または `campaign-completion` を記録する。この 2 つの review mode は campaign の走行可否または完了可否に関わるため、`--type full` でなければならない。
+```text
+目的: spec の Checks を CLI 自身が実行し、Surfaces と照合する
+入力: <run-id>
+出力: verification（verdict JSON + 生出力 + diff）。off-surface 変更は report に自動列挙
+遷移: run returned -> verified（Checks 実行と surface 照合の成立時）
+```
 
----
+Checks 実行と surface 照合の生成規則は 06 を参照。
 
-## 9. cc-iasd open-item add / resolve
+### 3.13 cc-iasd run accept / block / escalate
 
-### 9.1 目的
+run の終端は次の 3 択のみである。
 
-run-local open item の作成と解決分類を command-owned operation として扱う。
+```text
+accept:
+  目的: run を受け入れて完了させる（最も高価）
+  入力: <run-id>
+  出力: 成功時は accepted への遷移、拒否時は guard 拒否メッセージ
+  遷移: run verified -> accepted（verification pass + review record + blocking gap 0 のとき）
 
-### 9.2 処理
+block:
+  目的: 上流不足を理由に差し戻す（最も安価）
+  入力: <run-id> --missing <ref>
+  出力: backtrack request
+  遷移: run -> blocked（--missing 指定で成立）
+
+escalate:
+  目的: 人間判断が必要な事項を戻す
+  入力: <run-id>
+  出力: escalation packet
+  遷移: run -> escalated（decision 待ちになる）
+```
+
+block が最も安価な合法出口になるコスト勾配の思想は 02、reject 階梯・停止条件は 05 を参照。escalation packet / backtrack request の必須欄は 06 を参照。
+
+### 3.14 cc-iasd review record
+
+```text
+目的: gate 種別ごとの review record を記録する
+入力: <ref> --gate spec|launch|run|completion
+出力: review record（対象 content-hash を刻印）
+遷移: review.recorded event を記録する。gate 判定は spec ready / campaign launch /
+      run accept / campaign close のガード入力になる
+```
+
+reviewer の起動と責務は 12、review record の鮮度判定は 05 / 06 を参照。
+
+### 3.15 cc-iasd gap add / close / route
 
 ```text
 add:
-1. run id を受け取る
-2. kind、summary、任意の target ref を受け取る
-3. ops/execution/runs/<run-id>/open-items.md に item entry を追加する
-4. ops/evidence/logs/ に open-item-add event を記録する
+  目的: 未解決事項を gap 台帳に登録する
+  入力: <ref>（+ kind / blocking などの属性）
+  出力: gap 台帳エントリ
+  遷移: gap.opened event を記録する（open 状態）
 
-resolve:
-1. run id と open item id を受け取る
-2. resolution を resolved / escalated / promoted / deferred から受け取る
-3. 任意の target ref と summary を受け取る
-4. open item metadata を更新する
-5. ops/evidence/logs/ に open-item-resolve event を記録する
+close:
+  目的: gap を解消する
+  入力: <gap-id>
+  出力: 成功時は closed への遷移、拒否時は guard 拒否メッセージ
+  遷移: gap open -> closed（decision へのリンク、または対象編集 + 再 review のとき）
+
+route:
+  目的: gap を計画層へ戻す
+  入力: <gap-id> --to <ref>
+  出力: 成功時は routed への遷移
+  遷移: gap open -> routed（blocking=false かつ route が none でないとき。decision 不要）
 ```
 
-### 9.3 出力
+gap の各終端条件（closed / routed / deferred）の詳細は 05 を参照。
+
+### 3.16 cc-iasd decide
 
 ```text
-ops/execution/runs/<run-id>/open-items.md
+目的: 人間決裁を記録する（人間専権。inbox から対話実行できる）
+入力: <decision-id> [--adopt <file>]
+出力: decision 記録（journal に actor=human を刻印）
+遷移: decision open -> decided。該当する escalation / blocking gap の再開条件を満たす
 ```
 
-open item の ID、kind、status、source run、target、resolution、created / updated timestamp は command が管理する。AI agent は command が作成した entry の Background、Options、Recommendation、Notes を執筆する。
+decide の機構（TTY 既定 / --adopt による非同期取込 / threat model）は 05 を参照。
 
-open item の Background、Options、Recommendation、Planning Feedback Routing、Notes は高密度 feedback の authored section として扱う。metadata だけで planning-layer follow-up を完了扱いにしてはならない。
+### 3.17 cc-iasd report
 
-open item kind は、実行中に自然発生する planning gap を分類するため、`roadmap-gap`、`feature-gap`、`spec-gap` を許可する。解決時に planning artifact へ戻す必要がある場合は、resolution を `promoted` とし、Planning Feedback Routing に target candidate と evidence refs を記述する。
+```text
+目的: 終端 packet または progress の skeleton を生成する
+入力: <ref>
+出力: report skeleton（AI が authored 節を執筆する）
+遷移: それ自体は状態遷移を起こさない（run / campaign 終端の記録は各終端コマンドが行う）
+```
 
-`open-items.md` の更新は file lock を使って直列化する。同一 run に対して複数の `open-item add` または `open-item resolve` が近接して実行された場合でも、各 command は lock 取得後の最新 content を読み直して更新する。
+report の必須欄は 06 を参照。
+
+### 3.18 cc-iasd retire
+
+```text
+目的: 使わなくなった artifact を退避する
+入力: <ref>
+出力: retired 状態への遷移（ファイルは移動しない）
+遷移: 対象ノードを retired にする。旧設計の archived/ outdated/ へのファイル移動は行わない
+```
+
+### 3.19 cc-iasd role show
+
+```text
+目的: role card を stdout に出力する
+入力: planner|worker|reviewer
+出力: 該当 role card（stdout）
+遷移: 起こさない（出力のみ）
+```
+
+role card の内容と規約は 12 を参照。
 
 ---
 
-## 10. cc-iasd planning-feedback add / resolve / view
+## 4. 対象者 3 分類と human-facing 上限
 
-### 10.1 目的
-
-execution から planning へ戻す正式な handoff artifact を `ops/planning-feedback/` に作成し、処理後に archive する。
-
-### 10.2 処理
+コマンドは対象者で 3 分類する。human-facing の上限を設計原則として固定する。
 
 ```text
-add:
-1. planning feedback id を pfNNN-kebab-case として受け取る
-2. summary、source report、任意の source run / source campaign を受け取る
-3. ops/planning-feedback/<id>.md を作成する
-4. ops/evidence/logs/ に planning-feedback-add event を記録する
+human-facing（この 3 つが上限。超える human 必須操作の追加は設計バグとして扱う）:
+  cc-iasd（inbox。decide と campaign close はここから対話実行できる）/
+  decide / STOP ファイル（コマンドですらない）
+  + Markdown 編集と git（独自ナレッジではない既存スキル）
 
-resolve:
-1. planning feedback id を受け取る
-2. resolution を absorbed / rejected / deferred から受け取る
-3. summary を必須で受け取る
-4. absorbed の場合は target ref を必須で受け取る
-5. status と resolution metadata を更新する
-6. ops/planning-feedback/archived/ に移動する
-7. ops/evidence/logs/ に planning-feedback-resolve event を記録する
+agent-facing（人間は学習不要。知識は事前学習ではなく in-band で供給される —
+  handoff への焼き込み、guard 拒否メッセージの次の一手提示、status の可能遷移提示）:
+  new / spec ready / campaign launch / run open / run handoff / session start / resume /
+  run return / run verify / run accept / block / escalate / review record /
+  gap add / close / route / report / retire / role show
 
-view:
-1. planning feedback id を受け取る
-2. active または archived の packet 本文を標準出力に表示する
+setup（初回と点検のみ）:
+  init / doctor
 ```
 
-`routed` は resolution として扱わない。role または human へ渡しただけでは planning feedback が閉じたとは限らない。閉じる条件は、planning artifact へ吸収された `absorbed`、対応しないと判断した `rejected`、または明示的に先送りした `deferred` のいずれかである。`--target` は `absorbed` の場合だけ指定する。
-
-### 10.3 出力
-
-```text
-ops/planning-feedback/<id>.md
-ops/planning-feedback/archived/<id>.md
-```
+human-facing が上限であることの意味は、人間が「気になったら cc-iasd、答えるは decide、止めるは STOP、直すは Markdown」の定常動線だけを覚えれば運用が回る、ということである。agent-facing コマンドは人間が事前学習する対象ではなく、agent が実行するものであり、その知識は in-band（handoff への焼き込み・guard 拒否メッセージ・status の可能遷移提示）で供給される。人間が agent-facing のコマンド体系を学習しなければ回らない状態は設計バグとして扱う。人間の介入モデル 4 類型の思想は 02、詳細定義は 05 を参照。
 
 ---
 
-## 11. cc-iasd ideal add <id>
+## 5. guard 拒否メッセージ仕様
 
-### 11.1 目的
-
-product ideal 正本を追加する。
-
-### 11.2 処理
+遷移ガードが不成立の場合、コマンドは遷移を起こさず拒否メッセージを返す。拒否メッセージは 2 つの要素を必ず含む。
 
 ```text
-処理:
-1. ideal id を iNNN-kebab-case として受け取る
-2. summary を受け取る
-3. product/ideal/<id>.md を作成する
-4. ops/evidence/logs/ に ideal-add event を記録する
+1. どの型付き入力が欠けているか（欠落セクション / open な blocking gap / 未取得の review record 等）
+2. 次に打つべきコマンド（差し戻しへ誘導する一手）
 ```
 
-### 11.3 出力
+拒否メッセージは人間可読と機械可読の両方で返す。`--json` を付すと機械可読形式で同じ内容を返す。
 
-```text
-product/ideal/<id>.md
-```
+差し戻しが、唯一のサンクションされた次の一手として提示される。ガード不成立時に agent が取れる正規の行動は、欠けた入力を上流で満たすか、block で差し戻すことである。推測で埋めて先へ進む経路はコマンド surface に存在しない。この設計により、agent は事前にコマンドの全成立条件を学習していなくても、拒否メッセージが提示する次の一手をたどるだけで正しい動線に戻れる（in-band 知識供給。9 章）。
 
-初期実装では、既存 ideal file は上書きしない。古くなった ideal は直接移動せず、`cc-iasd product outdate ideal <id>` で `outdated/` に退避する。
-
-ideal artifact が存在する場合、doctor は Product Ideal、Experience Principles、Boundaries の authored section が空でないことを検査する。ideal の本文が薄いまま feature / roadmap / spec へ進むことは許可しない。
+拒否メッセージが列挙する「欠けている型付き入力」の内部判定条件は 05、handoff 合成失敗時の欠落列挙は 06 を参照。
 
 ---
 
-## 12. cc-iasd feature add <id>
+## 6. 導入フロー: 5 分で最初の run
 
-### 12.1 目的
+フル chain（vision -> spec -> campaign -> run）を初日から要求しない。adhoc run を導入の入口にする。
 
-ideal と roadmap の間に置く feature scope を追加する。
-
-### 12.2 処理
-
-```text
-処理:
-1. feature id を fNNN-kebab-case として受け取る
-2. kind を epic / supporting などの metadata として受け取る
-3. summary と ideal refs を受け取る
-4. ops/scopes/features/ に feature file を作成する
-5. ops/evidence/logs/ に feature event を記録する
+```bash
+npx cc-iasd@latest init myapp --repo git@github.com:me/app.git
+cd myapp
+npx cc-iasd run open --adhoc "ログイン失敗時に 500 が出るのを修正" --check "npm test"
+npx cc-iasd session start r-... --runtime claude-code
 ```
 
-### 12.3 出力
-
-```text
-ops/scopes/features/<id>.md
-```
-
-初期実装では、既存 feature file は上書きしない。
-
-feature file は構造化 backlog を持つ。run-local open item が後続 planning 対象に昇格した場合は、feature backlog に `promoted` として記録する。
+adhoc run は spec を要求しない。人間が直書きした goal は推測補完に当たらないためである。spec を経由しなくても、guard / journal / verify / 終端 3 択はすべて有効であり、3 不変条件は初日から守られる。規模が増えたら spec / campaign へ昇格する。adhoc run の位置づけは 8.1 節に詳しい。
 
 ---
 
-## 13. cc-iasd roadmap add <id>
+## 7. 導入フロー: 1 機能を作り切る
 
-### 13.1 目的
+vision から campaign close までの一連の遷移を、実コマンド列で示す。
 
-feature layer を入力にして、campaign / run へ接続する roadmap scope を追加する。
+```bash
+# 計画
+cc-iasd new vision core && $EDITOR vision/v001-core.md
+cc-iasd decide d001-approve-vision           # 人間承認 -> vision approved
+cc-iasd new spec csv-export && $EDITOR specs/s001-csv-export/spec.md
+#   文字コード未確定 -> cc-iasd gap add spec:s001 --kind needs-human-decision --blocking
+#   spec 本文には [UNRESOLVED: g001] を記載
+cc-iasd spec ready s001    # => 拒否: blocking gap g001 が open。decide を促す
+cc-iasd decide d002-csv-encoding             # 「BOM 付き UTF-8」を決裁。g001 close
+cc-iasd review record spec:s001 --gate spec  # reviewer session が record
+cc-iasd spec ready s001                      # => ready
 
-### 13.2 処理
+cc-iasd new campaign reporting && $EDITOR campaigns/c001-reporting/charter.md
+cc-iasd review record campaign:c001 --gate launch
+cc-iasd campaign launch c001
 
-```text
-処理:
-1. roadmap id を受け取る
-2. summary と goal を受け取る
-3. ops/scopes/roadmaps/ に roadmap file を作成する
-4. ops/evidence/logs/ に roadmap event を記録する
+# 実行
+cc-iasd run open c001 --tasks T001,T002      # handoff 機械合成。上流欠落なら開始不能
+cc-iasd session start r-xxx --runtime claude-code
+#   （runtime 内で worker が src/ を実装）
+cc-iasd run return r-xxx                     # diff snapshot 実測
+cc-iasd run verify r-xxx                     # Checks 実行 + surface 照合 -> verification pass
+cc-iasd review record run:r-xxx --gate run
+cc-iasd run accept r-xxx                     # 全ガード通過 -> accepted
+
+# 締め
+cc-iasd review record campaign:c001 --gate completion
+cc-iasd report campaign:c001
+cc-iasd campaign close c001
 ```
 
-### 13.3 出力
-
-```text
-ops/scopes/roadmaps/<id>.md
-```
-
-初期実装では、既存 roadmap file は上書きしない。
+このフロー全体で、AI が状態を進めた箇所は一つもない。すべての前進はガードを通過した遷移であり、すべての停止は型付き packet（decision / backtrack / escalation）として journal に残る。上の `cc-iasd spec ready s001` が一度拒否されている箇所が、5 章の guard 拒否メッセージの実例である。欠けている型付き入力（open な blocking gap g001）と次に打つべきコマンド（decide）が提示され、差し戻しへ誘導される。
 
 ---
 
-## 14. cc-iasd campaign add <id>
+## 8. adhoc run と spike run の位置づけ
 
-### 14.1 目的
+kernel は、フル chain を通さない 2 種類の軽量 run を最初から定義する。いずれも spec を経由しないが、guard / journal / verify / 終端 3 択は有効であり、3 不変条件は守られる。
 
-複数 run の進行制御を担う campaign を追加する。
+### 8.1 adhoc run
 
-### 14.2 処理
-
-```text
-処理:
-1. campaign id を受け取る
-2. linked roadmap / spec / tasks を受け取る
-3. user experience outcome / feature-spec coverage / task selector / stop condition / progression condition / cross-run non-regression focus / impact map / Devil's Advocate Focus / Devil's Advocate Design Launch Review / completion condition を受け取る
-4. ops/execution/campaigns/ に campaign directory を作成する
-5. ops/evidence/logs/ に campaign event を記録する
-```
-
-### 14.3 出力
+adhoc run は、spec を要求せず人間直書きの goal で開始する run である（6 章の導入フローの入口）。
 
 ```text
-ops/execution/campaigns/<id>/plan.md
-ops/execution/campaigns/<id>/state.md
-ops/execution/campaigns/<id>/queue.md
-ops/execution/campaigns/<id>/aggregate-report.md
+- 入力: --adhoc "<goal>" --check "<cmd>"（spec を経由しない）
+- 人間が直書きした goal は推測補完に当たらないため、spec 不在でも不変条件 3 に抵触しない
+- guard / journal / verify / 終端 3 択はすべて有効
+- 規模が増えたら spec / campaign へ昇格する
 ```
 
-campaign は runtime output を直接内包しない。実行結果は `ops/evidence/` に置き、Source Campaign / Source Run で関連付ける。
+doctor が adhoc run の比率を表示して昇格を促す。adhoc に留め続けることを禁じるのではなく、可視化して判断材料を提供する。
 
-Devil's Advocate Focus は、Devil's Advocate の監査範囲を制限しない。計画時点で特に警戒すべき項目を明示するための入力である。
+### 8.2 spike run
 
-Devil's Advocate Design Launch Review は、campaign 作成後、最初の run を開始する前に記録される review evidence への参照である。campaign 完了時の Campaign Completion Review とは review mode を分ける。
-
-aggregate-report.md は campaign の複数 run を横断する authored summary である。Execution Manager は各 run の completion report、open items、review evidence、Planning Feedback Packet をもとに、Progression Summary、Open Item Rollup、Planning Feedback Rollup を更新する。aggregate-report.md は roadmap / feature / spec の正本更新を代替しない。
-
-### 14.4 cc-iasd campaign mark-run
-
-campaign queue に登録済みの run を `completed / blocked / escalated / deferred` のいずれかに更新する。
+spike run は、事前に検証コマンドを宣言できない調査・探索作業の受け皿である。逃げ道を用意しないと現場で弱い Checks が乱造され、検証構造自体が骨抜きになるため、最初から定義する。
 
 ```text
-処理:
-1. campaign id と run id を受け取る
-2. status を completed / blocked / escalated / deferred から受け取る
-3. ops/execution/campaigns/<id>/queue.md の該当 run status を更新する
-4. ops/execution/runs/<run-id>/state.md の Result と Last Update を更新する
-5. ops/execution/campaigns/<id>/state.md の Result と Last Update を queue から更新する
-6. ops/evidence/logs/ に campaign-mark-run event を記録する
+- 入力: run open に [--spike] を付す
+- src/ を変更しない（surfaces.write は空または notes 限定）
+- Checks の最低要件は「調査成果（notes / report）の存在チェック」
+- 終端は accept ではなく report 提出による close
+- spike の成果から spec / gap を起票して通常 run に接続する
 ```
 
-AI agent は queue.md を直接編集して進行状態を変更しない。
+spike run の Surfaces / Checks の内部条件は 05 / 06 を参照。
 
 ---
 
-## 15. cc-iasd spec add <id>
+## 9. in-band 知識供給
 
-### 15.1 目的
-
-Spec Kit 互換 dialect の spec / plan / tasks 正本の最小受け皿を作成する。
-
-### 15.2 処理
+agent-facing コマンド（4 章）の使い方は、人間にも agent にも事前学習を要求しない。必要な知識は実行のたびに in-band で供給される。
 
 ```text
-処理:
-1. spec id を受け取る
-2. summary を受け取る
-3. product/specs/<id>/spec.md を作成する
-4. product/specs/<id>/plan.md を作成する
-5. product/specs/<id>/research.md を作成する
-6. product/specs/<id>/data-model.md を作成する
-7. product/specs/<id>/contracts/README.md を作成する
-8. product/specs/<id>/tasks.md を作成する
-9. ops/evidence/logs/ に spec event を記録する
+供給経路:
+- handoff への焼き込み: run に必要な context・許可コマンド・exit protocol を handoff が持つ
+- guard 拒否メッセージの次の一手提示: 欠けた入力と次に打つコマンドを返す（5 章）
+- status の可能遷移提示: 現在状態から取れる遷移を status が示す（3.4 節）
 ```
 
-### 15.3 出力
-
-```text
-product/specs/<id>/spec.md
-product/specs/<id>/plan.md
-product/specs/<id>/research.md
-product/specs/<id>/data-model.md
-product/specs/<id>/contracts/README.md
-product/specs/<id>/tasks.md
-```
-
-初期実装では、既存 spec file は上書きしない。
+この 3 経路により、agent は cc-iasd 固有のコマンド体系を事前に暗記していなくても、その場で提示される次の一手をたどって正しい動線を進める。独自ナレッジの事前供給を前提にする設計は避ける。handoff の合成規則は 06 を参照。
 
 ---
 
-## 16. cc-iasd reference add historical|external|note <id>
-
-### 16.1 目的
-
-正本ではない参照資料、外部資料、補助 note の受け皿を command-created artifact として追加する。
-
-### 16.2 処理
-
-```text
-処理:
-1. reference kind を historical / external / note から受け取る
-2. reference id を lowercase-kebab-case として受け取る
-3. summary を受け取る
-4. reference/<kind-dir>/<id>.md を作成する
-5. reference/INDEX.md に参照 entry を追加する
-6. ops/evidence/logs/ に reference-add event を記録する
-```
-
-### 16.3 出力
-
-```text
-reference/historical-documents/<id>.md
-reference/external/<id>.md
-reference/notes/<id>.md
-reference/INDEX.md
-```
-
-AI agent は command が作成した reference file の Notes / Source Material を執筆する。新規 reference file の直接作成は行わない。
-
----
-
-## 17. cc-iasd profile update
-
-### 17.1 目的
-
-runtime profile、plugin metadata、adapter metadata を非破壊で補完する。
-
-### 17.2 処理
-
-```text
-処理:
-1. project-context root を解決する
-2. rules/roles/ から role runtime manifest を生成する
-3. runtime/profile.md を作成する
-4. runtime/plugins.yaml を作成する
-5. runtime/adapters/README.md を作成する
-6. runtime/adapters/role-runtime.md を作成する
-```
-
-### 17.3 出力
-
-```text
-runtime/profile.md
-runtime/plugins.yaml
-runtime/adapters/README.md
-runtime/adapters/role-runtime.md
-```
-
-既存 file は上書きしない。runtime profile files を再生成する場合は `--force` を明示する。
-
----
-
-## 18. cc-iasd help roles / role
-
-### 18.1 目的
-
-role-specific command visibility を標準出力で確認する。AI role に渡す command context を狭めるための view command であり、artifact は作成しない。
-
-### 18.2 処理
-
-```text
-roles:
-1. rules/roles/ を読む
-2. 利用可能な role id を列挙する
-
-role:
-1. role id を受け取る
-2. 該当 role の Command Visibility section を抽出する
-3. role invocation metadata がある場合は併記する
-```
-
-### 18.3 出力
-
-```text
-stdout only
-```
-
----
-
-## 19. 初期 workflow
-
-```text
-0. project-context 作成
-1. cc-iasd init
-2. user/ に意図と制約を書く
-3. cc-iasd ideal add で ideal artifact を作成し、本文 section を執筆する
-4. cc-iasd feature add で feature scope を作成し、本文 section を執筆する
-5. cc-iasd roadmap add で roadmap を作成し、本文 section を執筆する
-6. cc-iasd spec add で spec / plan / tasks を作成し、本文 section を執筆する
-7. cc-iasd campaign add で campaign を作成し、本文 section を執筆する
-8. cc-iasd run start <id>
-9. Worker runtime が src/ を編集する
-10. open item が発生した場合は cc-iasd open-item add / resolve で metadata を管理する
-11. campaign queue の run status は cc-iasd campaign mark-run で更新する
-12. Reviewer runtime または人間が cc-iasd review add で review を記録する
-13. ops/evidence/logs/ は cc-iasd command が event として更新する
-14. 問題があれば cc-iasd escalate <scope-ref>
-15. 完了したら cc-iasd report <scope-ref>
-16. planning-layer follow-up が必要なら cc-iasd planning-feedback add で packet を作成する
-17. Planning Lead が packet を処理したら cc-iasd planning-feedback resolve で閉じる
-18. 古くなった product artifact は cc-iasd product outdate で outdated/ に退避する
-19. 古くなった ops artifact は cc-iasd ops archive で archived/ に退避する
-```
-
----
-
-## 20. 実行 runtime への handoff
-
-初期実装では、run handoff は run-local な Markdown packet とする。
-
-```markdown
-# Run Handoff
-
-## Scope
-
-## Source Root
-
-src/
-
-## Linked Product Artifacts
-
-## Linked Scope Artifacts
-
-## Constraints
-
-## Do Not Change
-
-## Expected Output
-
-## Evidence To Record
-```
-
----
-
-## 21. Reviewer workflow
-
-```text
-Reviewer workflow:
-1. Worker の変更を確認
-2. product/specs/<id>/tasks.md の完了条件と照合
-3. test / lint / build 結果を確認
-4. scope 外変更がないか確認
-5. review を ops/evidence/reviews/ に記録
-6. run state または scope artifact に review ref を記録
-7. bounded remediation か escalation かを判定
-```
-
----
-
-## 22. cc-iasd view
-
-### 22.1 目的
-
-正本ファイルを増やさず、AI または人間に渡すための一時 view を標準出力に生成する。
-
-### 22.2 処理
-
-```text
-処理:
-1. evidence view は campaign / run / review / report の関連 path を列挙する
-2. current view は現行 product / scope / execution / recent evidence の path を列挙する
-3. scope view は scope 境界レビュー用 view として、指定 id から linked feature / roadmap / spec / campaign / run を辿り、Planning Lead または Execution Manager が境界の重複、不足、実行対象のずれを確認するための artifact と関連 evidence をまとめる
-4. run view は指定 run の state / handoff / knowledge をまとめる
-5. 生成した view はファイルとして保存しない
-```
-
-### 22.3 出力
-
-```text
-cc-iasd view evidence
-cc-iasd view current
-cc-iasd view scope <id>
-cc-iasd view run <id>
-```
-
----
-
-## 23. cc-iasd product outdate
-
-### 23.1 目的
-
-product 正本でなくなった ideal または spec を `outdated/` に退避する。
-
-### 23.2 処理
-
-```text
-処理:
-1. 対象 layer を ideal / spec から受け取る
-2. 対象 id を受け取る
-3. product/ideal/<id>.md を product/ideal/outdated/<id>.md に移動する
-4. または product/specs/<id>/ を product/specs/outdated/<id>/ に移動する
-5. ops/evidence/logs/ に product-outdate event を記録する
-```
-
-既存 destination は上書きしない。
-
----
-
-## 24. cc-iasd ops archive
-
-### 24.1 目的
-
-ops artifact を、各 layer の `archived/` に退避する。
-
-### 24.2 処理
-
-```text
-処理:
-1. 対象 layer を feature / roadmap / campaign / run / log / review / report から受け取る
-2. 対象 id を受け取る
-3. 対応する active artifact を同一 layer の archived/ に移動する
-4. ops/evidence/logs/ に ops-archive event を記録する
-```
-
-既存 destination は上書きしない。archive 済み artifact への log reference は、doctor が archived/ 側も解決候補として扱う。
-
----
-
-## 25. cc-iasd doctor
-
-### 25.1 目的
-
-project-context の整合性を検査する。
-
-### 25.2 処理
-
-```text
-検査例:
-- src/ が存在するか
-- product/ideal/ が存在するか
-- product/specs/ が存在するか
-- ops/scopes/ が存在するか
-- ops/execution/ が存在するか
-- ops/execution/campaigns/ が存在するか
-- ops/execution/runs/ が存在するか
-- ops/evidence/ が存在するか
-- lock.json があるか
-- linked tasks が解決できるか
-- evidence references が壊れていないか
-```
-
-doctor は、project-context scaffold の必須パス、禁止パスの混入、product / ops の archive 規則、artifact 間参照を検査する。
-
-doctor は framework 開発用資料の存在や参照を検査しない。開発資料の release 前整理は、project-context doctor とは別の管理方針で扱う。
-
----
-
-## 26. command 設計の原則
+## 10. コマンド設計の原則
 
 ```text
 原則:
-- 既存 framework command を再実装しない
-- cc-iasd command は統合・委譲・状態管理を担う
-- product 正本と ops transaction を混ぜない
-- src/ root を常に明示する
-- 自走前に scope と run を確認する
-- 停止時は escalation report に変換する
-- 完了時は completion report に変換する
-- 横断 index を正本化しない
+- ライフサイクル状態を進めるのは、ガードを通過した遷移コマンドのみ
+- コマンドは journal への event 追記を通じてのみ状態を変える（silent overwrite の経路なし）
+- human-facing コマンドは inbox / decide / STOP を上限とし、超過は設計バグとして扱う
+- guard 不成立時は差し戻しを唯一のサンクションされた次の一手として提示する
+- 完了を宣言するコマンドは worker の可視 surface に存在しない
+- 導入は adhoc run を入口にし、規模に応じて spec / campaign へ昇格する
 ```

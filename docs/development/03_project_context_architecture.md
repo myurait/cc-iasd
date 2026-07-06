@@ -1,608 +1,221 @@
 # 03. project-context アーキテクチャ
 
-作成日: 2026-05-04  
-状態: 統合整理版 v0.2
+作成日: 2026-07-05  
+状態: kernel 正本 v1.0（Phase 1 レビュー待ち）
 
 ---
 
-## 1. 基本構造
+## 1. この文書の位置づけ
 
-cc-iasd の基本構造は次である。
+本文書は、cc-iasd kernel が扱う project-context の物理構造を定める。ディレクトリツリー、各領域の役割、journal の物理形式、書き込み経路の管理、成果物 repo との境界、multi-repo 構成の登録と照合を対象とする。
 
-```text
-project-context/
-  runtime/
-  rules/
-  user/
-  product/
-  ops/
-  reference/
-  src/
-```
-
-`project-context` は cc-iasd が所有する開発文脈である。`src/` は成果物 project の root である。
-
-この構造では、次の境界を固定する。
-
-```text
-runtime:
-  framework provenance と runtime adapter 設定
-
-rules:
-  恒常的な制約、role、template、checklist
-
-user:
-  人間由来の raw input、制約、明示判断
-
-product:
-  プロダクト正本。ideal と spec を置く
-
-ops:
-  scope / transaction layer と evidence layer
-
-reference:
-  正本ではない補助資料、旧文書、外部資料
-
-src:
-  成果物 project
-```
-
-`ops/` は万能置き場ではない。実態として ops であるもの、すなわち scope / transaction と evidence だけを置く。
+概念・根拠は 02、状態遷移とガードは 05、event schema と evidence の詳細は 06、コマンド構文は 08 に置く。本文書はそれらの詳細を再掲せず、物理配置と領域境界に責務を限定する。
 
 ---
 
-## 2. 推奨ディレクトリ構造
+## 2. フラット構成の全景
+
+project-context は、それ自体が git repo である。証跡の版管理をこの repo の git 履歴に委ね、成果物 repo（src/）は ignore する。
 
 ```text
-project-context/
-  runtime/
-    cc-iasd.yaml
-    lock.json
-    profile.md
-    plugins.yaml
-    adapters/
-      README.md
-      role-runtime.md
-
-  rules/
-    policies/
-      autonomy-policy.md
-      escalation-policy.md
-      evidence-policy.md
-      language-policy.md
-      testing-policy.md
-    roles/
-      planning-lead.md
-      worker.md
-      reviewer.md
-      auditor.md
-    templates/
-      escalation-packet.md
-      completion-report.md
-      review-report.md
-      run-handoff.md
-    checklists/
-      reviewer-checklist.md
-      auditor-checklist.md
-
-  user/
-    product-intent.md
-    constraints.md
-    decisions.md
-    preferences.md
-    scratch.md
-
-  product/
-    ideal/
-      iNNN-<ideal-slug>.md
-      outdated/
-        iNNN-<ideal-slug>.md
-    specs/
-      sNNN-<spec-slug>/
-        spec.md
-        plan.md
-        research.md
-        data-model.md
-        contracts/
-        tasks.md
-      outdated/
-        <spec-id>/
-          spec.md
-          plan.md
-          research.md
-          data-model.md
-          contracts/
-          tasks.md
-
-  ops/
-    scopes/
-      features/
-        <feature-id>.md
-        archived/
-          <feature-id>.md
-      roadmaps/
-        rNNN-<roadmap-slug>.md
-        archived/
-          rNNN-<roadmap-slug>.md
-    execution/
-      campaigns/
-        cNNN-<campaign-slug>/
-          plan.md
-          state.md
-          queue.md
-          aggregate-report.md
-        archived/
-          cNNN-<campaign-slug>/
-      runs/
-        run_<timestamp>_<task-or-scope>/
-          plan.md
-          handoff.md
-          state.md
-          open-items.md
-          knowledge.md
-      archived/
-        run_<timestamp>_<task-or-scope>/
-    evidence/
-      logs/
-        log_<timestamp>_<type>.md
-        archived/
-          log_<timestamp>_<type>.md
-      reviews/
-        review_<timestamp>_<scope>.md
-        archived/
-          review_<timestamp>_<scope>.md
-      reports/
-        report_<timestamp>_<scope>.md
-        archived/
-          report_<timestamp>_<scope>.md
-
-  reference/
-    INDEX.md
-    historical-documents/
-    external/
-    notes/
-
-  src/
-    package.json
-    composer.json
-    go.mod
-    app/
-    tests/
-```
-
-実際の `product/specs/` 構造は Spec Kit の artifact vocabulary に寄せる。cc-iasd は Spec Kit tooling の成果物正本性や lifecycle には依存しない。
-
----
-
-## 3. runtime/
-
-`runtime/` は、framework provenance と adapter 設定を持つ。
-
-```text
-runtime/ の責務:
-- cc-iasd profile version
-- framework lock
-- plugin 定義
-- adapter 設定
-- role runtime manifest
-- project-context の実行設定
-```
-
-`runtime/` は証跡や正本を持たない。実行時にどの規約・adapter・plugin を使うかを示す。
-
----
-
-## 4. rules/
-
-`rules/` は、cc-iasd の恒常的な制約レイヤーである。
-
-```text
-rules/
-  policies/
-  roles/
-  templates/
-  checklists/
-```
-
-`rules/` に昇格するのは、個別 scope や run に閉じない再利用可能な規則である。
-
-```text
-rules に置くもの:
-- 自走範囲
-- 停止条件
-- escalation 条件
-- evidence 記録規律
-- role の責務と権限
-- review / audit checklist
-- output template
-```
-
-`run` 内で得た知見は、恒常化できる場合だけ `rules/` に昇格する。未成熟な知見を `rules/` に直接置かない。
-
----
-
-## 5. user/
-
-`user/` は、人間が与えた入力と判断を置く領域である。
-
-```text
-user/
-  product-intent.md
-  constraints.md
-  decisions.md
-  preferences.md
-  scratch.md
-```
-
-cc-iasd はこの領域を勝手に上書きしない。AI が整理する場合も提案として扱い、人間判断を経て反映する。
-
-`user/decisions.md` は人間判断の正本である。AI や開発運用上の軽微判断は、発生した run、review、report の文脈に閉じる。
-
----
-
-## 6. product/
-
-`product/` は、プロダクト正本レイヤーである。
-
-```text
-product/
-  ideal/
+project-context/               # それ自体が git repo（証跡の版管理。src/ は ignore）
+  cc-iasd.yaml                 # 唯一の設定: runtime adapter / budgets / checks allowlist /
+                               # decision policy / gate 要否 / 登録 repo
+  journal/                     # append-only event store。1 event = 1 JSON file（ULID 名）
+                               # CLI のみ書込。ライフサイクル状態の唯一の正本
+  state.json                   # journal からの導出 snapshot（再生成可能。正本ではない）
+  vision/
+    v001-core.md               # 起点正本。必須セクションを持つ authored content
   specs/
-```
-
-`product/` 以下の正本は、古くなった場合に `outdated/` へ退避する。`outdated/` は正本性を失った成果物を残す領域であり、理由の記録は必須ではない。
-
-project-context 運用時、AI agent は `product/` 以下に新規ファイルを直接作成しない。新規 ideal / spec は cc-iasd command が ID、metadata、required sections を作成し、その後 AI agent が本文 section を執筆する。
-
-### 6.1 product/ideal/
-
-```text
-product/ideal/
-  iNNN-<ideal-slug>.md
-  outdated/
-    iNNN-<ideal-slug>.md
-```
-
-ideal は、ユーザー入力を開発判断に使える形へ正規化したプロダクト正本である。
-
-ideal ID は `iNNN-<ideal-slug>` とする。ideal は後から追加されることがあり、追加機能方針、localization、外部環境への対応など、複数の ideal が同時に正本性を持ち得る。そのため、ideal も人間が参照しやすいように番号を持つ。
-
-番号は順序管理の補助であり、唯一の正本を意味しない。`outdated/` に入っていない ideal が現行参照対象である。
-
-`outdated/` に入っていない `ideal/<ideal-id>.md` が事実上の現行 ideal である。
-
-複数 ideal は同時に存在できる。
-
-```text
-例:
-- core-experience.md
-- onboarding-experience.md
-- operations-experience.md
-```
-
-### 6.2 product/specs/
-
-```text
-product/specs/
-  <spec-id>/
-    spec.md
-    plan.md
-    research.md
-    data-model.md
-    contracts/
-      README.md
-    tasks.md
-  outdated/
-    <spec-id>/
-      spec.md
-      plan.md
-      research.md
-      data-model.md
-      contracts/
-        README.md
-      tasks.md
-```
-
-spec は、`spec / plan / tasks` を中心とする束として正本性を持つ。したがって、旧化は原則として spec 単位で行う。
-
-個別ファイルだけを `outdated/` に落とすと、spec は現行だが plan / tasks は旧、という混在状態を作る。これは spec-driven development の実行モデルと相性が悪い。
-
-軽微な修正は同じ spec 内で更新してよい。spec、plan、tasks の対応関係が崩れる場合、または実施対象から外れる場合は、spec ごと `product/specs/outdated/<spec-id>/` に移す。
-
----
-
-## 7. ops/
-
-`ops/` は、scope / transaction layer と evidence layer だけを持つ。
-
-```text
-ops/
-  scopes/
-  execution/
-  evidence/
-```
-
-必要な情報は、発生した scope / execution / evidence artifact 内に閉じるか、恒常化できる場合は `rules/` に昇格し、正本でない資料は `reference/` に退避する。
-
-### 7.1 ops/scopes/
-
-```text
-ops/scopes/
-  features/
-  roadmaps/
-```
-
-scope layer は、何を、どの範囲で、どの順序として扱うかを管理する。
-
-```text
-features:
-  ideal と roadmap の間の feature planning layer。構造化 backlog を持つ
-
-roadmaps:
-  実現順序と投資順序
-```
-
-milestone は廃止する。task の実行選択、停止条件、進行条件は campaign / run 側に置く。
-
-`archived/` に入っていないものが通常参照対象である。
-
-### 7.2 ops/execution/
-
-```text
-ops/execution/
+    s001-<slug>/
+      spec.md                  # spec 本文（必須セクション制）
+      attachments/             # 任意（data model / contracts 等。スキーマ非強制）
   campaigns/
-    cNNN-<campaign-slug>/
-      plan.md
-      state.md
-      queue.md
-      aggregate-report.md
+    c001-<slug>/
+      charter.md               # campaign の authored 媒体
   runs/
-    run_<timestamp>_<task-or-scope>/
-      plan.md
-      handoff.md
-      state.md
-      open-items.md
-      knowledge.md
-    archived/
-      run_<timestamp>_<task-or-scope>/
+    r-<ulid>-<slug>/
+      handoff.md               # CLI が機械合成する実行入力（生成物）
+      notes.md                 # worker の実装ノート（authored）
+      report.md                # 終端 packet: completion / escalation / backtrack のいずれか 1 つ
+  evidence/
+    verifications/             # verify の verdict JSON + 生出力（stdout / stderr / diff.patch）
+    reviews/                   # review record（対象 content-hash 刻印つき）
+  decisions/
+    d001-<slug>.md             # 人間決裁記録（decide のみが登録する）
+  gaps/
+    g001-<slug>.md             # gap 台帳の authored 本文（metadata は journal 側）
+  roles/                       # planner / worker / reviewer の 3 role cards
+  out/                         # compile 生成物（runtime bundle）。gitignore。非正本
+  reference/                   # カーネル非管理の自由領域
+  src/                         # 成果物 repo root（nested git）。CLI は読み取りと verify 実行のみ
 ```
 
-execution layer は campaign と run で構成する。spec-driven development 的には実装進行の中心は spec / task であり、campaign / run はその実行を cc-iasd の project-context に接続する transaction artifact である。
+旧設計の 6 分割トップレベル（runtime / rules / user / product / ops / reference）は廃止した。ライフサイクル状態を Markdown から追い出して journal に一本化した結果、状態を運ぶための階層が不要になり、authored content の種別（vision / spec / campaign / run / decision / gap）と証跡（evidence）と設定（cc-iasd.yaml）が同一階層に並ぶフラット構成に再編される。
 
-campaign は複数 run の進行制御を持つ。user experience outcome、feature / spec coverage、task selector、stop condition、progression condition、cross-run non-regression focus、impact map、Devil's Advocate Focus、Devil's Advocate Design Launch Review、completion condition、run queue を持つが、runtime output は持たない。
-
-campaign queue は operation artifact である。run 登録、status 更新、進行状態の変更は cc-iasd command が行う。AI agent は queue の自由編集によって進行状態を変更しない。
-
-run は task の実行選択と runtime context を持つ。旧 cycle 概念は run に置き換える。run は実装者に禁止領域を過度に与えるのではなく、likely touched surfaces、related impact surfaces、non-regression focus、escalation triggers によって局所実行境界を示す。
+この構成の要点は次である。
 
 ```text
-campaign:
-  user experience outcome、feature / spec coverage、task selector、stop condition、progression condition、cross-run non-regression focus、impact map、Devil's Advocate Focus、Devil's Advocate Design Launch Review、completion condition、run queue、aggregate report を持つ
-
-state.md:
-  Status、active blocker、open items、related spec、related tasks、related campaign、related logs、related reviews、related reports を持つ
-
-handoff.md:
-  selected tasks、expected local outcome、likely touched surfaces、related impact surfaces、non-regression focus、escalation triggers、local verification、open item routing を含む Worker / runtime 向け実行入力 packet
-
-open-items.md:
-  run-local unresolved context の正本を持つ
-
-knowledge.md:
-  run 内で判明した次 run / reviewer / worker に渡す局所知識。feature backlog へ昇格し得る観察もここに残す
-```
-
-中断、失敗、blocked、escalated は `state.md` の `Status` として表現する。
-
-現在作業は `ops/execution/runs/` の未 archive run と `state.md` から判断する。AI に渡す入口が必要な場合は CLI が一時 view を生成する。
-
-backlog は feature scope の planning context である。open item は run-local runtime context である。run 終了時、open item は `resolved / escalated / promoted / deferred` のいずれかへ分類する。`promoted` は feature backlog への昇格を意味する。
-
-open item は hybrid artifact である。ID、kind、status、source run、target、resolution などの metadata は cc-iasd command が管理する。背景、選択肢、推奨案、Planning Feedback Routing、補足説明は AI agent が執筆できる。metadata だけで planning-layer feedback を完了扱いにしてはならない。
-
-### 7.3 ops/planning-feedback/
-
-```text
-ops/planning-feedback/
-  pfNNN-<feedback-slug>.md
-  archived/
-```
-
-planning-feedback layer は、execution entry から planning entry へ戻す planning-layer follow-up の正本である。Completion Report は evidence layer に残し、Planning Feedback Packet は planning artifact へ戻すべき項目だけを分類する。
-
-`ops/planning-feedback/` 直下の packet は active handoff である。処理後は `cc-iasd planning-feedback resolve` により `absorbed / rejected / deferred` のいずれかへ更新し、`archived/` へ退避する。`routed` は resolution としない。role や human へ渡しただけでは planning feedback が閉じたとは限らないためである。
-
-### 7.4 ops/evidence/
-
-```text
-ops/evidence/
-  logs/
-  reviews/
-  reports/
-```
-
-evidence layer は、発生した事実、検査、報告を記録する。
-
-```text
-logs:
-  global chronological cc-iasd
-
-reviews:
-  scope 横断の review record
-
-reports:
-  completion、escalation、progress などの人間向け report
-```
-
-reviews は特定 scope 以下に置かない。review scope は spec、task、run、campaign、roadmap、rules、project-context など複数あり得るため、`ops/evidence/reviews/` を正本配置とする。
-
-run、campaign、spec などは review 本体を内包せず、review ID または path を参照する。
-
-logs / reviews / reports は証跡であり、active / inactive という状態を持たない。古くなった証跡は `archived/` に退避する。
-
-report は正本 artifact の全文複製ではない。Source Artifact、Source Run、Review refs、Related Reports などの参照 metadata は cc-iasd command が作成し、人間判断に必要な要約・解釈だけを AI agent が執筆する。
-
----
-
-## 8. reference/
-
-`reference/` は、正本ではない補助資料を置く。
-
-```text
-reference/
-  INDEX.md
-  historical-documents/
-  external/
-  notes/
-```
-
-historical documents、外部資料、調査メモは `reference/` に置く。`reference/` の内容は、直接実装判断の正本にしない。必要な内容は `product/`、`ops/`、`rules/` の適切な場所へ昇格する。
-
-`reference/` も project-context 管理領域である。AI agent は新規 reference file を直接作成せず、cc-iasd command が作成した entry に本文を追記する。
-
----
-
-## 9. src/
-
-`src/` は成果物 project root である。
-
-```text
-src/ に置くもの:
-- application code
-- tests
-- package manager files
-- build config
-- lint config
-- runtime config
-```
-
-cc-iasd は `src/` 内の技術スタックを一律に規定しない。
-
-`src/` は AI agent が通常の実装作業としてファイル作成・編集できる領域である。一方、`product/`、`ops/`、`rules/`、`runtime/`、`user/`、`reference/` は cc-iasd-managed 領域であり、project-context 運用時の新規 artifact 作成、移動、archive、outdate、lifecycle metadata 更新は cc-iasd command または明示的人間操作で行う。
-
-AI agent は cc-iasd-managed 領域で writer にはなれるが artifact owner ではない。AI agent が編集してよいのは、CLI が作成した artifact の authored content section であり、tool-owned metadata、ID、status、source refs、archive/outdate 位置は直接変更しない。
-
----
-
-## 10. archive / outdated 原則
-
-旧文書の退避は、レイヤーごとに名前を統一する。
-
-```text
-product/ 以下:
-  outdated/
-
-ops/ 以下:
-  archived/
-```
-
-`product/` の `outdated/` は、正本性を失った product artifact を意味する。
-
-`ops/` の `archived/` は、transaction / evidence artifact の退避を意味する。
-
-一覧ファイルは原則として正本にしない。適切な archive が機能すれば、未 archive の artifact を列挙するだけで現在参照対象を得られる。必要な一覧は CLI が生成する。
-
----
-
-## 11. 設計 rule
-
-今回の構造整理から、次を project-context architecture の rule とする。
-
-```text
-Rule 1:
-  product 正本と ops transaction を混ぜない。
-
-Rule 2:
-  product/ 以下の旧化は outdated/ に統一する。
-
-Rule 3:
-  ops/ 以下の退避は archived/ に統一する。
-
-Rule 4:
-  archived/ に入っていない artifact を通常参照対象とする。
-
-Rule 5:
-  ideal は current.md にしない。product/ideal/iNNN-<ideal-slug>.md を正本とする。
-
-Rule 6:
-  spec の旧化は原則として spec directory 単位で行う。
-
-Rule 7:
-  milestone は廃止する。
-
-Rule 8:
-  自走実行の task 選択と runtime context は run に閉じる。
-
-Rule 9:
-  reviews は特定 scope 配下に固定しない。ops/evidence/reviews/ に置き、scope refs で関連付ける。
-
-Rule 10:
-  logs / reviews / reports は evidence layer に置く。
-
-Rule 11:
-  decisions / knowledge を ops 直下の横断ファイルに集約しない。
-
-Rule 12:
-  aborted は directory ではなく run state として表現する。
-
-Rule 13:
-  横断一覧が必要な場合は CLI 生成 view とし、正本化しない。
-
-Rule 14:
-  project-context 運用時、AI agent は cc-iasd-managed 領域に新規ファイルを直接作成しない。
-
-Rule 15:
-  tool-owned metadata と lifecycle state は cc-iasd command が管理し、AI agent は authored content section を執筆する。
-
-Rule 16:
-  docs/development/ は cc-iasd 開発期間中だけ存在する開発用資料であり、cc-iasd の文書管理方針、project-context artifact、runtime rules の対象外とする。リリース時には削除するか、別管理方針へ委譲する。
-
-Rule 17:
-  docs/development/ への参照は docs 配下の開発資料に閉じる。README、rules、roles、templates、CLI 生成物、project-context artifact に漏れ出してはならない。
+1. Markdown は authored content 専用。frontmatter は id と refs のみで status 欄を持たない。
+   人間はファイルを開けば内容を読める（ブラウザビリティの維持）
+2. ライフサイクル状態・遷移・検証・決裁は journal の event が正本。state.json と status 出力は
+   すべて導出であり、正本ではない
+3. project-context 自体を git repo とし、CLI が遷移のたびに auto-commit する。改竄検出と
+   タイムラインは自前の hash-chain を実装せず git に委譲する
+4. out/ は再生成可能な非正本。runtime へ渡すものはすべてここに生成し、src/ にも $HOME にも書かない
 ```
 
 ---
 
-## 12. 最小構成
+## 3. 各領域の役割
 
-初期構成は次である。
+### 3.1 journal（ライフサイクル状態の正本）
+
+journal は append-only の event store であり、ライフサイクル状態・遷移・検証・決裁の唯一の正本である。CLI のみが書き込む。状態を変える行為は journal に event を追記する行為と同一化されており、journal を経由しない状態変更は存在しない。物理形式は 4 章で述べる。
+
+### 3.2 state.json（導出 snapshot）
+
+state.json は journal の全 event を時系列で畳み込んで得る導出 snapshot である。再生成可能であり、正本ではない。破損・欠落しても journal から再構築でき、status 出力もここではなく journal から導出される。
+
+### 3.3 authored content 領域（vision / specs / campaigns / runs / decisions / gaps）
+
+vision / specs / campaigns / runs / decisions / gaps は authored content の媒体である。それぞれのノードが持つ必須セクションと概念は 02、event schema は 06 に置く。ここでは配置のみを扱う。
 
 ```text
-project-context/
-  runtime/
-    lock.json
-    cc-iasd.yaml
-
-  rules/
-    policies/
-    roles/
-    templates/
-
-  user/
-    product-intent.md
-    constraints.md
-    decisions.md
-    scratch.md
-
-  product/
-    ideal/
-    specs/
-
-  ops/
-    scopes/
-      features/
-      roadmaps/
-    execution/
-      campaigns/
-      runs/
-    evidence/
-      logs/
-      reviews/
-      reports/
-
-  reference/
-
-  src/
+vision/     起点正本。v<NNN>-<slug>.md
+specs/      s<NNN>-<slug>/ ディレクトリ。spec.md 本体 + 任意 attachments/
+campaigns/  c<NNN>-<slug>/ ディレクトリ。authored 媒体は charter.md
+runs/       r-<ulid>-<slug>/ ディレクトリ。handoff.md（生成物）/ notes.md（authored）/
+            report.md（終端 packet）
+decisions/  d<NNN>-<slug>.md。decide コマンドのみが登録する
+gaps/       g<NNN>-<slug>.md。authored 本文のみを置き、metadata は journal 側に持つ
 ```
 
-この段階では、plugin の完全実装、multi-runtime adapter、複雑な update mechanism は不要である。
+authored content 領域のファイルは、frontmatter に id と refs のみを持ち、status 欄を持たない。frontmatter の refs は作成・編集時の宣言入力であり、遷移時に CLI がパースして journal の refs（正規形）へ正規化して取り込む。正本は journal 側であり、doctor が frontmatter と journal 導出 refs の一致を検査する。
+
+旧設計にあった outdated/ や archived/ へのファイル移動による退避規約は廃止した。正本性を失った artifact はファイルを動かさず、journal 上の retired 状態で表現する。したがって authored content 領域に退避用サブディレクトリは置かない。
+
+### 3.4 evidence（証跡層）
+
+evidence は verification と review record の証跡層である。
+
+```text
+evidence/
+  verifications/   verify の verdict JSON + 生出力（stdout / stderr / diff.patch）
+  reviews/         review record（対象の content-hash を刻印）
+```
+
+verification は verify コマンドの実行によってのみここに生成される。review record は gate ごとの reviewer 判定を記録し、対象の content-hash を刻印する。verify の出力捕捉先はこの evidence/ に固定され、src/ など管理領域外へは書かない。verification の生成規則・content-hash 鮮度・review record の必須欄は 06 に置く。
+
+### 3.5 roles（role cards）
+
+roles/ は planner / worker / reviewer の 3 role card を置く。role card 規約（行数上限・出力言語明示）とロール責務は 12 に置く。
+
+### 3.6 cc-iasd.yaml（唯一の設定）
+
+cc-iasd.yaml は唯一の設定ファイルである。runtime adapter、budgets、checks allowlist、decision policy、gate 要否、登録 repo を持つ。登録 repo の扱いは 7 章で述べる。各設定項目の意味と運用は 05 / 08 に置く。
+
+---
+
+## 4. journal の物理形式
+
+### 4.1 1-event-1-file
+
+journal は 1 event = 1 file とし、ファイル名を ULID とする JSON で表現する。単一 NDJSON への追記は並行 run と git ブランチ運用で必ず衝突するため採らない。1-event-1-file にすることで、追記は常に新規ファイル作成のみになり、並行書き込みも git merge も衝突しない。
+
+順序は ULID で決まる。state.json 導出時には journal 内の全 event を ULID 順（時系列）で畳み込む。event の JSON 構造（closed set の type / guard_results / actor / refs 等のフィールド定義）は 06 に置く。
+
+### 4.2 git 委譲による改竄検出
+
+改竄耐性は event 間の hash-chain を自作せず、project-context repo の git 履歴で担保する。CLI が遷移のたびに auto-commit することで、event の追加・改変・削除はすべて git の履歴と差分に現れる。ローカル版の証跡台帳を自前で再実装せず、既存の git インフラに委ねる方針である。
+
+doctor は「journal event の参照整合」「guard 判定結果の再計算一致」「evidence の sha256 一致」を検査する。doctor の検査観点の詳細は 06 に置く。
+
+### 4.3 state.json は導出 snapshot（正本ではない）
+
+state.json は 4.1 の畳み込み結果を保持する導出 snapshot であり、正本ではない。journal が正本であるため、state.json が破損・欠落しても journal から再生成できる。AI が state.json を編集しても、次の導出で journal の内容に上書きされるため状態は動かない。
+
+---
+
+## 5. write-path allowlist（書き込み経路の一元化）
+
+不変条件 1（src/ 隔離）の物理的執行点は、CLI の全書き込みが単一の write-path モジュールを通ることである。この単一経路が、管理領域の allowlist に照らして書き込み先を判定し、allowlist 外への書き込みを例外で拒否する。
+
+```text
+管理領域（write-path allowlist の対象。CLI が所有し書き込む）:
+  cc-iasd.yaml / journal/ / state.json / vision/ / specs/ / campaigns/ / runs/ /
+  evidence/ / decisions/ / gaps/ / roles/ / out/
+
+非管理領域:
+  reference/  カーネルが管理しない自由領域（6.1）
+  src/        成果物 repo。CLI は読み取りと verify 実行のみ（6.2）
+```
+
+verify の出力捕捉先は evidence/ に固定される。verification の生出力を src/ や reference/ に書くことはなく、管理領域外への書き込み経路が構造上開いていない。doctor は src/ 配下への管理物混入を deny-glob 検査で捕捉する。
+
+write-path allowlist は「どのディレクトリに書けるか」を定める物理境界であり、「どの遷移で何が書かれるか」の遷移規則ではない。遷移ごとの書き込み内容とガードは 05、書き込まれる event の形状は 06 に置く。
+
+---
+
+## 6. 非正本領域と成果物境界
+
+### 6.1 out/（非正本の compile 生成物）
+
+out/ は compile 生成物（runtime bundle）を置く領域である。gitignore され、非正本であり、いつでも再生成できる。
+
+```text
+out/ の性質:
+- runtime へ渡すもの（起動設定など）はすべてここに生成する
+- src/ にも $HOME にも書かない
+- gitignore 対象。git 履歴に含めない
+- 削除しても compile で再生成できる。正本ではないため復元対象にしない
+```
+
+adapter が runtime を起動するための設定生成物はこの out/ 配下に置かれる。adapter の capability manifest や Tier 1 hook の詳細は 05 に置く。
+
+### 6.2 reference/（カーネル非管理の自由領域）
+
+reference/ は cc-iasd kernel が管理しない自由領域である。write-path allowlist の対象外であり、doctor の管理整合検査の対象にもならない。調査メモや外部資料など、正本性を持たない補助資料の置き場として利用者が自由に使える。kernel はこの領域の内容を状態機械の入力にしない。
+
+### 6.3 src/（成果物 repo。読み取りと verify のみ）
+
+src/ は成果物 repo の root である。project-context repo からは ignore され、nested git として独立に版管理される。
+
+cc-iasd の src/ に対する関与は、読み取りと verify 実行に限られる。CLI は src/ の内容を handoff 合成のために読み、verify 時に Checks を子プロセス実行し、git diff を取得して Surfaces と照合する。src/ への書き込みは worker（実装 runtime）が行うものであり、CLI は src/ にファイルを作成・編集しない。
+
+src/ 内の技術スタックは kernel が一律に規定しない。verify の照合規則・Surfaces の意味・diff snapshot の取得規則は 05 / 06 に置く。
+
+---
+
+## 7. multi-repo 構成
+
+現実のプロダクトは infrastructure / frontend / backend など複数の構成要素で成り立つ。multi-repo な src/ は将来拡張ではなく v0 の前提要件であり、その物理構造と登録・照合の枠組みを本文書で定める。
+
+### 7.1 repo 登録と nested git 検出
+
+src/ 配下の各 repo は、project-context 直下の cc-iasd.yaml が持つ repo エントリに登録する。src/ の内側に管理ファイルは置かない（5 章の write-path allowlist と 6.3 節の境界に従う）。
+
+```text
+src/
+  <repo-a>/        # nested git repo
+  <repo-b>/        # nested git repo
+```
+
+doctor は、cc-iasd.yaml に登録された repo と src/ 配下の実際の nested git を突き合わせて検出・照合する。登録されているのに実体がない repo、実体があるのに未登録の repo は doctor が不整合として報告する。
+
+### 7.2 Surfaces glob の repo プレフィックス
+
+spec が宣言する Surfaces の write / forbid glob は、`src/<repo>/` プレフィックスを含む。run の対象 repo 集合は Surfaces から導出され、1 run = 1 repo に固定せず横断 run を許す。glob と対象 repo 集合の対応の詳細、および Surfaces と diff の照合規則は 06 に置く。
+
+### 7.3 repo 別 base commit
+
+run open は、対象 repo ごとに base commit を journal に記録する。run return / verify 時の diff snapshot 取得と Surfaces 照合は、この repo 別 base commit を基準に repo ごとに行う。Checks も check ごとに cwd（対象 repo）を持ち、repo ごとに実行される。
+
+```text
+repo 別処理の物理的な要点:
+- base commit は repo ごとに journal へ記録する（run open 時）
+- diff snapshot は repo ごとに取得し、repo ごとに Surfaces と照合する
+- Checks は check ごとに cwd（repo）を持つ
+```
+
+base commit の記録・diff snapshot・照合を起こす遷移とガード、並列 run の排他規則（対象 repo が互いに素か同一 repo を共有するか、verify lock、worktree 隔離）は 05 に置く。本文書は repo が cc-iasd.yaml に登録され nested git として配置される物理構造までを扱う。
