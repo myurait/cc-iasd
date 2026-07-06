@@ -69,24 +69,25 @@ function emitRefusal(refusal, jsonMode) {
 async function main() {
   const argv = process.argv.slice(2);
 
-  if (argv.length === 0) {
-    // 引数なし = human inbox（views 担当）。
-    argv.push('inbox');
-  }
-
-  if (argv[0] === '--help' || argv[0] === '-h') {
+  // --help / -h / --version / -v は最優先で処理する（サブコマンド解決の前）。
+  if (argv.includes('--help') || argv.includes('-h')) {
     process.stdout.write(usage());
     process.exit(0);
   }
-  if (argv[0] === '--version' || argv[0] === '-v') {
+  if (argv.includes('--version') || argv.includes('-v')) {
     process.stdout.write(VERSION + '\n');
     process.exit(0);
   }
 
-  const command = argv[0];
-  const rest = argv.slice(1);
-  const { positional, flags } = parseArgs(rest);
+  // argv 全体を解析する。位置引数（サブコマンド）が無い場合は inbox を
+  // 既定コマンドにする（契約: 引数なし = human inbox。
+  // `cc-iasd --root <path>` のように flag のみでも inbox 扱い）。
+  const { positional: allPositional, flags } = parseArgs(argv);
   const jsonMode = !!flags.json;
+
+  // 先頭 positional をコマンドとして解決する。無ければ inbox。
+  const command = allPositional.length > 0 ? allPositional[0] : 'inbox';
+  const positional = allPositional.length > 0 ? allPositional.slice(1) : [];
 
   const moduleName = COMMAND_MODULE[command];
   if (!moduleName) {
