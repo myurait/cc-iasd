@@ -9,6 +9,7 @@
   },
   "files": [
     "bin",
+    "lib",
     "rules",
     "roles",
     "templates/*.md",
@@ -28,5 +29,8 @@
     "project-context",
     "governance",
     "spec-driven-development"
-  ]
+  ],
+  "dependencies": {
+    "js-yaml": "^5.2.1"
+  }
 }

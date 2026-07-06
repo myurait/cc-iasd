@@ -1,0 +1,9 @@
+{
+  "id": "01KWVY8E0QFTGX7GXZH7SGGAY6",
+  "ts": "2026-07-06T14:45:31.287Z",
+  "actor": {
+    "kind": "agent"
+  },
+  "type": "created",
+  "subject": "spec:s001"
+}

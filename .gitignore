@@ -1,5 +1,6 @@
 __pycache__/
 .DS_Store
+node_modules/
 
 # Local framework-development artifacts (not part of the framework distribution)
 CLAUDE.md

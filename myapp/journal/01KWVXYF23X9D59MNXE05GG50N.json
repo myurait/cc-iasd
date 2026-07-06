@@ -1,0 +1,19 @@
+{
+  "id": "01KWVXYF23X9D59MNXE05GG50N",
+  "ts": "2026-07-06T14:40:04.675Z",
+  "actor": {
+    "kind": "cli"
+  },
+  "type": "created",
+  "subject": "project:root",
+  "data": {
+    "doc_lang": "Japanese",
+    "dev_lang": "TypeScript",
+    "repos": [
+      {
+        "name": "api",
+        "path": "src/api"
+      }
+    ]
+  }
+}
