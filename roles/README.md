@@ -1,25 +1,38 @@
-# Roles
+---
+id: roles-readme
+refs:
+  - doc:12
+  - doc:08
+  - doc:03
+---
 
-This directory defines reusable agent roles for the project.
+# roles
 
-A role is a set of instructions that an AI agent adopts when performing a specific function such as reviewing, planning, or auditing. Roles are tool-agnostic: the same definition can be consumed by Claude Code, Codex, or any other agent runtime.
+このディレクトリは cc-iasd kernel の 3 枚の role card を収める。role card は AI に人格を与える persona ではなく、project-context 内での責務分離単位である。card が定めるのは「判断してよい観点」と「判断してはならない観点」（can / cannot）だけであり、手順・進行順序は書かない。順序・ゲート判定・証跡完全性検査はカーネルが状態機械のガードで強制するため、card に手順を書くと二重管理になる。
 
-## Rules
+## 3 role card
 
-- Each role lives in its own file named `{role-name}.md`.
-- A role file defines stance, responsibilities, required reading, and output format.
-- Role files are stable rule documents and must be written in English per `rules/policies/language-policy.md` (after init).
-- Tool-specific wrappers (e.g., Claude Code's `.claude/agents/`) may reference the canonical role file here. Such wrappers are local convenience files and are not version-controlled.
+- planner.md — vision / spec / charter の authored content を執筆する。人間との vision 対話も担う。
+- worker.md — handoff を入力に src/ のみを編集し、notes と gap 起票で報告する。
+- reviewer.md — gate 種別（spec / launch / run / completion）ごとに fresh-context で起動され、review record を返す。
 
-## Available Roles
+3 ロールとも fresh-context 起動を前提とする。planner は narrow context packet、worker は handoff、reviewer は gate 入力を起動時に与えられ、過去 session の文脈を引き継がない。したがって card には履歴を書かない。
 
-- `ideal-interviewer.md` — elicits and maintains product ideal artifacts through direct human-facing interview. Owns ideal clarification before feature scope design.
-- `worker.md` — minimal-context implementer that focuses on coding, testing, and returning implementation handoff packets. Entry point for implementation tasks.
-- `feature-scope-designer.md` — designs feature scopes and structured feature backlogs from product ideals and user decisions. Owns ideal-to-feature scope design.
-- `spec-designer.md` — designs Spec Kit-compatible spec packages from feature scopes and roadmap direction. Owns feature-to-spec package design.
-- `design-reviewer.md` — reviews newly authored ideal, feature, and spec artifacts with narrow context, and can request same-design-level remediation or upstream backtrack.
-- `compliance-auditor.md` — audits language policy compliance and document format quality across all changed files. Launched after required quality or Devil's Advocate review evidence is available.
-- `code-quality-auditor.md` — audits coding conventions, naming patterns, test design quality, and design document drift. Launched by Execution Manager or the human runtime owner when code files are changed.
-- `devils-advocate.md` — adversarial reviewer with Design Launch Review and Campaign Completion Review modes. Launched during Full review before Compliance Auditor.
-- `execution-manager.md` — execution entry point for campaign/run execution, Worker handoff, implementation reviews, open item routing, completion report, and execution escalation.
-- `planning-lead.md` — planning entry point for roadmap progression, designer handoff, backtrack routing, execution entry packet preparation, and user-facing plan communication.
+決裁者かつ著者としての human は role card を持たない。human の専権（vision approve / decide / campaign close）はカーネルと 12 が定める。
+
+## 生成と override
+
+これらの card は init が出荷資産として project-context へ配布する。card の出力言語欄はプレースホルダ {{docLang}} で持ち、init の doc-lang（cc-iasd.yaml）から生成時に具体言語へ確定する。init 後は project がこれらのファイルを所有し、変更はファイルを直接編集して行う。card は `cc-iasd role show planner|worker|reviewer` で stdout へ出力される。
+
+## card 規約
+
+card は次の規約に従う。詳細は 12 の 5 章を参照する。
+
+- 各 card は 50 行以内とする。
+- 出力言語を明示する（プレースホルダ {{docLang}}）。
+- 手順・進行順序を書かない。
+- 判断してよい観点と判断してはならない観点（can / cannot）のみを書く。
+- 全プロジェクト履歴・全 spec 全文・他ロールの詳細責務を書かない。
+- frontmatter は id と refs のみとし、ライフサイクル情報を Markdown に書かない。
+
+card の配置場所と compile 生成物（out/）の扱いは 03 を参照する。
