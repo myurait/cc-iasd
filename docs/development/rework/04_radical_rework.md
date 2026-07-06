@@ -805,4 +805,12 @@ open questions:
   （surface 内外・impact）/ 人間専権領域該当）とする
 - gate 緩和の適用範囲（2026-07-06 確定）: charter によるオプトダウンは run gate のみ。
   config による無効化は spec / run gate に対して可能で、launch / completion は不可
+- role card の出力言語（2026-07-06 確定。Phase 1 末レビューで再確認）:
+  card の出力言語欄は init の --doc-lang（cc-iasd.yaml の doc-lang）から生成時に
+  確定する。card template は言語をプレースホルダで持ち、生成後の card には
+  具体言語が明示される
+- fresh-context 起動の前提（2026-07-06 確定。Phase 1 末レビューで再確認）:
+  3 ロールとも fresh-context 起動を前提とする。planner は narrow context packet、
+  worker は handoff、reviewer は gate 入力を起動時に与えられ、過去 session の
+  文脈を引き継がない。role card に履歴・手順を書かない規約の根拠である
 ```

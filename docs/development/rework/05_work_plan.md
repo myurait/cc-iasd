@@ -78,6 +78,8 @@ Phase 3: README 全体再構築
     出荷対象を整理（language-policy 等の残すものを選別）
 
 1-E 机上検証（Phase 1 の締め）
+  - 04_core_workflow.md を rework/04 10.3 章のフロー（1 機能を作り切る遷移列）で
+    再構成する（ガイド 3.3 章の割当）
   - 13_simulation_scenarios.md を kernel 語彙で再作成し、
     PBI 並列完走・backtrack・escalation・中断再開のシナリオを新設計で通し検証する。
     矛盾が出たら 2 章のルールに従い rework/04 経由で解決する
