@@ -1,0 +1,20 @@
+{
+  "id": "01KWVY8E71FAPEJ8RZ0D9T27TW",
+  "ts": "2026-07-06T14:45:31.489Z",
+  "actor": {
+    "kind": "agent"
+  },
+  "type": "transitioned",
+  "subject": "spec:s001",
+  "data": {
+    "from": "draft",
+    "to": "retired",
+    "guard_results": [
+      {
+        "name": "exists",
+        "pass": true,
+        "detail": "spec:s001 は存在する"
+      }
+    ]
+  }
+}
