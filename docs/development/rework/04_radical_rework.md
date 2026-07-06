@@ -766,14 +766,22 @@ open questions:
   専用 artifact の復活か charter 拡張か
 - project-context repo の auto-commit 粒度（遷移ごとか、まとめるか）
 - 旧 roles/ の prompt 資産（narrow context packet 設計等）を 3 cards へどこまで移植するか
-- gap の routed / deferred の成立条件（routed に decision を要するか、blocking gap を
-  routed にできるか）— Phase 1-B の 05 / 06 改稿時に確定する
-- journal event の refs と Markdown frontmatter の refs の対応形式 — Phase 1-B の
-  06 改稿時に確定する（設計判断が必要なら本文書へ追記して確定を取る）
 
 決定済み（2026-07-03）:
 - multi-repo: v0 必須。横断 run を許す（7.4 章）
 - 並列 run: v0 必須。claim + write glob 交差ガード + verify lock で並列安全を担保（7.4 章）
 - gate review: 4 gate 既定必須 + charter 単位の risk-tier オプトダウン。
   緩和下限は launch + completion。actor=human 要求は v0 非搭載（5.2 章）
+- gap の終端条件（2026-07-05 確定。Phase 1 末レビューで再確認）:
+    closed   = decision へのリンク、または対象 artifact の編集 + 再 review で成立
+    routed   = blocking=false かつ route が none でない場合に decision 不要で成立。
+               gap は route 先の計画在庫として台帳に残り、status --plan に現れ続ける。
+               blocking gap を routed にはできない（先に decision か上流編集で
+               blocking を解消する）
+    deferred = decision へのリンクを必須とする（campaign close ガードの
+               「deferred（要 decision）」と整合）
+- refs の対応形式（2026-07-05 確定。Phase 1 末レビューで再確認）:
+    frontmatter の refs は作成・編集時の宣言入力であり、遷移時に CLI がパースして
+    journal の refs（{rel, to} の正規形）へ正規化して取り込む。正本は journal 側で
+    あり、doctor が frontmatter と journal 導出 refs の一致を検査する
 ```
