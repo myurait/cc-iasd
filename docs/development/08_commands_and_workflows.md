@@ -88,18 +88,18 @@ cc-iasd role show planner|worker|reviewer
 遷移: journal を新規作成する。ノードの状態遷移は起こさない
 ```
 
-ディレクトリツリーの詳細は 03 を参照。
+init は登録した各 repo の baseline（導入時点の HEAD / dirty）を baseline.recorded event として journal に刻む（14 5.4）。以後の run 単位 base commit 記録がこの baseline を起点に差分を測る。ディレクトリツリーの詳細は 03 を参照。
 
 ### 3.3 cc-iasd doctor
 
 ```text
 目的: project-context の整合性を検査する
 入力: なし
-出力: 検査結果（構造 / 参照整合 / src 汚染 / guard 再計算一致 / 証拠十分性）
+出力: 検査結果（構造 / 参照整合 / src 汚染 / guard 再計算一致 / 証拠十分性 / 導入時 baseline）
 遷移: 起こさない（読み取り検査のみ）
 ```
 
-doctor は adhoc run の比率を表示して spec / campaign への昇格を促す（8.1 節）。検査観点の詳細は 06 を参照。
+doctor は adhoc run の比率を表示して spec / campaign への昇格を促す（8.1 節）。導入時 baseline 検査（adoption-baseline）は baseline を持たない登録 repo と導入時点で dirty だった repo を warning にする（14 5.4。いずれも 3 不変条件の破れではないため error にはしない）。検査観点の詳細は 06 を参照。
 
 ### 3.4 cc-iasd status
 

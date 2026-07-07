@@ -15,6 +15,31 @@ function tmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'cc-init-'));
 }
 
+// テスト用の src 側 git repo を作る。1 commit を積んで HEAD を成立させる。
+// dirty=true の場合は commit 後に untracked ファイルを 1 つ残す。
+function makeGitRepo(dir, { dirty = false } = {}) {
+  fs.mkdirSync(dir, { recursive: true });
+  const g = (args) =>
+    execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  g(['init', '-q']);
+  g(['config', 'user.name', 'test']);
+  g(['config', 'user.email', 'test@local']);
+  fs.writeFileSync(path.join(dir, 'README.md'), '# test\n');
+  g(['add', '-A']);
+  g(['commit', '-q', '-m', 'init']);
+  const head = g(['rev-parse', 'HEAD']).trim();
+  if (dirty) {
+    // untracked ファイルを残して working tree を dirty にする。
+    fs.writeFileSync(path.join(dir, 'dirty.txt'), 'x\n');
+  }
+  return head;
+}
+
+// baseline.recorded event を 1 件返す（無ければ null）。
+function baselineEvent(root) {
+  return readAll(root).find((e) => e.type === 'baseline.recorded') || null;
+}
+
 // stdout / process.exitCode を捕捉して doctor を実行するヘルパ。
 function captureDoctor(root, opts = {}) {
   const chunks = [];
@@ -295,5 +320,119 @@ test('doctor は journal-native な decision ref を解決成功にする', () =
   assert.ok(
     !json.errors.some((f) => f.check === 'journal-refs' && /decision:d001/.test(f.detail)),
     `decision:d001 は journal subject として解決されるべき: ${JSON.stringify(json.errors)}`
+  );
+});
+
+// --- 実装 1: 導入時 baseline イベント（14 5.4 / 06 3.2） ---
+
+test('init は baseline event を 1 件刻み data.repos が登録 repo と一致する（clean git repo は dirty=false）', () => {
+  const base = tmpDir();
+  const repoDir = path.join(base, 'src', 'api');
+  const head = makeGitRepo(repoDir, { dirty: false });
+  const target = path.join(base, 'proj');
+  // repo path は project-context から src/api への相対で登録する（実体は base/src/api）。
+  // init は path.resolve(target, r.path) で解決するため、target を base 配下に置き相対を合わせる。
+  silentInit({ positional: [target], flags: { repo: `api:${path.relative(target, repoDir)}` }, jsonMode: true });
+
+  const ev = baselineEvent(target);
+  assert.ok(ev, 'baseline.recorded event が 1 件存在する');
+  assert.equal(ev.subject, 'project:root');
+  assert.equal(ev.actor.kind, 'cli');
+  assert.equal(ev.data.repos.length, 1);
+  const r = ev.data.repos[0];
+  assert.equal(r.name, 'api');
+  assert.equal(r.head, head, 'head が実 HEAD sha と一致する');
+  assert.equal(r.dirty, false, 'clean な git repo は dirty=false');
+});
+
+test('init の baseline は dirty な git repo を dirty=true と記録する', () => {
+  const base = tmpDir();
+  const repoDir = path.join(base, 'src', 'api');
+  const head = makeGitRepo(repoDir, { dirty: true });
+  const target = path.join(base, 'proj');
+  silentInit({ positional: [target], flags: { repo: `api:${path.relative(target, repoDir)}` }, jsonMode: true });
+
+  const ev = baselineEvent(target);
+  const r = ev.data.repos[0];
+  assert.equal(r.head, head);
+  assert.equal(r.dirty, true, 'untracked ファイルがあれば dirty=true');
+});
+
+test('init の baseline は非 git ディレクトリ登録で head=null / dirty=null', () => {
+  const base = tmpDir();
+  const repoDir = path.join(base, 'src', 'plain');
+  fs.mkdirSync(repoDir, { recursive: true });
+  fs.writeFileSync(path.join(repoDir, 'a.txt'), 'x\n');
+  const target = path.join(base, 'proj');
+  silentInit({ positional: [target], flags: { repo: `plain:${path.relative(target, repoDir)}` }, jsonMode: true });
+
+  const ev = baselineEvent(target);
+  const r = ev.data.repos[0];
+  assert.equal(r.name, 'plain');
+  assert.equal(r.head, null, '非 git は head=null');
+  assert.equal(r.dirty, null, '非 git は dirty=null');
+});
+
+test('init は登録 repo が 0 件でも baseline event を刻む（data.repos=[]）', () => {
+  const target = path.join(tmpDir(), 'no-repo');
+  silentInit({ positional: [target], flags: {}, jsonMode: true });
+  const ev = baselineEvent(target);
+  assert.ok(ev, 'repo 0 件でも baseline event が存在する');
+  assert.deepEqual(ev.data.repos, []);
+});
+
+// --- 実装 2: doctor の adoption-baseline 検査（14 5.4 / 08 3.3） ---
+
+test('doctor: baseline event の無い旧 project-context は warning を出すが green（exit 0）のまま', () => {
+  const base = tmpDir();
+  const repoDir = path.join(base, 'src', 'api');
+  makeGitRepo(repoDir, { dirty: false });
+  const target = path.join(base, 'proj');
+  silentInit({ positional: [target], flags: { repo: `api:${path.relative(target, repoDir)}` }, jsonMode: true });
+
+  // baseline event を意図的に削除して「旧 project-context」を再現する。
+  const journalDir = path.join(target, 'journal');
+  for (const f of fs.readdirSync(journalDir)) {
+    const raw = JSON.parse(fs.readFileSync(path.join(journalDir, f), 'utf8'));
+    if (raw.type === 'baseline.recorded') fs.rmSync(path.join(journalDir, f));
+  }
+
+  const { json, exitCode } = captureDoctor(target);
+  assert.equal(json.green, true, JSON.stringify(json.errors));
+  assert.equal(exitCode, 0);
+  assert.ok(
+    json.warnings.some((f) => f.check === 'adoption-baseline' && /baseline がありません/.test(f.detail)),
+    `baseline 欠落は warning であるべき: ${JSON.stringify(json.warnings)}`
+  );
+});
+
+test('doctor: baseline で dirty=true と記録された repo は warning（green のまま）', () => {
+  const base = tmpDir();
+  const repoDir = path.join(base, 'src', 'api');
+  makeGitRepo(repoDir, { dirty: true });
+  const target = path.join(base, 'proj');
+  silentInit({ positional: [target], flags: { repo: `api:${path.relative(target, repoDir)}` }, jsonMode: true });
+
+  const { json, exitCode } = captureDoctor(target);
+  assert.equal(json.green, true, JSON.stringify(json.errors));
+  assert.equal(exitCode, 0);
+  assert.ok(
+    json.warnings.some((f) => f.check === 'adoption-baseline' && /dirty/.test(f.detail)),
+    `導入時 dirty は warning であるべき: ${JSON.stringify(json.warnings)}`
+  );
+});
+
+test('doctor: baseline 完備・clean 記録なら adoption-baseline warning はゼロ', () => {
+  const base = tmpDir();
+  const repoDir = path.join(base, 'src', 'api');
+  makeGitRepo(repoDir, { dirty: false });
+  const target = path.join(base, 'proj');
+  silentInit({ positional: [target], flags: { repo: `api:${path.relative(target, repoDir)}` }, jsonMode: true });
+
+  const { json, exitCode } = captureDoctor(target);
+  assert.equal(exitCode, 0);
+  assert.ok(
+    !json.warnings.some((f) => f.check === 'adoption-baseline'),
+    `baseline 完備・clean なら adoption-baseline warning は出ないべき: ${JSON.stringify(json.warnings)}`
   );
 });

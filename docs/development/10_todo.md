@@ -188,15 +188,17 @@ P1 実装中に詰めた仕様詳細（3 章のバッチ、および正規化ハ
 
 ---
 
-## 7. brownfield 導入の実装候補
+## 7. brownfield 導入の実装候補【実装済み】
 
-14_brownfield_adoption.md 7 章の未確定事項に対応する実装候補である。いずれも小粒で、着手判断は指示待ちとする。
+14_brownfield_adoption.md 7 章の未確定事項に対応する実装候補である。3 件とも実装・確定済み。
 
 ```text
-- 導入時 baseline イベント:
-    init 時に各登録リポジトリの HEAD と dirty 状態を journal へ 1 event として刻む
-- doctor の導入時検査:
-    登録リポジトリが dirty のまま運用開始していないか等の検査
-- 既存ドキュメントの参照形式の確定:
-    spec 本文からの相対参照で足りるか、read-only の持ち込み領域を設けるか
+- 導入時 baseline イベント【実装済み】:
+    init が各登録 repo の HEAD / dirty を baseline.recorded event（subject=project:root）として
+    journal に 1 件刻む（登録 0 件でも data.repos=[] で刻む）。06 3.2 の closed set に追加済み
+- doctor の導入時検査【実装済み】:
+    doctor の adoption-baseline 検査を追加。baseline 欠落の登録 repo と導入時点 dirty=true の repo を
+    warning にする（両者とも error ではないため green 判定は崩さない）
+- 既存ドキュメントの参照形式の確定【確定済み】:
+    src/<repo>/<path> の論理パス参照に確定。持ち込み領域は設けない。14 の 5.5 章に規定
 ```

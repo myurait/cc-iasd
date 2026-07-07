@@ -104,6 +104,7 @@ event type（closed set）:
 - session.resumed    session 再開
 - commit.observed    src/ 側 repo の base commit 観測（refs に commit）
 - note.appended      notes への追記
+- baseline.recorded  導入時点の各登録 repo の HEAD / dirty の記録（init のみが生成）
 ```
 
 ### 3.3 transitioned event の guard_results
