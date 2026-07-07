@@ -469,8 +469,8 @@ test('campaign close: run 未受入 / report 欠落で拒否 -> 揃えて成立'
     }
   );
 
-  // report を置く
-  writeFile(root, 'campaigns/c001-reporting/report.md', '# report: c001\n完了。\n');
+  // report を置く（report コマンドの出力先 out/<campaign-id>/report.md。P1 契約 5 章）
+  writeFile(root, 'out/c001/report.md', '# report: c001\n完了。\n');
 
   const r = _internal.cmdCampaign({ positional: ['close', 'c001'], root });
   assert.equal(r.to, 'closed');
@@ -483,7 +483,7 @@ test('campaign close: open gap が残ると拒否', () => {
   launchCampaign(root);
   makeAcceptedRun(root, 'r-1-csv', 'c001', 'T001');
   recordReview(root, 'campaign:c001', 'completion', CHARTER_BODY);
-  writeFile(root, 'campaigns/c001-reporting/report.md', '# report\n');
+  writeFile(root, 'out/c001/report.md', '# report\n');
   openGap(root, 'g009', 'campaign:c001', { blocking: false, route: 'vision' });
   assert.throws(
     () => _internal.cmdCampaign({ positional: ['close', 'c001'], root }),

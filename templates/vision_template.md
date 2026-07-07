@@ -24,9 +24,15 @@ refs: []
 
 ## Capabilities
 
-<!-- 提供すべき機能能力の構造化チェックリスト。coverage 追跡の基準になる。
-     各 capability は spec / campaign が covers ref で参照し、未カバーは status --plan の
-     射影で空欄として可視化される。 -->
+<!-- 提供すべき機能能力の構造化チェックリスト。coverage 追跡の突合キーになる。
+     記法（1 capability = 1 チェックリスト項目。id は cap-<slug> で安定させる）:
+       - [ ] cap-<slug>: 説明
+     spec / campaign は frontmatter refs に covers（to=<cap-id>）を宣言してこの
+     capability を被覆する。遷移時に journal へ取り込まれ、covers 射影の正本になる。
+     どの spec / campaign も covers しない capability は status --plan で
+     未カバーとして可視化される。以下は記入例（実際の capability に置き換える）。 -->
+
+- [ ] cap-example: この vision が提供すべき能力の一例（説明を書き、id は cap- で始める）
 
 ## Human Decision Points
 
