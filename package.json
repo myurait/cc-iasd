@@ -1,7 +1,7 @@
 {
   "name": "cc-iasd",
   "version": "0.1.0",
-  "description": "Project-context framework for governed agentic software development.",
+  "description": "Deterministic state-machine kernel for agentic development: src isolation, evidence-first journal, and no-guess backtracking enforced by structure.",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -10,7 +10,6 @@
   "files": [
     "bin",
     "lib",
-    "rules",
     "roles",
     "templates/*.md",
     "README.md",
