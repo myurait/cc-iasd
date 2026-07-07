@@ -82,6 +82,10 @@ cc-iasd
   机上検証シナリオ。PBI 並列完走 / backtrack / escalation / 中断再開 /
   停止条件 / gap 終端の 6 シナリオと 1-E 検証結果
 
+14_brownfield_adoption.md
+  既存コードベースへの追加導入。物理配置・as-built の扱い・段階導入ラダー・
+  context 成果物ごとの取り扱い・アンチパターン
+
 rework/
   先行事例調査に基づく設計リワークの検討・作業記録。設計正本は 04_radical_rework.md、
   正本化の作業計画は 05_work_plan.md、並行改稿の共通規約は 06_doc_rework_guide.md。
