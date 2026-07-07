@@ -45,4 +45,8 @@ depends_on: []
 
 ## Cross-Checks
 
-<!-- campaign 全体で横断的に確認すべき観点を記す。completion gate の review 対象になる。 -->
+<!-- campaign 全体で横断的に確認すべき check を記す。campaign close 時に CLI が
+     子プロセス実行し、exit code を expect と照合する（1 件でも fail なら close 拒否）。
+     記法は spec の Checks と同一:
+     - id: e2e ; run: "npm run e2e" ; cwd: src/api ; expect: { exit: 0 } -->
+

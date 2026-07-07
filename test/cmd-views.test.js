@@ -256,6 +256,47 @@ test('status <ref>: verified run は accept / block / escalate を提示', async
   }
 });
 
+// 修正 4: run の status ref view は spec を露出する（node.spec 一次、upstream refs 二次）。
+test('status <ref>: run view は spec を露出する（created data.spec 由来）', async () => {
+  const root = makeRoot();
+  try {
+    put(root, 'run:r-1', 'created', { data: { type: 'normal', campaign: 'c001', spec: 's001' } });
+    const { result } = await call('status', { positional: ['run:r-1'], root, jsonMode: true });
+    assert.ok(result.run, 'run view があるべき');
+    assert.equal(result.run.campaign, 'c001', 'campaign が露出される');
+    assert.equal(result.run.spec, 'spec:s001', 'spec が spec:<id> 正規形で露出される');
+  } finally {
+    cleanup(root);
+  }
+});
+
+// spec が created data に無くても upstream ref（run open の buildOpenRefs 由来）から導出する。
+test('status <ref>: run view の spec は upstream ref からも導出できる', async () => {
+  const root = makeRoot();
+  try {
+    put(root, 'run:r-1', 'created', {
+      data: { type: 'normal', campaign: 'c001' },
+      refs: [{ rel: 'campaign', to: 'campaign:c001' }, { rel: 'upstream', to: 'spec:s002' }],
+    });
+    const { result } = await call('status', { positional: ['run:r-1'], root, jsonMode: true });
+    assert.equal(result.run.spec, 'spec:s002', 'upstream ref から spec を導出する');
+  } finally {
+    cleanup(root);
+  }
+});
+
+// adhoc run（spec 紐付けなし）は spec=null。
+test('status <ref>: spec 紐付けの無い adhoc run は spec=null', async () => {
+  const root = makeRoot();
+  try {
+    put(root, 'run:r-1', 'created', { data: { type: 'normal' } });
+    const { result } = await call('status', { positional: ['run:r-1'], root, jsonMode: true });
+    assert.equal(result.run.spec, null, 'spec 未紐付けは null');
+  } finally {
+    cleanup(root);
+  }
+});
+
 test('status <ref>: 存在しない ref は拒否', async () => {
   const root = makeRoot();
   try {

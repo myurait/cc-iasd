@@ -144,6 +144,9 @@ close:
   入力: <campaign-id>
   出力: 成功時は closed への遷移、拒否時は guard 拒否メッセージ
   遷移: campaign active -> closed（ガード通過時）
+  補足: close ガードは charter の Cross-Checks 節（spec の Checks と同一記法）に
+        check があれば全件を子プロセス実行し、exit code を expect と照合する。
+        1 件でも fail なら close を拒否する（Default-FAIL）。節が無い/空なら vacuous pass。
 ```
 
 ### 3.8 cc-iasd run open

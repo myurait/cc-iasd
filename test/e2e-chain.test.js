@@ -17,10 +17,11 @@ import { fileURLToPath } from 'node:url';
 //        -> s002 run 完走 -> status --plan の covered/uncovered 射影 assert
 //        -> review record(gate=completion) -> report -> campaign close -> closed
 //
-// 設計正本: 05（遷移ガード・coverage 順序制約）/ 06（covers 射影・charter Cross-Checks）/
-// 08（コマンド構文）/ rework 08（P1 契約）。cross-checks は charter の 1 節であり
-// completion gate review の対象（06 charter 節・templates/charter_template.md）。
-// close が別途「実行」する経路は正本に無い（最終報告 open question 参照）。
+// 設計正本: 04/13（close 条件に cross-checks pass）/ 05（遷移ガード・coverage 順序制約・
+// campaign close の Cross-Checks 実行ガード）/ 06（covers 射影・frontmatter refs 取込）/
+// 08（コマンド構文）/ rework 08（P1 契約）。charter の Cross-Checks は spec の Checks と
+// 同一記法で書き、campaign close 時に CLI が子プロセス実行して exit code を照合する
+// （Default-FAIL。結果は guard_results に焼込）。full-chain の最後に doctor green を assert する。
 
 const BIN = path.resolve(fileURLToPath(new URL('../bin/cc-iasd.js', import.meta.url)));
 
@@ -198,7 +199,7 @@ tier A: なし。
 ## Non-Regression Focus
 既存 export を壊さない。
 ## Cross-Checks
-全 export / import の回帰確認。
+- id: e2e ; run: "${OK_CHECK}" ; cwd: src/api ; expect: { exit: 0 }
 `;
 
 // campaign 由来 run を open -> return -> verify -> review -> accept まで進め run-id を返す。
@@ -355,6 +356,26 @@ test('full-chain e2e: vision(2cap) -> spec x2 -> campaign -> 順序制約 -> run
   // close で coverage spec が in-campaign -> done（05 2 章）。
   assert.equal(statusOf(root, 'spec:s001'), 'done', 's001 は done');
   assert.equal(statusOf(root, 'spec:s002'), 'done', 's002 は done');
+
+  // --- 修正 1: charter の Cross-Checks が close で CLI 実行され guard_results に焼込 ---
+  const journalDir = path.join(root, 'journal');
+  const events = fs
+    .readdirSync(journalDir)
+    .map((f) => JSON.parse(fs.readFileSync(path.join(journalDir, f), 'utf8')));
+  const closeEv = events.find(
+    (e) => e.type === 'transitioned' && e.subject === 'campaign:c001' && e.data && e.data.to === 'closed'
+  );
+  assert.ok(closeEv, 'campaign close の transitioned event が存在すべき');
+  const xcheck = (closeEv.data.guard_results || []).find((g) => g.name === 'cross-check:e2e');
+  assert.ok(xcheck && xcheck.pass === true, `cross-check:e2e が pass で焼き込まれるべき: ${JSON.stringify(closeEv.data.guard_results)}`);
+
+  // --- 修正 3: full-chain の最後に doctor が green（error 0 件）であること ---
+  // decide が焼く approved-by:decision refs（journal のみ / decision は journal-native subject）が
+  // frontmatter-refs / journal-refs 検査に反しないことを、フル chain 末尾で実測確認する。
+  const doc = cliResult(root, ['doctor']);
+  const dj = JSON.parse(lastLine(doc.stdout));
+  assert.equal(dj.green, true, `full-chain 完走後 doctor は green であるべき: ${JSON.stringify(dj.errors)}`);
+  assert.equal((dj.errors || []).length, 0, `doctor error は 0 件であるべき: ${JSON.stringify(dj.errors)}`);
 });
 
 // ==================================================================

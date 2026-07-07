@@ -169,19 +169,60 @@ tier A: なし。
 全 export の回帰。
 `;
 
-// campaign を active にするまでを CLI で構築する。
-function buildActiveCampaign(root) {
+// campaign を active にするまでを CLI で構築する。charterBody を渡せば差し替える
+// （Cross-Checks 節を実行可能 check にしたテスト等）。
+function buildActiveCampaign(root, charterBody = CHARTER_BODY) {
   assertOk(cliResult(root, ['new', 'vision', 'core']), 'new vision');
   assertOk(cliResult(root, ['new', 'spec', 'csv']), 'new spec');
   assertOk(cliResult(root, ['new', 'campaign', 'reporting']), 'new campaign');
   fs.writeFileSync(path.join(root, 'vision', 'v001-core.md'), VISION_BODY);
   fs.writeFileSync(path.join(root, 'specs', 's001-csv', 'spec.md'), SPEC_BODY);
-  fs.writeFileSync(path.join(root, 'campaigns', 'c001-reporting', 'charter.md'), CHARTER_BODY);
+  fs.writeFileSync(path.join(root, 'campaigns', 'c001-reporting', 'charter.md'), charterBody);
   assertOk(cliResult(root, ['decide', 'd001', '--approve', 'vision:v001']), 'decide vision');
   assertOk(cliResult(root, ['review', 'record', 'spec:s001', '--gate', 'spec', '--verdict', 'pass']), 'review spec');
   assertOk(cliResult(root, ['spec', 'ready', 's001']), 'spec ready');
   assertOk(cliResult(root, ['review', 'record', 'campaign:c001', '--gate', 'launch', '--verdict', 'pass']), 'review launch');
   assertOk(cliResult(root, ['campaign', 'launch', 'c001']), 'campaign launch');
+}
+
+// Cross-Checks 節に CLI 実行可能な check を持つ charter を組み立てる（cmd 記法は spec の Checks と同一）。
+function charterWithCrossChecks(crossChecksBody) {
+  return `---
+id: c001
+refs:
+  - { rel: covers, to: spec:s001 }
+---
+# charter: reporting
+## UX Outcome
+レポートを得られる。
+## Coverage
+covers spec:s001
+## Depends On
+\`\`\`text
+depends_on: []
+\`\`\`
+## Stop Conditions
+budget 超過で停止。
+## Risk Tiers
+tier A: なし。
+## Non-Regression Focus
+既存 export を壊さない。
+## Cross-Checks
+${crossChecksBody}
+`;
+}
+
+// campaign を close 直前（全 task 消化 + completion review + report 済み）まで進める。
+function readyToClose(root, charterBody) {
+  initProject(root);
+  initSrcRepo(root);
+  buildActiveCampaign(root, charterBody);
+  runCampaignTasks(root, ['T001', 'T002'], 'a.js');
+  assertOk(
+    cliResult(root, ['review', 'record', 'campaign:c001', '--gate', 'completion', '--verdict', 'pass']),
+    'review completion'
+  );
+  assertOk(cliResult(root, ['report', 'campaign:c001'], []), 'report campaign');
 }
 
 // campaign 由来 run を open -> return -> verify -> review -> accept まで進め run-id を返す。
@@ -310,6 +351,67 @@ test('campaign close: 宣言 task の一部が未消化なら拒否（run.tasks 
   assertOk(cliResult(root, ['campaign', 'close', 'c001'], []), 'campaign close(全消化後)');
   assert.equal(statusOf(root, 'campaign:c001'), 'closed');
   assert.equal(statusOf(root, 'spec:s001'), 'done');
+});
+
+// ==================================================================
+// 修正 1: campaign close で charter の Cross-Checks を CLI 実行する（04/13 の close 条件）
+// ==================================================================
+
+// (i) Cross-Checks が fail する check を持つと close は拒否される（Default-FAIL）。
+test('campaign close: Cross-Checks の check が fail なら close は拒否（Default-FAIL）', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-chain-xcheck-fail-'));
+  const charter = charterWithCrossChecks(
+    '- id: e2e ; run: "node -e \\"process.exit(1)\\"" ; cwd: src/api ; expect: { exit: 0 }'
+  );
+  readyToClose(root, charter);
+
+  const close = cliResult(root, ['campaign', 'close', 'c001'], ['--json']);
+  assert.equal(close.status, 2, `Cross-Checks fail 時 close は拒否されるべき: ${close.stdout}${close.stderr}`);
+  const j = JSON.parse(lastLine(close.stdout));
+  assert.equal(j.ok, false);
+  assert.ok(
+    j.missing.some((m) => m.input === 'cross-check:e2e' && /fail/.test(m.detail)),
+    `fail した cross-check:e2e が列挙されるべき: ${JSON.stringify(j.missing)}`
+  );
+  assert.equal(statusOf(root, 'campaign:c001'), 'active', '拒否時 campaign は active のまま');
+});
+
+// (ii) Cross-Checks が全 pass なら close が成立し guard_results に焼き込まれる。
+test('campaign close: Cross-Checks 全 pass で close 成立し guard_results に焼き込まれる', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-chain-xcheck-pass-'));
+  const charter = charterWithCrossChecks(
+    `- id: e2e ; run: "${OK_CHECK}" ; cwd: src/api ; expect: { exit: 0 }`
+  );
+  readyToClose(root, charter);
+
+  const close = assertOk(cliResult(root, ['campaign', 'close', 'c001'], []), 'campaign close');
+  assert.match(close.stdout, /closed/, `Cross-Checks 全 pass で close 成立すべき: ${close.stdout}`);
+  assert.equal(statusOf(root, 'campaign:c001'), 'closed');
+
+  // transitioned event の guard_results に cross-check:e2e（pass, exit=0）が焼き込まれること。
+  const journalDir = path.join(root, 'journal');
+  const events = fs
+    .readdirSync(journalDir)
+    .map((f) => JSON.parse(fs.readFileSync(path.join(journalDir, f), 'utf8')));
+  const closeEv = events.find(
+    (e) => e.type === 'transitioned' && e.subject === 'campaign:c001' && e.data && e.data.to === 'closed'
+  );
+  assert.ok(closeEv, 'campaign close の transitioned event が存在すべき');
+  const gr = (closeEv.data.guard_results || []).find((g) => g.name === 'cross-check:e2e');
+  assert.ok(gr, `guard_results に cross-check:e2e があるべき: ${JSON.stringify(closeEv.data.guard_results)}`);
+  assert.equal(gr.pass, true, 'cross-check:e2e は pass で焼き込まれるべき');
+  assert.match(gr.detail, /exit=0/, `detail に exit code が含まれるべき: ${gr.detail}`);
+});
+
+// (iii) Cross-Checks 節が無い（check 0 件）charter は従来どおり close 可（vacuous pass）。
+test('campaign close: Cross-Checks に check が無ければ従来どおり close 可（vacuous pass）', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-chain-xcheck-none-'));
+  // 既定 CHARTER_BODY の Cross-Checks は平文（id:/run: 無し）なので check 0 件。
+  readyToClose(root, CHARTER_BODY);
+
+  const close = assertOk(cliResult(root, ['campaign', 'close', 'c001'], []), 'campaign close');
+  assert.match(close.stdout, /closed/, `check 0 件の charter は close 可: ${close.stdout}`);
+  assert.equal(statusOf(root, 'campaign:c001'), 'closed');
 });
 
 // ==================================================================
