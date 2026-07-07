@@ -178,7 +178,7 @@ escalate: escalation packet を生成して escalated へ（decision 待ち）
 
 ## 現在の状態
 
-現在は P1（縦スライス）が実装済みです。adhoc run だけで 3 不変条件が構造で守られる最小系が動作します。次のコマンドが実装済みです（各コマンドの目的・入力・出力・遷移は `docs/development/08_commands_and_workflows.md`）。
+現在は P1（縦スライス）と P2（計画チェーン）が実装済みです。adhoc run だけで 3 不変条件が構造で守られる最小系に加え、vision 承認から campaign close までの full-chain が 4 gate 運用込みで動作します。次のコマンドが実装済みです（各コマンドの目的・入力・出力・遷移は `docs/development/08_commands_and_workflows.md`）。
 
 ```text
 cc-iasd                                        # 引数なし = human inbox
@@ -204,19 +204,13 @@ cc-iasd retire <ref>
 cc-iasd role show planner|worker|reviewer
 ```
 
-実行検証済みの動線は次です。`init -> run open --adhoc --check -> run handoff` で handoff を機械合成して runtime へ渡し、`run return -> run verify -> review record --gate run --verdict pass -> run accept` で adhoc run を完走できます。ガード不成立時（notes 不在での return、verify 前の accept、blocking gap open での spec ready など）は遷移せず拒否メッセージを返します。
+実行検証済みの動線は 2 本です。adhoc の最短動線は `init -> run open --adhoc --check -> run handoff` で handoff を機械合成して runtime へ渡し、`run return -> run verify -> review record --gate run --verdict pass -> run accept` で完走します。full-chain の動線は `new vision`（Capabilities 宣言）`-> decide --approve -> new spec -> spec ready -> new campaign -> campaign launch -> run open <campaign-id> --tasks -> run 完走 -> review record --gate completion -> report -> campaign close` を通し、charter Coverage の `after:` による run open の順序制約、宣言 task の全消化判定、`status --plan` での capability カバー / 未カバー射影が e2e テストで検証済みです。ガード不成立時（notes 不在での return、verify 前の accept、blocking gap open での spec ready、先行 spec 未完了での run open など）は遷移せず拒否メッセージを返します。
 
 ### roadmap（未実装）
 
-次の項目は P2〜P4 のスコープで、現時点では未実装です。
+次の項目は P3〜P4 のスコープで、現時点では未実装です。
 
 ```text
-- vision / spec / campaign のノード化 CLI（現状は new / gap / spec ready / campaign
-  launch などの基本遷移は動作するが、フル chain 前提の運用は未整備）
-- campaign launch から completion review・close までを通す full-chain の gate 運用
-  （review record コマンド自体は 4 gate とも動作します）
-- vision Capabilities を基準にした covers 射影マトリクス（status --plan 自体は
-  動作しますが、未カバー capability の可視化は未実装です）
 - session start / resume（実装 runtime の bundle compile と起動 / 中断再開）
 - Tier 1 adapter（hook 対応 runtime 向けの加速層。context 注入・src 外書込 deny 等）
 - worktree 隔離 adapter（並列 run の高度な隔離）

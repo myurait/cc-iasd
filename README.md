@@ -184,7 +184,7 @@ escalate: generates an escalation packet and moves to escalated (awaiting a deci
 
 ## Current status
 
-P1 (a vertical slice) is currently implemented. The minimal system in which the three invariants are upheld by structure with adhoc runs alone is working. The following commands are implemented (each command's purpose, inputs, outputs, and transitions are in `docs/development/08_commands_and_workflows.md`).
+P1 (a vertical slice) and P2 (the planning chain) are currently implemented. On top of the minimal system in which the three invariants are upheld by structure with adhoc runs alone, the full chain from vision approval through campaign close works with all four gates in operation. The following commands are implemented (each command's purpose, inputs, outputs, and transitions are in `docs/development/08_commands_and_workflows.md`).
 
 ```text
 cc-iasd                                        # no arguments = human inbox
@@ -210,20 +210,13 @@ cc-iasd retire <ref>
 cc-iasd role show planner|worker|reviewer
 ```
 
-The execution-verified path is: `init -> run open --adhoc --check -> run handoff` synthesizes the handoff and hands it to the runtime, and `run return -> run verify -> review record --gate run --verdict pass -> run accept` completes an adhoc run end to end. When a guard is not satisfied (return with no notes present, accept before verify, spec ready with a blocking gap open, and so on) no transition occurs and a rejection message is returned.
+There are two execution-verified paths. The shortest, adhoc path is: `init -> run open --adhoc --check -> run handoff` synthesizes the handoff and hands it to the runtime, and `run return -> run verify -> review record --gate run --verdict pass -> run accept` completes the run end to end. The full-chain path runs `new vision` (declaring Capabilities) `-> decide --approve -> new spec -> spec ready -> new campaign -> campaign launch -> run open <campaign-id> --tasks -> run to completion -> review record --gate completion -> report -> campaign close`, and the ordering constraint on run open via `after:` in the charter's Coverage, the all-declared-tasks-consumed check, and the covered / uncovered capability projection in `status --plan` are all verified by e2e tests. When a guard is not satisfied (return with no notes present, accept before verify, spec ready with a blocking gap open, run open before a preceding spec has completed, and so on) no transition occurs and a rejection message is returned.
 
 ### roadmap (not yet implemented)
 
-The following items are in the P2–P4 scope and are not yet implemented.
+The following items are in the P3–P4 scope and are not yet implemented.
 
 ```text
-- Node-izing CLI for vision / spec / campaign (the basic transitions such as new / gap /
-  spec ready / campaign launch work today, but operation premised on the full chain is not
-  yet built out)
-- Full-chain gate operation from campaign launch through completion review and close
-  (the review record command itself works for all four gates)
-- The covers projection matrix based on vision Capabilities (status --plan itself works,
-  but visualizing uncovered capabilities is not yet implemented)
 - session start / resume (bundle compile and launch of the implementation runtime / interruption and resume)
 - Tier 1 adapter (an acceleration layer for hook-capable runtimes: context injection, deny writes outside src, etc.)
 - worktree isolation adapter (advanced isolation for parallel runs)
