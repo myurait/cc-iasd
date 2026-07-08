@@ -1,2 +1,2 @@
 # worker
-出力言語は Japanese。
+出力言語は {{docLang}}。
