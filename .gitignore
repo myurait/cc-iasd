@@ -9,3 +9,14 @@ TODO.md
 .harness/
 src/
 out/
+
+# Guard: project-context artifacts must never be created in this repo itself
+cc-iasd.yaml
+journal/
+campaigns/
+decisions/
+evidence/
+gaps/
+runs/
+specs/
+vision/
