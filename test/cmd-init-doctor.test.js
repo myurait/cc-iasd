@@ -436,3 +436,23 @@ test('doctor: baseline 完備・clean 記録なら adoption-baseline warning は
     `baseline 完備・clean なら adoption-baseline warning は出ないべき: ${JSON.stringify(json.warnings)}`
   );
 });
+
+test('init: cc-iasd パッケージ自身への init は拒否される', () => {
+  const dir = tmpDir();
+  // パッケージ自身を模した package.json（name=cc-iasd）を置く。
+  fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'cc-iasd' }));
+  assert.throws(
+    () => initRun({ positional: [dir], flags: {}, jsonMode: false }),
+    (e) => e instanceof Refusal && /cc-iasd パッケージ自身/.test(JSON.stringify(e.missing)),
+  );
+  // scaffold が一切作られていないこと。
+  assert.equal(fs.existsSync(path.join(dir, 'journal')), false);
+  assert.equal(fs.existsSync(path.join(dir, 'cc-iasd.yaml')), false);
+});
+
+test('init: name が cc-iasd でない package.json 持ちディレクトリは init できる', () => {
+  const dir = tmpDir();
+  fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'my-app' }));
+  initRun({ positional: [dir], flags: {}, jsonMode: false });
+  assert.equal(fs.existsSync(path.join(dir, 'journal')), true);
+});
