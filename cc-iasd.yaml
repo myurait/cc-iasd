@@ -1,0 +1,21 @@
+doc_lang: Japanese
+dev_lang: TypeScript
+repos: []
+budgets:
+  max_minutes: 90
+  no_progress_runs: 2
+  session_stale_minutes: 15
+reject_limit: 2
+checks_allowlist:
+  - 'npm '
+  - 'npx '
+  - 'node '
+  - 'git '
+gates:
+  spec: required
+  run: required
+runtime:
+  adapter: none
+decision:
+  require_tty: true
+  allow_adopt: false

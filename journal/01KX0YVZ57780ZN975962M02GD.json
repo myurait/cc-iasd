@@ -1,0 +1,12 @@
+{
+  "id": "01KX0YVZ57780ZN975962M02GD",
+  "ts": "2026-07-08T13:32:23.591Z",
+  "actor": {
+    "kind": "cli"
+  },
+  "type": "baseline.recorded",
+  "subject": "project:root",
+  "data": {
+    "repos": []
+  }
+}
