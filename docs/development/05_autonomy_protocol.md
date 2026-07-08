@@ -229,6 +229,23 @@ claim event:
 
 run の対象 repo 集合は Surfaces の glob（repo プレフィックス）から導出される。1 run = 1 repo に固定せず横断 run を許す。base commit の記録・diff snapshot・surface 照合を repo ごとに行う点、adapter による worktree 隔離は multi-repo 構成の詳細として 03 に置く。
 
+worktree 隔離は上記の排他規則を置換せず上乗せする。claim / write glob 交差 / verify lock は worktree の有無に関わらず常に適用され、worktree は同一 repo を共有する並列 run に対して物理的な作業ツリー分離を追加で与える。
+
+```text
+worktree 隔離の上乗せ関係（既存の排他規則を置換しない）:
+- claim / write-glob-cross:  run open 時に常に評価する。worktree の有無で変わらない
+- verify lock:               repo 単位で verify を直列化する。worktree 有無で変わらない
+- worktree 隔離（追加層）:    run open --worktree で対象 repo ごとに隔離ブランチ + worktree を張り、
+                            worker の作業を隔離ツリー内に閉じる
+
+merge conflict の機械検出:
+  worktree 隔離 run は accept 時に隔離ブランチを base ブランチへ merge する。
+  conflict は accept 前の verify 段で merge dry-run により検出し、conflict があれば
+  verify の verdict.pass を false に倒す。pass=false の verification は accept ガードを
+  自動封鎖するため、conflict した run は accept できない（09 4.3「conflict は verify 失敗
+  として機械検出」の実装形）。dry-run は base ブランチ側 repo 本体で行い working tree を汚さない
+```
+
 ---
 
 ## 8. review 鮮度の dirty 検出
@@ -319,5 +336,18 @@ STOP:
   runs/<id>/STOP ファイル（人間が置く）を guard が検出し、以降の遷移を拒否する
   （5.1 と同一の停止条件）
 ```
+
+start の base commit 記録は commit.observed event で行う。session start は起動時点の各対象 repo の HEAD を再観測し、observe した HEAD を commit.observed の data.repos に載せて追記する。state 導出は commit.observed を run.repos へ畳み込むため、以降の return / verify / diff snapshot は起動時点を新 base として基準にする（UNCOMMITTED な repo は観測をスキップする）。session start 自体は run.status を進めない（session.started は状態列を進めない event）。
+
+resume brief は次の 3 要素を journal と git から機械再構成する（確定形）。
+
+```text
+resume brief の再コンパイル内容:
+- git diff 概要:      各 repo の最新 base（commit.observed）からの変更ファイル一覧と件数
+- 最終 verification:  最後の verify.recorded の pass と checks（id / exit / expect / pass）
+- 未終端 event 要約:   note.appended / session.started / session.resumed / commit.observed の履歴
+```
+
+resume は resume brief を out/<run-id>/resume-brief.md に書き、bundle を再 compile して session.resumed を追記する。resume も run.status を進めない。
 
 session の中断は明示的な操作を要さず、状態は常に journal から導出される。したがって中断・再開はプロセスの生死に依存せず、いつでも安全に行える。session 起動 bundle の compile 出力先（out/）と adapter の起動設定は 03、resume brief の生成に用いる event の schema は 06 に置く。

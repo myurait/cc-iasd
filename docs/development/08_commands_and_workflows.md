@@ -156,12 +156,13 @@ close:
 入力: <campaign-id> --tasks <T..>（campaign 由来）
       | --adhoc "<goal>" --check "<cmd>"（spec なし。8.1 節）
       | 上記に [--spike] を付す（探索作業。8.2 節）
+      | 上記に [--worktree]（別名 --isolate）を付す（worktree 隔離。05 7 章）
 出力: 成功時は run 生成 + handoff 合成、上流欠落時は欠落セクションを列挙して拒否
 遷移: run created -> handed-off（handoff 機械合成に成功した場合）。
       合成失敗は run を開始せず backtrack request の生成を誘導する
 ```
 
-handoff の合成元と合成失敗時の扱いは 06、上流欠落の判定は 05 を参照。
+--worktree は対象 nested git repo ごとに base から隔離ブランチ ccisad/<run-id> を切り worktree を out/<run-id>/wt/<repo> に張る（v0 は CLI フラグ起動限定。config 既定化はしない）。spike は src 不変のため --worktree を無視する。handoff の合成元と合成失敗時の扱いは 06、上流欠落の判定・worktree 隔離の排他関係は 05 を参照。
 
 ### 3.9 cc-iasd run handoff
 
@@ -178,17 +179,17 @@ handoff の合成元と合成失敗時の扱いは 06、上流欠落の判定は
 start:
   目的: run 用の bundle を compile して実行 runtime を起動する
   入力: <run-id> [--runtime claude-code|codex|none]
-  出力: 起動された runtime session（--runtime none なら手順のみ出力）
-  遷移: session.started event を記録する。base commit を journal に記録する
+  出力: out/<run-id>/ へ bundle を compile。--runtime none は起動せず起動手順を stdout に案内する
+  遷移: session.started event を記録する。base commit を commit.observed で journal に記録する
 
 resume:
   目的: 中断した session を再開する
-  入力: <run-id>
-  出力: resume brief を再コンパイルして再起動した session
+  入力: <run-id> [--runtime claude-code|codex|none]
+  出力: out/<run-id>/resume-brief.md を再コンパイルし bundle を再生成して起動手順を案内する
   遷移: session.resumed event を記録する
 ```
 
-session lifecycle と bundle 生成の詳細は 03 / 05 を参照。
+--runtime の許容値は claude-code / codex / none。省略時は cc-iasd.yaml の runtime.adapter、それも無ければ none。adapter=none の出力は bundle 生成に加えて「bundle を runtime へ渡す -> worker は src/ のみ編集し完了宣言せず停止 -> 戻ったら run return / verify」の起動手順を stdout に案内する（実プロセス起動はしない）。session lifecycle と bundle 生成・run 別 out/ レイアウトの詳細は 03 / 05 を参照。
 
 ### 3.11 cc-iasd run return
 

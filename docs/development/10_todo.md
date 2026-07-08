@@ -1,7 +1,7 @@
 # 10. TODO
 
 作成日: 2026-07-05  
-状態: kernel 正本 v1.1（P1 / P2 実装済み。2026-07-07 更新）
+状態: kernel 正本 v1.2（P1 / P2 / P3 / P4 実装済み。2026-07-08 更新）
 
 ---
 
@@ -58,7 +58,7 @@ P1 は adhoc run だけで 3 不変条件と並列安全を構造で守る最小
 
 P1 完了条件は、導入フローが実機で通ること、上記 (a)〜(e) の破り試行がすべて構造で拒否されること、doctor が green であること、npm test 通過、ユーザーレビュー通過である。
 
-P2（vision / spec / campaign のノード化、full-chain の 4 gate 運用、campaign close での Cross-Checks CLI 実行、vision Capabilities + covers 射影）は実装済みである（2026-07-07。full-chain e2e テストで検証済み）。未実装で残るのは P3（session start / resume、Tier 1 adapter、worktree 隔離 adapter）と P4（監査強化。guard_results 再計算検証の拡充を含む）である。
+P2（vision / spec / campaign のノード化、full-chain の 4 gate 運用、campaign close での Cross-Checks CLI 実行、vision Capabilities + covers 射影）は実装済みである（2026-07-07。full-chain e2e テストで検証済み）。P3（session start / resume、Tier 1 adapter、worktree 隔離 adapter）と P4（監査強化。guard_results 再計算検証の拡充を含む）も実装済みである（2026-07-08。e2e テストで検証済み）。残るのは 09 4.3 / 4.4 節の高度化（worktree の自動 GC・プール管理・conflict 自動再試行、監査のさらなる再計算強化）で、これは将来構想である。
 
 ---
 
@@ -71,9 +71,10 @@ P2（vision / spec / campaign のノード化、full-chain の 4 gate 運用、c
 ```text
 - cc-iasd.yaml の repo 登録スキーマ:
     multi-repo で src/ 配下の各 repo をどう記述するか（repo キー / パス / 想定 glob）
-- out/ の run 別内部レイアウト:
-    compile 生成物を run ごとにどう配置するか（adapter が settings / context / launch を
-    生成する際の格納構造）
+- out/ の run 別内部レイアウト（P3 で確定。03 6.1）:
+    compile 生成物を run ごとに out/<run-id>/ 配下へ配置する（handoff.md / bundle.md /
+    resume-brief.md / launch.json / settings/）。adapter が settings / context / launch を
+    生成する際の格納構造も同節に確定
 - 数値既定:
     no-progress の N（直近何 run で diff / task 進捗ゼロを停止条件とするか）/
     budget の既定値 / session stale の閾値（何分イベントなしで stale 表示するか）

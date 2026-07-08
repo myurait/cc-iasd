@@ -195,13 +195,15 @@ P2（chain。v0 の実装対象。将来構想ではない）:
   report、covers 射影（status --plan）。
   この層が入って初めて計画チェーンが機能する。ここは将来構想に置かない
 
-P3（接続層）:
-  claude-code adapter（Tier 1 hooks）、session resume、worktree 隔離 adapter。
+P3（接続層。実装済み）:
+  claude-code adapter（Tier 1 hooks）、session start / resume、worktree 隔離 adapter。
   隔離の提供と accept 時 merge・conflict 機械検出まで（高度化は 4.3 節）
 
-P4（監査強化。将来寄り）:
+P4（監査強化。実装済み）:
   guard_results 再計算検証、証拠十分性検査の拡充（4.4 節）
 ```
+
+P3 / P4 は実装済みである（session start / resume + Tier 0/1 adapter、worktree 隔離、DEMM 証拠十分性の具体検査。e2e テストで検証済み）。将来構想として残るのは 4.3 / 4.4 節の高度化（worktree の自動 GC・プール管理・conflict 自動再試行、監査のさらなる再計算強化）である。
 
 P2 のノード化を将来構想と誤認しないことが重要である。vision / spec / campaign のノード化と review gates は、kernel の計画チェーンの本体であり v0 に入る。将来構想として切り出すのは、この本体の外側にある拡張（4 章）と、確定を保留して観察に回す事項（5 章）、および P4 の監査強化に限る。
 

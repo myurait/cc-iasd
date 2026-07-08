@@ -20,7 +20,7 @@ const COMMAND_MODULE = {
   campaign: 'authoring',
   retire: 'authoring',
   run: 'run',
-  session: 'run',
+  session: 'session',
   decide: 'humans',
   gap: 'humans',
   review: 'humans',

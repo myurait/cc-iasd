@@ -115,6 +115,16 @@ roles/ は planner / worker / reviewer の 3 role card を置く。role card 規
 
 cc-iasd.yaml は唯一の設定ファイルである。runtime adapter、budgets、checks allowlist、decision policy、gate 要否、登録 repo を持つ。登録 repo の扱いは 7 章で述べる。各設定項目の意味と運用は 05 / 08 に置く。
 
+runtime.adapter の許容値は none / claude-code / codex の集合であり、validate はこの集合外を拒否する。既定は none。claude-code は Tier 1 実装（session start / resume が settings / hook を生成する）を持ち、codex は将来拡張で未実装のため none 実装で代替する。
+
+```text
+runtime の設定形（cc-iasd.yaml）:
+runtime:
+  adapter: none | claude-code | codex   # 既定 none
+```
+
+各 adapter の capability（どの能力をどの機構で満たすか）は adapter 実装が表明するものであり cc-iasd.yaml には書かない。capability は out/<run-id>/launch.json に記録される（contextInjection / writeGuard / stopGate / journal を hook | wrapper | none のいずれかで表明する）。adapter の capability manifest と Tier 1 hook の詳細は 05 に置く。
+
 ---
 
 ## 4. journal の物理形式
@@ -171,7 +181,18 @@ out/ の性質:
 - 削除しても compile で再生成できる。正本ではないため復元対象にしない
 ```
 
-adapter が runtime を起動するための設定生成物はこの out/ 配下に置かれる。adapter の capability manifest や Tier 1 hook の詳細は 05 に置く。
+out/ の run 別内部レイアウトは次に確定する。compile 生成物は run ごとに `out/<run-id>/` 配下へ配置する。
+
+```text
+out/<run-id>/ の内部レイアウト:
+- handoff.md      run open が合成する handoff の compile 先（runs/<run-id>/handoff.md と同内容の写し）
+- bundle.md       session start が compile する実行 bundle（handoff + worker role card + repos base）
+- resume-brief.md session resume が journal と git から再構成する再開ブリーフ
+- launch.json     session start / resume が記録する起動情報（runtime / capability / command / cwd）
+- settings/       claude-code adapter が生成する runtime 設定（settings.json + write-guard hook）
+```
+
+bundle.md / resume-brief.md / launch.json は adapter=none でも生成する（none は起動しないが compile は常に成立する）。settings/ は Tier 1 adapter（claude-code）のみが生成する。adapter が runtime を起動するための設定生成物はこの out/ 配下に置かれる。adapter の capability manifest や Tier 1 hook の詳細は 05 に置く。
 
 ### 6.2 reference/（カーネル非管理の自由領域）
 
@@ -219,3 +240,14 @@ repo 別処理の物理的な要点:
 ```
 
 base commit の記録・diff snapshot・照合を起こす遷移とガード、並列 run の排他規則（対象 repo が互いに素か同一 repo を共有するか、verify lock、worktree 隔離）は 05 に置く。本文書は repo が cc-iasd.yaml に登録され nested git として配置される物理構造までを扱う。
+
+worktree 隔離 run（05 7 章）の worktree 実体は out/<run-id>/wt/<repo> に配置する。
+
+```text
+worktree 隔離の物理配置:
+- worktree path:   out/<run-id>/wt/<repo>（非正本・gitignore 領域）
+- branch:          ccisad/<run-id>（run open が base から切る隔離ブランチ）
+- 追跡主体:        src 側 repo の .git（worktree の追跡は path 位置に依らないため out/ 下で成立する）
+```
+
+worktree を out/ 配下に置くのは、out/ が非正本・gitignore・再生成可能という性質（6.1）と一致し、隔離実体を project-context の管理領域から分離できるためである。worktree は run open で作成し accept 時の merge 後に掃除する。作成・merge・掃除を起こす遷移は 05 に置く。

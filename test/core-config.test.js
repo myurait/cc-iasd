@@ -50,8 +50,13 @@ test('validate は不正 repo を拒否', () => {
   assert.throws(() => validate({ ...DEFAULTS, repos: [{ name: 'x' }] }));
 });
 
-test('validate は adapter none 以外を拒否', () => {
-  assert.throws(() => validate({ ...DEFAULTS, runtime: { adapter: 'claude-code' } }));
+test('validate は許容 adapter を通し未知 adapter を拒否', () => {
+  // P3 で none / claude-code / codex を許容へ拡張（契約 1 章 / 09 3 章）。
+  assert.doesNotThrow(() => validate({ ...DEFAULTS, runtime: { adapter: 'none' } }));
+  assert.doesNotThrow(() => validate({ ...DEFAULTS, runtime: { adapter: 'claude-code' } }));
+  assert.doesNotThrow(() => validate({ ...DEFAULTS, runtime: { adapter: 'codex' } }));
+  // 許容集合外は拒否。
+  assert.throws(() => validate({ ...DEFAULTS, runtime: { adapter: 'gpt' } }));
 });
 
 test('checkAllowed は prefix match', () => {
