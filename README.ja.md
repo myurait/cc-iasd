@@ -178,7 +178,7 @@ escalate: escalation packet を生成して escalated へ（decision 待ち）
 
 ## 現在の状態
 
-現在は P1（縦スライス）と P2（計画チェーン）が実装済みです。adhoc run だけで 3 不変条件が構造で守られる最小系に加え、vision 承認から campaign close までの full-chain が 4 gate 運用込みで動作します。次のコマンドが実装済みです（各コマンドの目的・入力・出力・遷移は `docs/development/08_commands_and_workflows.md`）。
+計画スコープ（P1〜P4）はすべて実装済みです。adhoc run の最小系、vision 承認から campaign close までの full-chain（4 gate 運用）、session 起動（runtime adapter による bundle compile）、並列 run の worktree 隔離、doctor の監査検査群までが動作します。次のコマンドが実装済みです（各コマンドの目的・入力・出力・遷移は `docs/development/08_commands_and_workflows.md`）。
 
 ```text
 cc-iasd                                        # 引数なし = human inbox
@@ -190,11 +190,12 @@ cc-iasd new vision|spec|campaign <slug>        # scaffold 作成（AI が author
 cc-iasd spec ready <id>
 cc-iasd campaign launch|close <id>
 
-cc-iasd run open <campaign-id> --tasks <T..> | --adhoc "<goal>" --check "<cmd>" [--spike]
+cc-iasd run open <campaign-id> --tasks <T..> | --adhoc "<goal>" --check "<cmd>" [--spike] [--worktree]
 cc-iasd run handoff <run-id>                   # 合成済み handoff を stdout 出力（Tier 0 正本経路）
 cc-iasd run return <run-id>                    # diff snapshot の実測記録
 cc-iasd run verify <run-id>                    # Checks の CLI 実行 + surface 照合
 cc-iasd run accept|block|escalate <run-id>     # 終端 3 択
+cc-iasd session start|resume <run-id>          # out/<run-id>/ へ bundle compile（adapter: none / claude-code）/ 再開 brief 生成
 
 cc-iasd review record <ref> --gate spec|launch|run|completion
 cc-iasd gap add|close|route <ref>
@@ -206,17 +207,9 @@ cc-iasd role show planner|worker|reviewer
 
 実行検証済みの動線は 2 本です。adhoc の最短動線は `init -> run open --adhoc --check -> run handoff` で handoff を機械合成して runtime へ渡し、`run return -> run verify -> review record --gate run --verdict pass -> run accept` で完走します。full-chain の動線は `new vision`（Capabilities 宣言）`-> decide --approve -> new spec -> spec ready -> new campaign -> campaign launch -> run open <campaign-id> --tasks -> run 完走 -> review record --gate completion -> report -> campaign close` を通し、charter Coverage の `after:` による run open の順序制約、宣言 task の全消化判定、`status --plan` での capability カバー / 未カバー射影が e2e テストで検証済みです。ガード不成立時（notes 不在での return、verify 前の accept、blocking gap open での spec ready、先行 spec 未完了での run open など）は遷移せず拒否メッセージを返します。
 
-### roadmap（未実装）
+### roadmap
 
-次の項目は P3〜P4 のスコープで、現時点では未実装です。
-
-```text
-- session start / resume（実装 runtime の bundle compile と起動 / 中断再開）
-- Tier 1 adapter（hook 対応 runtime 向けの加速層。context 注入・src 外書込 deny 等）
-- worktree 隔離 adapter（並列 run の高度な隔離）
-```
-
-現状、実装 runtime への handoff 配布は `run handoff` の stdout 出力（Tier 0 の正本経路）で行います。`session start` はまだ実装されておらず、実行すると未知の run サブコマンドとして拒否されます。開発順序と各 Phase の完了条件は `docs/development/rework/05_work_plan.md` を参照してください。
+計画スコープ（P1〜P4）は完了しています。実装 runtime への handoff 配布は `run handoff` の stdout 出力（Tier 0 の正本経路）に加え、`session start` による `out/<run-id>/` への bundle compile が使えます。claude-code adapter は Tier 1 の加速層（settings / write-guard hook の生成）を提供しますが、Tier 0 だけで 3 不変条件は閉じています。今後の拡張候補と運用観察後に判断する事項は `docs/development/09_future_vision.md` と `docs/development/10_todo.md` を参照してください。
 
 ## 語彙対応表
 

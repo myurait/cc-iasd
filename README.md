@@ -184,7 +184,7 @@ escalate: generates an escalation packet and moves to escalated (awaiting a deci
 
 ## Current status
 
-P1 (a vertical slice) and P2 (the planning chain) are currently implemented. On top of the minimal system in which the three invariants are upheld by structure with adhoc runs alone, the full chain from vision approval through campaign close works with all four gates in operation. The following commands are implemented (each command's purpose, inputs, outputs, and transitions are in `docs/development/08_commands_and_workflows.md`).
+The planned scope (P1–P4) is fully implemented: the minimal adhoc-run system, the full chain from vision approval through campaign close (with all four gates in operation), session launch (bundle compile via runtime adapters), worktree isolation for parallel runs, and doctor's audit check suite. The following commands are implemented (each command's purpose, inputs, outputs, and transitions are in `docs/development/08_commands_and_workflows.md`).
 
 ```text
 cc-iasd                                        # no arguments = human inbox
@@ -196,11 +196,12 @@ cc-iasd new vision|spec|campaign <slug>        # create scaffold (the AI authors
 cc-iasd spec ready <id>
 cc-iasd campaign launch|close <id>
 
-cc-iasd run open <campaign-id> --tasks <T..> | --adhoc "<goal>" --check "<cmd>" [--spike]
+cc-iasd run open <campaign-id> --tasks <T..> | --adhoc "<goal>" --check "<cmd>" [--spike] [--worktree]
 cc-iasd run handoff <run-id>                   # print the synthesized handoff to stdout (the Tier 0 canonical path)
 cc-iasd run return <run-id>                    # record the diff snapshot as measured
 cc-iasd run verify <run-id>                    # run Checks via the CLI + surface cross-check
 cc-iasd run accept|block|escalate <run-id>     # the three terminal choices
+cc-iasd session start|resume <run-id>          # compile the bundle into out/<run-id>/ (adapter: none / claude-code) / generate the resume brief
 
 cc-iasd review record <ref> --gate spec|launch|run|completion
 cc-iasd gap add|close|route <ref>
@@ -212,17 +213,9 @@ cc-iasd role show planner|worker|reviewer
 
 There are two execution-verified paths. The shortest, adhoc path is: `init -> run open --adhoc --check -> run handoff` synthesizes the handoff and hands it to the runtime, and `run return -> run verify -> review record --gate run --verdict pass -> run accept` completes the run end to end. The full-chain path runs `new vision` (declaring Capabilities) `-> decide --approve -> new spec -> spec ready -> new campaign -> campaign launch -> run open <campaign-id> --tasks -> run to completion -> review record --gate completion -> report -> campaign close`, and the ordering constraint on run open via `after:` in the charter's Coverage, the all-declared-tasks-consumed check, and the covered / uncovered capability projection in `status --plan` are all verified by e2e tests. When a guard is not satisfied (return with no notes present, accept before verify, spec ready with a blocking gap open, run open before a preceding spec has completed, and so on) no transition occurs and a rejection message is returned.
 
-### roadmap (not yet implemented)
+### roadmap
 
-The following items are in the P3–P4 scope and are not yet implemented.
-
-```text
-- session start / resume (bundle compile and launch of the implementation runtime / interruption and resume)
-- Tier 1 adapter (an acceleration layer for hook-capable runtimes: context injection, deny writes outside src, etc.)
-- worktree isolation adapter (advanced isolation for parallel runs)
-```
-
-Today, distribution of the handoff to the implementation runtime is done via `run handoff`'s stdout output (the Tier 0 canonical path). `session start` is not yet implemented and, if run, is rejected as an unknown run subcommand. For the development order and each phase's completion criteria, see `docs/development/rework/05_work_plan.md`.
+The planned scope (P1–P4) is complete. Distribution of the handoff to the implementation runtime is done via `run handoff`'s stdout output (the Tier 0 canonical path), and additionally via `session start`, which compiles the bundle into `out/<run-id>/`. The claude-code adapter provides the Tier 1 acceleration layer (generating settings and a write-guard hook), but the three invariants are closed by Tier 0 alone. For future extension candidates and matters to be decided after operational observation, see `docs/development/09_future_vision.md` and `docs/development/10_todo.md`.
 
 ## Vocabulary mapping
 

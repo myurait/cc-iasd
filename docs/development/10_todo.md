@@ -194,3 +194,31 @@ P1 実装中に詰めた仕様詳細（3 章のバッチ、および正規化ハ
 - 既存ドキュメントの参照形式の確定【確定済み】:
     src/<repo>/<path> の論理パス参照に確定。持ち込み領域は設けない。14 の 5.5 章に規定
 ```
+
+---
+
+## 8. P3/P4 実装で保留した設計確認事項
+
+P3/P4 実装（2026-07-08）は最小の決定論形で完了したが、正本に判断が無く保留した点が残る。いずれも現行実装は動作しており、確定後に調整する。
+
+```text
+- base commit の二重記録の優先規則:
+    run open が created に base を焼き、session start が commit.observed で起動時点 HEAD を
+    新 base として上書きする。open -> start 間に src が進んだ場合の diff 基準は
+    「start 時点を新 base」を採用済みだが、05/08 に優先規則の明文が無い
+- session start と worktree の結線:
+    worktree 実体（out/<run-id>/wt/<repo>）は run open --worktree 側で作られ、
+    session start は結線されていない。start が worktree を作るべきかは未規定
+- handoff 本文への worktree 作業ディレクトリ表示:
+    return/verify/accept の cwd 差し替えで実質結線済みだが、handoff.md の Repos 欄には
+    worktree path が出ない（handoff.js の改変が必要）
+- run-review ガードの二重照合:
+    guard-recalc は run gate の存在検査を decision-unit 検査へ一本化した。二重照合の要否は未規定
+- escalated -> decided 再開遷移の監査分岐:
+    再開遷移の event 形が正本で確定していないため、doctor の検査分岐は未実装
+- spike run の session start / block・escalate 後の worktree 後始末:
+    spike は compile + 手順案内のみで通す実装。block/escalate 後の worktree は残置 + 手動掃除。
+    いずれも正本に明示なし
+- worktree / adapter の config 既定化:
+    v0 は CLI フラグ起動限定。cc-iasd.yaml での既定化は運用観察後に判断（5 章と同種）
+```
