@@ -199,26 +199,60 @@ P1 実装中に詰めた仕様詳細（3 章のバッチ、および正規化ハ
 
 ## 8. P3/P4 実装で保留した設計確認事項
 
-P3/P4 実装（2026-07-08）は最小の決定論形で完了したが、正本に判断が無く保留した点が残る。いずれも現行実装は動作しており、確定後に調整する。
+P3/P4 実装（2026-07-08）は最小の決定論形で完了し、続く統合（2026-07-16。worktree 強化 / resume キャッシュ / verify 型付けの 3 系統統合）で一部の保留を解消し正本へ追随した。以下は解消済み・継続 open・新規保留に区分して管理する。
+
+### 8.1 統合で解消した保留事項【解消済み】
+
+```text
+- session start と worktree の結線【解消】:
+    終端後始末の統一規則・lock/unlock・run cleanup を追加し（03 7.3 / 05 7 章 / 08 3.20）、
+    worktree と session の運用が確定した。「start が worktree を作るか」は非採用で確定
+    （start は非生成。worktree 生成は run open --worktree 側に閉じる）
+- spike run の block・escalate 後の worktree 後始末【解消】:
+    block / escalate も終端統一規則（clean+base 反映済み自動削除・dirty/未 merge 残置記録）に
+    含めた（05 7 章）。「残置 + 手動掃除」から「終端統一規則で自動判定（run cleanup で明示回収も可）」へ更新
+- worktree の config 既定化【解消】:
+    config.worktree セクション（baseRef / cleanup / include / force / stale_days）を追加し
+    CLI フラグ上書きを実装した（03 3.6 / 05 7 章 / 08 3.8・3.20）。adapter 既定化は既存 runtime.adapter で対応済み
+```
+
+### 8.2 継続 open（本統合の範囲外・canon 明文化待ち）
 
 ```text
 - base commit の二重記録の優先規則:
     run open が created に base を焼き、session start が commit.observed で起動時点 HEAD を
-    新 base として上書きする。open -> start 間に src が進んだ場合の diff 基準は
-    「start 時点を新 base」を採用済みだが、05/08 に優先規則の明文が無い
-- session start と worktree の結線:
-    worktree 実体（out/<run-id>/wt/<repo>）は run open --worktree 側で作られ、
-    session start は結線されていない。start が worktree を作るべきかは未規定
+    新 base として上書きする。統合で非 worktree accept の base-progress 封鎖（記録 base が現 HEAD の
+    非祖先なら拒否。05 7 章）を追加したが、open -> start 間に src が進んだ場合の diff 基準優先規則
+    （「start 時点を新 base」）の 05/08 明文化は依然未了
 - handoff 本文への worktree 作業ディレクトリ表示:
     return/verify/accept の cwd 差し替えで実質結線済みだが、handoff.md の Repos 欄には
-    worktree path が出ない（handoff.js の改変が必要）
+    worktree path が出ない（handoff.js の改変が必要。本統合は handoff.js 非改変）
 - run-review ガードの二重照合:
     guard-recalc は run gate の存在検査を decision-unit 検査へ一本化した。二重照合の要否は未規定
 - escalated -> decided 再開遷移の監査分岐:
     再開遷移の event 形が正本で確定していないため、doctor の検査分岐は未実装
-- spike run の session start / block・escalate 後の worktree 後始末:
-    spike は compile + 手順案内のみで通す実装。block/escalate 後の worktree は残置 + 手動掃除。
-    いずれも正本に明示なし
-- worktree / adapter の config 既定化:
-    v0 は CLI フラグ起動限定。cc-iasd.yaml での既定化は運用観察後に判断（5 章と同種）
+```
+
+### 8.3 統合で新規に保留した設計確認事項
+
+```text
+- worktree baseRef=fresh / include の実挙動:
+    config スキーマは用意したが canon 根拠が無い。v0 は baseRef=head 固定・include=[] 既定で動き、
+    fresh（origin/default から分岐）と include（対象 repo 絞り込み）の実挙動は運用観察後に判断する
+- run cleanup --stale の active run 除外の是非:
+    --stale は「隔離ブランチ先端が現 HEAD の祖先 × 最終イベント ts が days 超過」で回収するため、
+    未終端（active）run の隔離 worktree も条件を満たせば回収し得る。進行中作業の隔離が消える懸念があり、
+    active run 除外の是非は運用観察後に判断する。staleness の更新時刻は決定論のため run subject の
+    最終イベント ts を採用（file mtime 非依存）。この定義の canon 明記も併せて判断する
+- resume compile-cache の基準と bundle 埋込 brief の鮮度:
+    cache 基準は「直近 session.resumed が焼いた inputHashes」に限定した（start 由来 bundle は brief 未埋込で
+    出力形が異なるため。05 10 章に明文化済み）。cache hit 時、既存 bundle.md に埋め込まれた前回 resume-brief が
+    最新 brief と不一致になる（resume-brief.md は毎回最新化されるため実害小）。bundle への brief 常時再埋込の
+    要否は未確定
+- verify check の timeout budget:
+    classifyCheck は res.error（ETIMEDOUT 含む）を unverified に分類できるが、spawn に timeout を渡していないため
+    実際の ETIMEDOUT は発生しない（分類ロジックのみ用意）。check 毎/config での timeout 値導入は canon 根拠が無く保留
+- run return のフル JSON 契約:
+    return を JSON payload + schema 検証で受けるフル契約は 06 に根拠が無く非実装（現行は notes.md 非空検査 +
+    diff-snapshot の理由型付与に限定）。必要性は運用観察後に判断する
 ```

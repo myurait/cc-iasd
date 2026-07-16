@@ -248,6 +248,167 @@ test('session resume は bundle.md に resume brief を連結する', async () =
   assert.match(bundle, /## resume brief/);
 });
 
+// --- session resume: 入力ハッシュ prefix キャッシュ（束2） ---
+
+// start は session.started.data に inputHashes（監査用）を焼く。
+test('session start は inputHashes を session.started に記録する', async () => {
+  const root = tmpRoot();
+  const runId = await openAdhoc(root);
+  await capture(() => sessionRun({ positional: ['start', runId], flags: {}, root }));
+
+  const started = readAll(root).find(
+    (e) => e.type === 'session.started' && e.subject === `run:${runId}`
+  );
+  assert.ok(started.data.inputHashes, 'inputHashes が焼かれること');
+  // 4 項目（handoff / roleCard / reposBase / config）が揃う。
+  assert.deepEqual(
+    Object.keys(started.data.inputHashes).sort(),
+    ['config', 'handoff', 'reposBase', 'roleCard']
+  );
+});
+
+// 初回 resume は prev=null（直近 resumed 無し）のため必ず compile する。
+test('session resume 初回は compile を実行する（changedInputs=no-prior-hashes）', async () => {
+  const root = tmpRoot();
+  const runId = await openAdhoc(root);
+  await capture(() => sessionRun({ positional: ['start', runId], flags: {}, root }));
+  await capture(() => sessionRun({ positional: ['resume', runId], flags: {}, root }));
+
+  const resumed = readAll(root).filter(
+    (e) => e.type === 'session.resumed' && e.subject === `run:${runId}`
+  );
+  assert.equal(resumed.length, 1);
+  assert.equal(resumed[0].data.compileReused, false);
+  assert.deepEqual(resumed[0].data.changedInputs, ['(no-prior-hashes)']);
+  // compile-cache hit の note は無い（compile 実行経路）。
+  const cacheNotes = readAll(root).filter(
+    (e) => e.type === 'note.appended' && e.data && e.data.kind === 'compile-cache'
+  );
+  assert.equal(cacheNotes.length, 0);
+});
+
+// 入力不変の 2 回目 resume は compile を skip する（cache hit）。
+test('session resume 2回目（入力不変）は compile を再利用する', async () => {
+  const root = tmpRoot();
+  const runId = await openAdhoc(root);
+  await capture(() => sessionRun({ positional: ['start', runId], flags: {}, root }));
+  await capture(() => sessionRun({ positional: ['resume', runId], flags: {}, root }));
+  // 2 回目 resume（入力不変）。
+  await capture(() => sessionRun({ positional: ['resume', runId], flags: {}, root }));
+
+  const resumed = readAll(root).filter(
+    (e) => e.type === 'session.resumed' && e.subject === `run:${runId}`
+  );
+  assert.equal(resumed.length, 2);
+  const last = resumed[resumed.length - 1];
+  assert.equal(last.data.compileReused, true, '2 回目は再利用');
+  assert.deepEqual(last.data.changedInputs, [], '変化した入力は無い');
+  // compile-cache hit の note が刻まれる。
+  const cacheNotes = readAll(root).filter(
+    (e) =>
+      e.type === 'note.appended' &&
+      e.subject === `run:${runId}` &&
+      e.data &&
+      e.data.kind === 'compile-cache' &&
+      e.data.hit === true
+  );
+  assert.equal(cacheNotes.length, 1);
+  assert.equal(cacheNotes[0].data.run, runId);
+});
+
+// handoff 編集後の resume は変化を検出して再 compile する。
+test('session resume は handoff 編集を検出して再 compile する（changedInputs=handoff）', async () => {
+  const root = tmpRoot();
+  const runId = await openAdhoc(root);
+  await capture(() => sessionRun({ positional: ['start', runId], flags: {}, root }));
+  await capture(() => sessionRun({ positional: ['resume', runId], flags: {}, root }));
+
+  // handoff.md を編集する（一意なマーカーを埋め込む）。
+  const marker = 'HANDOFF-CHANGED-MARKER-9f3a';
+  const handoffPath = path.join(root, 'runs', runId, 'handoff.md');
+  fs.appendFileSync(handoffPath, `\n\n${marker}\n`);
+
+  await capture(() => sessionRun({ positional: ['resume', runId], flags: {}, root }));
+
+  const resumed = readAll(root).filter(
+    (e) => e.type === 'session.resumed' && e.subject === `run:${runId}`
+  );
+  const last = resumed[resumed.length - 1];
+  assert.equal(last.data.compileReused, false, 'handoff 変化のため再 compile');
+  assert.deepEqual(last.data.changedInputs, ['handoff']);
+  // 再 compile された bundle.md に新 handoff のマーカーが反映される。
+  const bundle = fs.readFileSync(path.join(root, 'out', runId, 'bundle.md'), 'utf8');
+  assert.match(bundle, new RegExp(marker));
+  // resume-brief.md の「compile 入力の変化」節に handoff が列挙される。
+  const brief = fs.readFileSync(path.join(root, 'out', runId, 'resume-brief.md'), 'utf8');
+  assert.match(brief, /## compile 入力の変化/);
+  assert.match(brief, /- handoff/);
+});
+
+// reuse 時の resume-brief には「変化なし（bundle 再利用）」が出る。
+test('session resume 再利用時の brief は変化なしを明記する', async () => {
+  const root = tmpRoot();
+  const runId = await openAdhoc(root);
+  await capture(() => sessionRun({ positional: ['start', runId], flags: {}, root }));
+  await capture(() => sessionRun({ positional: ['resume', runId], flags: {}, root }));
+  await capture(() => sessionRun({ positional: ['resume', runId], flags: {}, root }));
+
+  const brief = fs.readFileSync(path.join(root, 'out', runId, 'resume-brief.md'), 'utf8');
+  assert.match(brief, /## compile 入力の変化/);
+  assert.match(brief, /変化なし（bundle 再利用）/);
+});
+
+// claude-code の reuse は settings/* も compiled.files に復元する。
+test('session resume 2回目（claude-code・入力不変）は settings を復元し再利用する', async () => {
+  const root = tmpRoot();
+  const runId = await openAdhoc(root);
+  await capture(() =>
+    sessionRun({ positional: ['start', runId], flags: { runtime: 'claude-code' }, root })
+  );
+  await capture(() =>
+    sessionRun({ positional: ['resume', runId], flags: { runtime: 'claude-code' }, root })
+  );
+  const res = await capture(() =>
+    sessionRun({
+      positional: ['resume', runId],
+      flags: { runtime: 'claude-code', json: true },
+      root,
+      jsonMode: true,
+    })
+  );
+  const obj = JSON.parse(res.out.trim());
+  // compile を再利用しても compiled.files に settings/* が復元される。
+  assert.ok(obj.files.some((f) => f.endsWith('bundle.md')));
+  assert.ok(obj.files.some((f) => f.endsWith(path.join('settings', 'settings.json'))));
+  assert.ok(obj.files.some((f) => f.endsWith(path.join('settings', 'write-guard.mjs'))));
+
+  const resumed = readAll(root).filter(
+    (e) => e.type === 'session.resumed' && e.subject === `run:${runId}`
+  );
+  assert.equal(resumed[resumed.length - 1].data.compileReused, true);
+});
+
+// runtime（adapter）を変えた resume は config 変化を検出して再 compile する。
+test('session resume は adapter 変更を検出して再 compile する（changedInputs=config）', async () => {
+  const root = tmpRoot();
+  const runId = await openAdhoc(root);
+  await capture(() => sessionRun({ positional: ['start', runId], flags: {}, root }));
+  await capture(() => sessionRun({ positional: ['resume', runId], flags: {}, root }));
+  // runtime を claude-code に切り替えて resume する。
+  await capture(() =>
+    sessionRun({ positional: ['resume', runId], flags: { runtime: 'claude-code' }, root })
+  );
+
+  const resumed = readAll(root).filter(
+    (e) => e.type === 'session.resumed' && e.subject === `run:${runId}`
+  );
+  const last = resumed[resumed.length - 1];
+  assert.equal(last.data.compileReused, false);
+  assert.ok(last.data.changedInputs.includes('config'));
+  // 再 compile により claude-code の settings が生成される。
+  assert.ok(fs.existsSync(path.join(root, 'out', runId, 'settings', 'settings.json')));
+});
+
 // --- session: 未知サブコマンドは拒否 ---
 
 test('session は未知サブコマンドを拒否する', async () => {

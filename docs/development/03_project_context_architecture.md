@@ -123,6 +123,18 @@ runtime:
   adapter: none | claude-code | codex   # 既定 none
 ```
 
+worktree 隔離 run（05 7 章）の既定は cc-iasd.yaml の worktree セクションで宣言する。run open の CLI フラグ（--worktree / --isolate / --force 等）はこの既定を上書きする。
+
+```text
+worktree の設定形（cc-iasd.yaml）:
+worktree:
+  baseRef: head | fresh    # 隔離ブランチの base（既定 head=現行 HEAD。fresh は将来拡張）
+  cleanup: auto | keep     # 終端後始末（既定 auto=規則に従い掃除 / keep=全残置）
+  include: [<repo-name>..] # 隔離対象 repo の絞り込み（既定 []=対象全て）
+  force: false             # cleanup / run cleanup で dirty worktree も強制削除するか（既定 false）
+  stale_days: 7            # run cleanup --stale の回収猶予日数（既定 7）
+```
+
 各 adapter の capability（どの能力をどの機構で満たすか）は adapter 実装が表明するものであり cc-iasd.yaml には書かない。capability は out/<run-id>/launch.json に記録される（contextInjection / writeGuard / stopGate / journal を hook | wrapper | none のいずれかで表明する）。adapter の capability manifest と Tier 1 hook の詳細は 05 に置く。
 
 ---
@@ -190,6 +202,7 @@ out/<run-id>/ の内部レイアウト:
 - resume-brief.md session resume が journal と git から再構成する再開ブリーフ
 - launch.json     session start / resume が記録する起動情報（runtime / capability / command / cwd）
 - settings/       claude-code adapter が生成する runtime 設定（settings.json + write-guard hook）
+- wt/<repo>/      worktree 隔離 run の隔離作業ツリー（7.3。run 終端後の cleanup 対象領域）
 ```
 
 bundle.md / resume-brief.md / launch.json は adapter=none でも生成する（none は起動しないが compile は常に成立する）。settings/ は Tier 1 adapter（claude-code）のみが生成する。adapter が runtime を起動するための設定生成物はこの out/ 配下に置かれる。adapter の capability manifest や Tier 1 hook の詳細は 05 に置く。
@@ -250,4 +263,17 @@ worktree 隔離の物理配置:
 - 追跡主体:        src 側 repo の .git（worktree の追跡は path 位置に依らないため out/ 下で成立する）
 ```
 
-worktree を out/ 配下に置くのは、out/ が非正本・gitignore・再生成可能という性質（6.1）と一致し、隔離実体を project-context の管理領域から分離できるためである。worktree は run open で作成し accept 時の merge 後に掃除する。作成・merge・掃除を起こす遷移は 05 に置く。
+worktree を out/ 配下に置くのは、out/ が非正本・gitignore・再生成可能という性質（6.1）と一致し、隔離実体を project-context の管理領域から分離できるためである。worktree は run open で作成し、active 中は git worktree lock で誤削除・並列干渉を防ぐ。
+
+run 終端後の後始末は 3 終端（accept / block / escalate）で統一する。掃除の起点で lock を外し（unlock）、clean かつ base 反映済み（accept の merge 済み、または成果差分なし）の worktree のみ自動削除する。dirty / 未 merge の成果を持つ worktree は削除せず残置し、残置理由を journal に記録する。
+
+```text
+終端後始末の統一規則（accept / block / escalate 共通）:
+- clean かつ base 反映済み:  unlock -> remove（force 省略=false）で自動削除する
+- dirty:                    残置（reason=dirty）。人手または run cleanup --force で回収する
+- 未 merge の成果あり:       残置（reason=unmerged-commits。block / escalate は base 未反映のため該当）
+- remove 失敗:              残置（reason=remove-failed）
+- config.worktree.cleanup=keep: 全残置（reason=config-keep）
+```
+
+作成・merge・後始末の統一規則を起こす遷移、および明示回収コマンド（run cleanup）は 05 / 08 に置く。

@@ -246,6 +246,36 @@ merge conflict の機械検出:
   として機械検出」の実装形）。dry-run は base ブランチ側 repo 本体で行い working tree を汚さない
 ```
 
+worktree の作成・削除・後始末・並列 accept の競合窓封鎖は次の規則で執行する。物理配置と config セクションは 03、コマンドは 08 に置く。
+
+```text
+worktree 削除の安全既定:
+  worktree の削除は force 既定=false（git worktree remove を --force なしで実行）。
+  dirty / locked な worktree は git が非 0 で失敗し、削除されず残置する。
+  強制削除は run cleanup --force / config.worktree.force=true が明示したときのみ。
+
+終端後始末の統一規則（accept / block / escalate 共通）:
+  active 中の worktree は lock され、終端の後始末で unlock してから remove する。
+  clean かつ base 反映済み（accept の merge 済み、または成果差分なし）の worktree のみ
+  自動削除する。dirty / 未 merge の成果を持つ worktree は残置し、残置理由
+  （dirty / unmerged-commits / remove-failed / config-keep）を journal に記録する
+  （note.appended {kind:'worktree-cleanup'}）。block / escalate は base 未反映のため、
+  成果差分を持つ worktree は unmerged-commits として残置される。
+
+accept 直前の再 merge dry-run（競合窓の封鎖）:
+  verify 段の merge dry-run と accept の実 merge の間に base ブランチが進行すると、
+  dry-run 時に無かった conflict が実 merge で発生し得る。この窓を封鎖するため、
+  accept は遷移成立後・実 merge 直前に各 repo で再度 merge dry-run を行い、conflict が
+  あれば merge を実施せず拒否する（次の一手 re-verify / escalate）。
+
+非 worktree run の base 進行ガード（base-progress）:
+  worktree を張らない run は src 本体を直接編集するため、run open 記録時点の base commit が
+  後から巻き戻り / 分岐すると、記録 base 起点の diff snapshot と現状が食い違う。accept は
+  記録 base が現 HEAD の祖先か（git merge-base --is-ancestor）を検査し、祖先でなければ
+  拒否して re-verify を促す。worktree run は base 隔離済み（accept 時に base へ merge する）の
+  ため常に pass する。base が前進（記録 base が現 HEAD の祖先のまま）した場合は封鎖しない。
+```
+
 ---
 
 ## 8. review 鮮度の dirty 検出
@@ -349,5 +379,7 @@ resume brief の再コンパイル内容:
 ```
 
 resume は resume brief を out/<run-id>/resume-brief.md に書き、bundle を再 compile して session.resumed を追記する。resume も run.status を進めない。
+
+resume の compile は安定入力ハッシュ（06 3.2 の inputHashes: handoff / roleCard / reposBase / config）で冗長な再 compile を避ける。直近 session.resumed が焼いた inputHashes と今回の安定入力が全一致し、既存 bundle.md が在る場合は adapter.compile をスキップして既存 bundle を再利用する（journal に note.appended {kind:'compile-cache', hit:true} を残す）。一つでも変化があれば再 compile し、resume brief に変化した入力名を列挙する。キャッシュ基準を直近 resume に限るのは、start 由来 bundle が resume brief を埋め込まず出力形が resume と異なるためである（初回 resume は基準が無く必ず再 compile される）。resume brief 自体は base からの diff 概要・最終 verification・未終端 event を毎回 journal と git から再構成する動的入力であり、キャッシュ対象にしない。
 
 session の中断は明示的な操作を要さず、状態は常に journal から導出される。したがって中断・再開はプロセスの生死に依存せず、いつでも安全に行える。session 起動 bundle の compile 出力先（out/）と adapter の起動設定は 03、resume brief の生成に用いる event の schema は 06 に置く。

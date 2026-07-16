@@ -129,8 +129,29 @@ test('run verify --json: { ok, command, run, pass, checks, surface }', async () 
   assert.equal(obj.pass, true);
   assert.ok(Array.isArray(obj.checks));
   assert.ok(obj.surface && Array.isArray(obj.surface.offSurface));
+  // 理由型: pass 時は failureReasons=[]、checks 各要素に reason が載る。
+  assert.deepEqual(obj.failureReasons, []);
+  assert.equal(obj.checks[0].reason, 'passed');
   // 返り値の pass は従来通り。
   assert.equal(ret.pass, true);
+});
+
+test('run verify --json: fail 時に failureReasons と checks[].reason を露出', async () => {
+  const root = tmpRoot();
+  const { obj: opened } = await openAdhoc(root, '検証失敗出力', 'node -e "process.exit(1)"');
+  const runId = opened.run;
+  write(root, path.join('runs', runId, 'notes.md'), '## 実装メモ\nx\n');
+  await captureJson(() =>
+    run({ positional: ['return', runId], flags: {}, root, jsonMode: true })
+  );
+
+  const { obj } = await captureJson(() =>
+    run({ positional: ['verify', runId], flags: {}, root, jsonMode: true })
+  );
+  assert.equal(obj.pass, false);
+  // exit 不一致 = refuted。
+  assert.deepEqual(obj.failureReasons, ['refuted']);
+  assert.equal(obj.checks[0].reason, 'refuted');
 });
 
 // --- run accept --json ---
@@ -165,6 +186,34 @@ test('run accept --json: { ok, command, run, to }', async () => {
   assert.equal(obj.to, 'accepted');
   assert.equal(ret, runId);
   assert.equal(snap(root).runs[runId].status, 'accepted');
+});
+
+test('verify fail 後の accept 封鎖は verification detail に理由型を載せる', async () => {
+  const root = tmpRoot();
+  const { obj: opened } = await openAdhoc(root, '受理封鎖検証', 'node -e "process.exit(1)"');
+  const runId = opened.run;
+  write(root, path.join('runs', runId, 'notes.md'), '## 実装メモ\nx\n');
+  await captureJson(() =>
+    run({ positional: ['return', runId], flags: {}, root, jsonMode: true })
+  );
+  // verify は pass=false（refuted）だが状態は verified へ遷移する。
+  const { obj: v } = await captureJson(() =>
+    run({ positional: ['verify', runId], flags: {}, root, jsonMode: true })
+  );
+  assert.equal(v.pass, false);
+  assert.equal(snap(root).runs[runId].status, 'verified');
+
+  // accept は verification pass=false で封鎖され、detail に reasons=refuted を含む。
+  await assert.rejects(
+    () => run({ positional: ['accept', runId], flags: {}, root, jsonMode: true }),
+    (err) => {
+      assert.ok(err.isRefusal, 'Refusal であること');
+      const vg = err.missing.find((m) => m.input === 'verification');
+      assert.ok(vg, 'verification ガードの欠落があること');
+      assert.match(vg.detail, /reasons=refuted/);
+      return true;
+    }
+  );
 });
 
 // --- run block --json ---

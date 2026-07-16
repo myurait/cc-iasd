@@ -67,3 +67,44 @@ test('checkAllowed は prefix match', () => {
   assert.ok(!checkAllowed(cfg, 'rm -rf /'));
   assert.ok(!checkAllowed(cfg, 'curl evil'));
 });
+
+// =========================================================================
+// worktree セクション（束1 契約 5 章）
+// =========================================================================
+
+test('worktree セクションはファイル無しで既定値を返す', () => {
+  const cfg = load(tmpRoot(null));
+  assert.equal(cfg.worktree.baseRef, 'head');
+  assert.equal(cfg.worktree.cleanup, 'auto');
+  assert.deepEqual(cfg.worktree.include, []);
+  assert.equal(cfg.worktree.force, false);
+  assert.equal(cfg.worktree.stale_days, 7);
+});
+
+test('worktree セクションは欠落キーのみ既定補完する', () => {
+  const cfg = load(tmpRoot('worktree:\n  cleanup: keep\n  stale_days: 30\n'));
+  assert.equal(cfg.worktree.cleanup, 'keep'); // 指定値
+  assert.equal(cfg.worktree.stale_days, 30); // 指定値
+  assert.equal(cfg.worktree.baseRef, 'head'); // 補完
+  assert.equal(cfg.worktree.force, false); // 補完
+});
+
+test('validate は worktree の不正 baseRef / cleanup を拒否', () => {
+  assert.throws(() => validate({ ...DEFAULTS, worktree: { ...DEFAULTS.worktree, baseRef: 'bad' } }));
+  assert.throws(() => validate({ ...DEFAULTS, worktree: { ...DEFAULTS.worktree, cleanup: 'bad' } }));
+});
+
+test('validate は worktree の force 型・include 型・stale_days 型を検証', () => {
+  assert.throws(() => validate({ ...DEFAULTS, worktree: { ...DEFAULTS.worktree, force: 'yes' } }));
+  assert.throws(() => validate({ ...DEFAULTS, worktree: { ...DEFAULTS.worktree, include: 'api' } }));
+  assert.throws(() =>
+    validate({ ...DEFAULTS, worktree: { ...DEFAULTS.worktree, stale_days: 'seven' } })
+  );
+});
+
+test('validate は既定 worktree を含む config を通す（束2 の cfg.load 呼出に影響しない）', () => {
+  assert.doesNotThrow(() => validate({ ...DEFAULTS }));
+  assert.doesNotThrow(() =>
+    validate({ ...DEFAULTS, worktree: { baseRef: 'fresh', cleanup: 'keep', include: ['api'], force: true, stale_days: 1 } })
+  );
+});

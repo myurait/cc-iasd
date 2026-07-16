@@ -37,12 +37,19 @@ test('Checks が pass し off-surface/forbid なしで pass', () => {
   });
   assert.equal(res.pass, true);
   assert.equal(res.checks[0].pass, true);
+  // 理由型: pass は reason='passed'・失敗理由集合は空。
+  assert.equal(res.checks[0].reason, 'passed');
+  assert.deepEqual(res.failureReasons, []);
   // evidence 捕捉
   const verdictPath = path.join(root, 'evidence', 'verifications', 'r-1', 'verdict.json');
   assert.ok(fs.existsSync(verdictPath));
+  // verdict.json にも reason / failureReasons が焼かれる（evidence への理由型捕捉）。
+  const verdict = JSON.parse(fs.readFileSync(verdictPath, 'utf8'));
+  assert.equal(verdict.checks[0].reason, 'passed');
+  assert.deepEqual(verdict.failureReasons, []);
 });
 
-test('Check の exit code 不一致で fail', () => {
+test('Check の exit code 不一致で fail（reason=refuted）', () => {
   const root = tmpRoot();
   const res = run(root, 'r-2', {
     checks: [{ id: 'bad', run: 'node -e "process.exit(1)"', cwd: root, expect: { exit: 0 } }],
@@ -52,6 +59,39 @@ test('Check の exit code 不一致で fail', () => {
   assert.equal(res.pass, false);
   assert.equal(res.checks[0].exit, 1);
   assert.equal(res.checks[0].pass, false);
+  // プロセスは走ったが期待 exit と不一致＝内容要因 refuted。
+  assert.equal(res.checks[0].reason, 'refuted');
+  assert.deepEqual(res.failureReasons, ['refuted']);
+});
+
+test('存在しないコマンドは reason=unverified（実行不能・環境要因）', () => {
+  const root = tmpRoot();
+  const res = run(root, 'r-2b', {
+    checks: [
+      { id: 'enoent', run: 'this-command-does-not-exist-xyz', cwd: root, expect: { exit: 0 } },
+    ],
+    surfaces: { write: [], forbid: [] },
+    repos: {},
+  });
+  // spawn 失敗（ENOENT）は pass ではなく unverified（Default-FAIL 不変）。
+  assert.equal(res.pass, false);
+  assert.equal(res.checks[0].pass, false);
+  assert.equal(res.checks[0].reason, 'unverified');
+  assert.deepEqual(res.failureReasons, ['unverified']);
+});
+
+test('unverified と refuted が混在すると失敗理由集合は両方をユニークに含む', () => {
+  const root = tmpRoot();
+  const res = run(root, 'r-2c', {
+    checks: [
+      { id: 'refuted', run: 'node -e "process.exit(1)"', cwd: root, expect: { exit: 0 } },
+      { id: 'enoent', run: 'this-command-does-not-exist-xyz', cwd: root, expect: { exit: 0 } },
+    ],
+    surfaces: { write: [], forbid: [] },
+    repos: {},
+  });
+  assert.equal(res.pass, false);
+  assert.deepEqual([...res.failureReasons].sort(), ['refuted', 'unverified']);
 });
 
 test('forbid glob 該当は機械 FAIL', () => {
