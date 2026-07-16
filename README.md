@@ -4,6 +4,8 @@ English | [日本語](README.ja.md)
 
 cc-iasd is a deterministic state-machine kernel and execution harness that enforces three invariants through structure rather than promises.
 
+> **Development status (2026-07)**: Active feature development of this project has stopped. See "awslabs/aidlc-workflows and the status of this project" at the end of this README for the background. The kernel itself is complete: the planned scope is implemented and all tests are green.
+
 The three invariants it protects are:
 
 ```text
@@ -258,6 +260,34 @@ The design canon is in `docs/development/`. The key documents are:
 08_commands_and_workflows.md  CLI command list / guard rejection message spec / onboarding flow
 12_role_design.md           the 3 role cards: planner / worker / reviewer + human
 ```
+
+## awslabs/aidlc-workflows and the status of this project
+
+This project competes head-on with [awslabs/aidlc-workflows](https://github.com/awslabs/aidlc-workflows) (AWS's AI-DLC). Its v2, currently under active development, has independently arrived at the same conclusions as cc-iasd: an append-only event store as the source of truth with state derived from it, deterministic bookkeeping owned by code while the LLM owns only judgment, parallel execution isolated by git worktrees, session resume, and independence from any specific harness. The kernel design philosophies are nearly identical.
+
+As of 2026-07, the differences are only the following.
+
+```text
+What cc-iasd has that aidlc does not (yet) have:
+- Verification (CLI subprocess execution, measured, Default-FAIL) as the only
+  blocking gate. aidlc's verification sensors do reach real measured execution,
+  but they remain advisory; its effective gate is per-stage human approval
+- Actor stamping of human decisions (decide is human-exclusive and stamps
+  actor=human into the journal)
+- Native multi-repo support from v0
+- Structured upstream backtracking as the enforcement of the no-guessing
+  invariant (the gap ledger, backtrack requests, and escalation packets are
+  first-class objects)
+
+What aidlc has that cc-iasd does not:
+- Methodology content (5 phases, 32 stages, a roster of domain-expert agents)
+- A learning loop that turns corrections into persistent behavioral rules
+- AWS's engineering capacity, distribution, and ecosystem
+```
+
+And the last line of the latter list is decisive. The differences in the former list are not a matter of design superiority but of roadmap timing, and I have judged that they are not a lead an individual developer can keep defending against AWS's development velocity and distribution. **In effect, this is a declaration of defeat.** If you are evaluating harnesses of this kind, I recommend evaluating aidlc-workflows first.
+
+Active feature development of this repository stops here. The kernel remains in a completed state: the planned scope (P1–P4) is implemented and all tests are green. That a well-resourced implementation independently arrived at the same design is also proof that the design was right. The insights gained here will be carried forward into a separate, derived project.
 
 ## License
 
